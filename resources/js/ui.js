@@ -1,29 +1,29 @@
 /**
- * Alpine.data() registrations for the <x-ui.*> component library.
- * Registered on `alpine:init` so load order relative to Alpine.start() never matters.
+ * Регистрация Alpine.data() для библиотеки компонентов <x-ui.*>.
+ * Регистрируется на `alpine:init`, чтобы порядок загрузки относительно Alpine.start() не имел значения.
  */
 document.addEventListener('alpine:init', () => {
     /**
-     * Backing store for <x-ui.form mode="enhance|ajax" :state="...">.
+     * Хранилище состояния для <x-ui.form mode="enhance|ajax" :state="...">.
      *
-     * - mode: 'default'  → plain server round-trip, this store does nothing extra.
-     * - mode: 'enhance'  → same POST, but exposes `state` for x-model consumers
-     *                      (Path C in the component library's value contract).
-     * - mode: 'ajax'     → intercepts submit, posts via fetch with
-     *                      Accept: application/json, expects a Laravel 422
-     *                      validation-error body ({ errors: { field: [msg] } })
-     *                      on failure. Falls back to a real submit if fetch
-     *                      itself fails (network down, JS disabled never reaches
-     *                      here at all — the <form> has no JS-only submit path).
+     * - mode: 'default'  → обычный серверный round-trip, это хранилище ничего лишнего не делает.
+     * - mode: 'enhance'  → тот же POST, но `state` доступен для потребителей x-model
+     *                      (путь C в контракте значений компонента).
+     * - mode: 'ajax'     → перехватывает submit, отправляет запрос через fetch с
+     *                      Accept: application/json, ожидает от Laravel тело ошибки
+     *                      валидации 422 ({ errors: { field: [msg] } }) при сбое.
+     *                      Если fetch сам не сработал, выполняется обычная отправка формы
+     *                      (например, при отсутствии сети; при отключённом JS код сюда вообще не попадёт,
+     *                      потому что у <form> нет отдельного JS-only пути отправки).
      */
     Alpine.data('uiForm', ({ mode = 'default', state = {}, errors = {} } = {}) => ({
         mode,
         state,
         submitting: false,
-        // Seeded from the Blade $errors bag on init (<x-ui.form> passes
-        // `errors: @js($errors->messages())`) so a plain 302-redirect page
-        // load and a failed ajax submit render identically — <x-ui.error>'s
-        // x-text just repeats what Blade already printed, no flash.
+        // Инициализируется из мешка ошибок Blade при старте
+        // (<x-ui.form> передаёт `errors: @js($errors->messages())`), чтобы обычная
+        // загрузка после 302-редиректа и неудачная ajax-отправка отображались одинаково.
+        // x-text у <x-ui.error> просто повторяет то, что уже вывел Blade, без flash-сообщений.
         errors,
         status: null,
 
@@ -32,9 +32,9 @@ document.addEventListener('alpine:init', () => {
         },
 
         async submit(el) {
-            // Bind with `x-on:submit.prevent="submit($el)"` — the `.prevent`
-            // modifier already stops the native submit, this method doesn't need
-            // the event object.
+            // Привязывается через `x-on:submit.prevent="submit($el)"`:
+            // модификатор `.prevent` уже останавливает нативную отправку,
+            // поэтому этому методу не нужен объект события.
             if (this.mode !== 'ajax') {
                 return true;
             }
@@ -60,7 +60,14 @@ document.addEventListener('alpine:init', () => {
                     throw new Error(`Unexpected response: ${response.status}`);
                 }
 
-                const redirect = response.headers.get('X-Redirect') ?? response.url;
+                // Навигацию выполняет только явный заголовок X-Redirect.
+                // response.url здесь НЕ подходит как запасной вариант: PUT-эндпоинты
+                // в стиле Fortify возвращают пустой 200 без Location, когда
+                // $request->wantsJson(). Тогда fetch кладёт в response.url тот же URL,
+                // что и action формы, а переход через window.location.assign() делает GET,
+                // который отвечает 405. Отсутствие заголовка означает
+                // "успех без навигации" — вместо этого показываем inline-результат через `status`.
+                const redirect = response.headers.get('X-Redirect');
                 if (redirect) {
                     window.location.assign(redirect);
                     return;
@@ -68,7 +75,7 @@ document.addEventListener('alpine:init', () => {
 
                 this.status = 'ok';
             } catch (e) {
-                // Network/JS failure — degrade to a real submit so the form still works.
+                // При сбое сети или JS откатываемся к обычной отправке, чтобы форма продолжала работать.
                 this.mode = 'default';
                 el.submit();
             } finally {
@@ -78,8 +85,9 @@ document.addEventListener('alpine:init', () => {
     }));
 
     /**
-     * <x-ui.password-field>'s show/hide toggle. Purely presentational —
-     * never touches the value, so it composes with any of the three value paths.
+     * Переключатель показа/скрытия для <x-ui.password-field>.
+     * Это чисто визуальная логика — значение поля не меняется, поэтому компонент
+     * совместим с любым из трёх путей передачи значения.
      */
     Alpine.data('uiPasswordToggle', () => ({
         show: false,
@@ -94,8 +102,8 @@ document.addEventListener('alpine:init', () => {
     }));
 
     /**
-     * <x-ui.resend-button>'s cooldown. `seconds` is the initial countdown;
-     * the button stays disabled until it reaches zero.
+     * Задержка повторной отправки для <x-ui.resend-button>.
+     * `seconds` — начальный таймер; кнопка остаётся отключённой, пока он не дойдёт до нуля.
      */
     Alpine.data('uiCountdown', (seconds = 60) => ({
         remaining: seconds,
@@ -127,9 +135,9 @@ document.addEventListener('alpine:init', () => {
     }));
 
     /**
-     * <x-ui.code-list>'s "copy all" affordance. Clipboard API needs HTTPS
-     * (fine — Safari 13.1+ supports it); falls back to execCommand for
-     * contexts where navigator.clipboard is unavailable.
+     * Действие "скопировать всё" для <x-ui.code-list>.
+     * Clipboard API требует HTTPS (это нормально — Safari 13.1+ поддерживает его);
+     * если navigator.clipboard недоступен, используется запасной вариант через execCommand.
      */
     Alpine.data('uiCopy', (text = '') => ({
         copied: false,

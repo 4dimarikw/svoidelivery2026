@@ -1,10 +1,19 @@
 <?php
 
+use App\Http\Controllers\Account\AddressController;
+use App\Http\Controllers\Account\ProfileController;
 use App\Http\Controllers\PageController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', [PageController::class, 'home'])->name('home');
+
+Route::middleware('auth')->prefix('account')->name('account.')->group(function () {
+    Route::get('profile', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::put('profile', [ProfileController::class, 'update'])->name('profile.update');
+
+    Route::resource('addresses', AddressController::class)->except(['show']);
+});
 
 // Local-only preview of the <x-ui.*> component library — proves the value
 // contract (Blade/old()/$errors vs x-model) works end-to-end without

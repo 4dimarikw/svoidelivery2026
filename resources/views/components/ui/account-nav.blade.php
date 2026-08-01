@@ -1,0 +1,39 @@
+{{-- Port of the design system's `.acc-nav` (design-system.html lines
+     297-305) as inline utilities — single consumer, no pseudo-elements, no
+     native-control reset, so it doesn't earn a place in app.css's
+     @layer components (see CLAUDE.md's "where CSS lives" rule).
+
+     No icons (the mockup has none) and no links to unbuilt features
+     (orders/payments/favorites/promo codes) — same "don't stub dead links"
+     rule already applied to <x-layouts.header>. --}}
+@props(['active' => null]) {{-- 'profile' | 'addresses' --}}
+
+@php
+    $itemClass = fn (bool $isActive) => $isActive
+        ? 'bg-teal-700 text-cream-100'
+        : 'text-ink-700 hover:bg-cream-200 hover:text-ink-900';
+@endphp
+
+<nav class="grid gap-0.5 rounded-sm border border-hairline bg-cream-50 p-2">
+    <a
+        href="{{ route('account.profile.edit') }}"
+        class="flex items-center justify-between rounded-sm px-3.5 py-2.5 text-body-m {{ $itemClass($active === 'profile') }}"
+    >{{ __('account.nav.profile') }}</a>
+
+    <a
+        href="{{ route('account.addresses.index') }}"
+        class="flex items-center justify-between rounded-sm px-3.5 py-2.5 text-body-m {{ $itemClass($active === 'addresses') }}"
+    >
+        {{ __('account.address.index_title') }}
+        <span class="font-mono text-micro">{{ auth()->user()->addresses()->count() }}</span>
+    </a>
+
+    <div class="my-1.5 h-px bg-hairline"></div>
+
+    <form method="POST" action="{{ route('logout') }}">
+        @csrf
+        <button type="submit" class="flex w-full items-center justify-between rounded-sm px-3.5 py-2.5 text-left text-body-m text-rust hover:bg-danger-50">
+            {{ __('layout.nav.logout') }}
+        </button>
+    </form>
+</nav>

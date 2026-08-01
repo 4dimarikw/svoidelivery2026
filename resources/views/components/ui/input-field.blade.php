@@ -7,6 +7,7 @@
     'required' => false,
     'placeholder' => null,
     'autocomplete' => null,
+    'bag' => 'default',
 ])
 
 @php
@@ -14,7 +15,7 @@
     $helpId = $help ? "{$id}-help" : null;
 @endphp
 
-<x-ui.field :name="$name" :label="$label" :for="$id" :help="$help" :required="$required">
+<x-ui.field :name="$name" :label="$label" :for="$id" :help="$help" :required="$required" :bag="$bag">
     <x-ui.input
         :name="$name"
         :id="$id"

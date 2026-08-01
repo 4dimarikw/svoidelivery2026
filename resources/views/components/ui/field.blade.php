@@ -8,6 +8,7 @@
     'help' => null,
     'name' => null,
     'required' => false,
+    'bag' => 'default',
 ])
 
 @php
@@ -27,6 +28,6 @@
     @endif
 
     @if ($name)
-        <x-ui.error :name="$name" />
+        <x-ui.error :name="$name" :bag="$bag" />
     @endif
 </div>

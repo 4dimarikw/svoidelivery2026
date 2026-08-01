@@ -6,6 +6,7 @@
     'checked' => false,
     'label' => null,
     'help' => null,
+    'bag' => 'default',
 ])
 
 <div class="grid gap-1.5">
@@ -17,5 +18,5 @@
         <x-ui.help>{{ $help }}</x-ui.help>
     @endif
 
-    <x-ui.error :name="$name" />
+    <x-ui.error :name="$name" :bag="$bag" />
 </div>

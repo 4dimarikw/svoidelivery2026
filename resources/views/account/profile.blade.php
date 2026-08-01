@@ -1,0 +1,138 @@
+{{-- Ajax success (`status === 'ok'`, set by uiForm.submit() on a blank 200)
+     has no session('status') to read — Fortify only sets that when the
+     request did NOT ask for JSON. The three session-status codes below are
+     the no-JS fallback only (plain POST-back after a real page reload):
+     Fortify's own PROFILE_INFORMATION_UPDATED / PASSWORD_UPDATED constants
+     are untranslated raw strings ('profile-information-updated' /
+     'password-updated') — <x-ui.status-alert> would print them verbatim, so
+     they're mapped to real copy here instead of being handed to it. --}}
+@php
+    $noJsStatusMessage = match (session('status')) {
+        'profile-information-updated' => __('account.profile.basic_updated'),
+        'account-profile-updated' => __('account.profile.details_updated'),
+        'password-updated' => __('account.profile.password_updated'),
+        default => null,
+    };
+@endphp
+
+<x-layouts.account active="profile" :title="__('account.nav.profile')">
+    <div class="grid gap-6">
+        @if ($noJsStatusMessage)
+            <x-ui.alert tone="ok">{{ $noJsStatusMessage }}</x-ui.alert>
+        @endif
+
+        {{-- Section 1 — name + email, Fortify's own endpoint. --}}
+        <x-ui.surface tone="paper-2" class="rounded-sm border border-hairline p-6">
+            <h2 class="mb-5 font-display text-heading-s uppercase text-ink-900">{{ __('account.profile.basic_title') }}</h2>
+
+            <x-ui.form :action="route('user-profile-information.update')" method="PUT" mode="ajax">
+                <div x-show="status === 'ok'" x-cloak class="mb-4">
+                    <x-ui.alert tone="ok">{{ __('account.profile.basic_updated') }}</x-ui.alert>
+                </div>
+
+                <div class="grid gap-3.5">
+                    <x-ui.input-field
+                        name="name"
+                        :label="__('account.field.name')"
+                        :value="auth()->user()->name"
+                        bag="updateProfileInformation"
+                        required
+                    />
+                    <x-ui.input-field
+                        name="email"
+                        type="email"
+                        :label="__('account.field.email')"
+                        :value="auth()->user()->email"
+                        autocomplete="username"
+                        bag="updateProfileInformation"
+                        required
+                    />
+
+                    <x-ui.form-actions>
+                        <x-ui.btn type="submit" x-bind:disabled="submitting">
+                            <span x-show="!submitting">{{ __('account.profile.submit') }}</span>
+                            <span x-show="submitting" x-cloak class="inline-flex items-center">
+                                <x-ui.spinner size="16" class="mr-2" />{{ __('account.profile.saving') }}
+                            </span>
+                        </x-ui.btn>
+                    </x-ui.form-actions>
+                </div>
+            </x-ui.form>
+        </x-ui.surface>
+
+        {{-- Section 2 — structured profile fields (Domain\Profile\Models\Profile). --}}
+        <x-ui.surface tone="paper-2" class="rounded-sm border border-hairline p-6">
+            <h2 class="mb-5 font-display text-heading-s uppercase text-ink-900">{{ __('account.profile.details_title') }}</h2>
+
+            <x-ui.form :action="route('account.profile.update')" method="PUT" mode="ajax">
+                <div x-show="status === 'ok'" x-cloak class="mb-4">
+                    <x-ui.alert tone="ok">{{ __('account.profile.details_updated') }}</x-ui.alert>
+                </div>
+
+                <div class="grid gap-3.5">
+                    <x-ui.input-field name="last_name" :label="__('account.field.last_name')" :value="$profile?->last_name" />
+                    <x-ui.input-field name="first_name" :label="__('account.field.first_name')" :value="$profile?->first_name" />
+                    <x-ui.input-field name="patronymic" :label="__('account.field.patronymic')" :value="$profile?->patronymic" />
+                    <x-ui.input-field name="phone" type="tel" :label="__('account.field.phone')" :value="$profile?->phone" />
+                    <x-ui.input-field name="vk_url" type="url" :label="__('account.field.vk_url')" :value="$profile?->vk_url" placeholder="https://vk.com/..." />
+                    <x-ui.input-field name="telegram_url" type="url" :label="__('account.field.telegram_url')" :value="$profile?->telegram_url" placeholder="https://t.me/..." />
+                    <x-ui.textarea-field name="default_order_comment" :label="__('account.field.default_order_comment')" :value="$profile?->default_order_comment" />
+
+                    <x-ui.form-actions>
+                        <x-ui.btn type="submit" x-bind:disabled="submitting">
+                            <span x-show="!submitting">{{ __('account.profile.submit') }}</span>
+                            <span x-show="submitting" x-cloak class="inline-flex items-center">
+                                <x-ui.spinner size="16" class="mr-2" />{{ __('account.profile.saving') }}
+                            </span>
+                        </x-ui.btn>
+                    </x-ui.form-actions>
+                </div>
+            </x-ui.form>
+        </x-ui.surface>
+
+        {{-- Section 3 — password, Fortify's own endpoint. --}}
+        <x-ui.surface tone="paper-2" class="rounded-sm border border-hairline p-6">
+            <h2 class="mb-5 font-display text-heading-s uppercase text-ink-900">{{ __('account.profile.password_title') }}</h2>
+
+            <x-ui.form :action="route('user-password.update')" method="PUT" mode="ajax">
+                <div x-show="status === 'ok'" x-cloak class="mb-4">
+                    <x-ui.alert tone="ok">{{ __('account.profile.password_updated') }}</x-ui.alert>
+                </div>
+
+                <div class="grid gap-3.5">
+                    <x-ui.password-field
+                        name="current_password"
+                        :label="__('account.field.current_password')"
+                        autocomplete="current-password"
+                        bag="updatePassword"
+                        required
+                    />
+                    <x-ui.password-field
+                        name="password"
+                        :label="__('account.field.new_password')"
+                        :help="__('account.register.password_hint')"
+                        autocomplete="new-password"
+                        bag="updatePassword"
+                        required
+                    />
+                    <x-ui.password-field
+                        name="password_confirmation"
+                        :label="__('account.field.new_password_confirmation')"
+                        autocomplete="new-password"
+                        bag="updatePassword"
+                        required
+                    />
+
+                    <x-ui.form-actions>
+                        <x-ui.btn type="submit" x-bind:disabled="submitting">
+                            <span x-show="!submitting">{{ __('account.profile.submit') }}</span>
+                            <span x-show="submitting" x-cloak class="inline-flex items-center">
+                                <x-ui.spinner size="16" class="mr-2" />{{ __('account.profile.saving') }}
+                            </span>
+                        </x-ui.btn>
+                    </x-ui.form-actions>
+                </div>
+            </x-ui.form>
+        </x-ui.surface>
+    </div>
+</x-layouts.account>

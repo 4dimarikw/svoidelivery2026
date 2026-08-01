@@ -73,10 +73,7 @@ return [
     |
     */
 
-    // TODO: point at the real account page once it exists (design system §09).
-    // No dashboard/account route is built yet, so this points at the welcome
-    // page rather than a real destination.
-    'home' => '/',
+    'home' => '/account/profile',
 
     /*
     |--------------------------------------------------------------------------

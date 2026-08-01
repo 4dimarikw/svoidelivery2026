@@ -4,6 +4,7 @@
     'help' => null,
     'required' => false,
     'autocomplete' => 'current-password',
+    'bag' => 'default',
 ])
 
 @php
@@ -11,7 +12,7 @@
     $helpId = $help ? "{$id}-help" : null;
 @endphp
 
-<x-ui.field :name="$name" :label="$label" :for="$id" :help="$help" :required="$required">
+<x-ui.field :name="$name" :label="$label" :for="$id" :help="$help" :required="$required" :bag="$bag">
     <div x-data="uiPasswordToggle" class="relative">
         <x-ui.input
             :name="$name"
@@ -29,6 +30,7 @@
             x-on:click="toggle()"
             x-bind:aria-label="show ? @js(__('ui.password.hide')) : @js(__('ui.password.show'))"
             class="absolute inset-y-0 right-0 flex items-center px-3.5 text-ink-500"
+            tabindex="-1"
         >
             {{-- Both icons render server-side; Alpine only toggles which is
                  visible — a component's `name` prop is resolved at render
