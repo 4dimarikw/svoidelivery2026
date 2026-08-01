@@ -1,7 +1,25 @@
 <?php
 
+use App\Http\Controllers\PageController;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', function () {
-    return view('welcome');
-});
+Route::get('/', [PageController::class, 'home'])->name('home');
+
+// Local-only preview of the <x-ui.*> component library — proves the value
+// contract (Blade/old()/$errors vs x-model) works end-to-end without
+// laravel/fortify installed. See CLAUDE.md.
+if (app()->environment('local')) {
+    Route::view('/ui-kit', 'ui-kit')->name('ui-kit');
+
+    Route::post('/ui-kit', function (Request $request) {
+        $request->validate([
+            'email' => ['required', 'email'],
+            'password' => ['required', 'min:8'],
+            'agree' => ['accepted'],
+            'city' => ['required'],
+        ]);
+
+        return back()->with('status', 'ok');
+    })->name('ui-kit.submit');
+}
