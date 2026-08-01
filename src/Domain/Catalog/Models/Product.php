@@ -19,6 +19,75 @@ use Spatie\MediaLibrary\MediaCollections\Models\Media;
 use Spatie\Sluggable\HasSlug;
 use Spatie\Sluggable\SlugOptions;
 
+/**
+ * @property int $id
+ * @property string $source_uuid
+ * @property string $external_code
+ * @property string|null $article
+ * @property string $name
+ * @property string $slug
+ * @property string|null $description
+ * @property int $category_id
+ * @property int|null $manufacturer_id
+ * @property int|null $volume_id
+ * @property int|null $container_id
+ * @property numeric $price
+ * @property int $stock_quantity
+ * @property bool $in_stock
+ * @property int|null $package_units
+ * @property string|null $packaging_raw
+ * @property string|null $source_category_path
+ * @property int|null $shelf_life_days
+ * @property string|null $brand
+ * @property string|null $sales_rating
+ * @property bool $is_active
+ * @property \Illuminate\Support\Carbon|null $synced_at
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \Domain\Catalog\Models\ProductBarcode> $barcodes
+ * @property-read int|null $barcodes_count
+ * @property-read \Domain\Catalog\Models\BeerProductDetail|null $beerDetails
+ * @property-read \Domain\Catalog\Models\Category $category
+ * @property-read \Domain\Catalog\Models\Container|null $container
+ * @property-read mixed $label
+ * @property-read \Domain\Catalog\Models\Manufacturer|null $manufacturer
+ * @property-read \Spatie\MediaLibrary\MediaCollections\Models\Collections\MediaCollection<int, Media> $media
+ * @property-read int|null $media_count
+ * @property-read mixed $thumb
+ * @property-read \Domain\Catalog\Models\Volume|null $volume
+ * @method static Builder<static>|Product active()
+ * @method static \Database\Factories\Catalog\ProductFactory factory($count = null, $state = [])
+ * @method static Builder<static>|Product inCategory(int $categoryId)
+ * @method static Builder<static>|Product inPriceRange(?string $min, ?string $max)
+ * @method static Builder<static>|Product newModelQuery()
+ * @method static Builder<static>|Product newQuery()
+ * @method static Builder<static>|Product query()
+ * @method static Builder<static>|Product whereArticle($value)
+ * @method static Builder<static>|Product whereBrand($value)
+ * @method static Builder<static>|Product whereCategoryId($value)
+ * @method static Builder<static>|Product whereContainerId($value)
+ * @method static Builder<static>|Product whereCreatedAt($value)
+ * @method static Builder<static>|Product whereDescription($value)
+ * @method static Builder<static>|Product whereExternalCode($value)
+ * @method static Builder<static>|Product whereId($value)
+ * @method static Builder<static>|Product whereInStock($value)
+ * @method static Builder<static>|Product whereIsActive($value)
+ * @method static Builder<static>|Product whereManufacturerId($value)
+ * @method static Builder<static>|Product whereName($value)
+ * @method static Builder<static>|Product wherePackageUnits($value)
+ * @method static Builder<static>|Product wherePackagingRaw($value)
+ * @method static Builder<static>|Product wherePrice($value)
+ * @method static Builder<static>|Product whereSalesRating($value)
+ * @method static Builder<static>|Product whereShelfLifeDays($value)
+ * @method static Builder<static>|Product whereSlug($value)
+ * @method static Builder<static>|Product whereSourceCategoryPath($value)
+ * @method static Builder<static>|Product whereSourceUuid($value)
+ * @method static Builder<static>|Product whereStockQuantity($value)
+ * @method static Builder<static>|Product whereSyncedAt($value)
+ * @method static Builder<static>|Product whereUpdatedAt($value)
+ * @method static Builder<static>|Product whereVolumeId($value)
+ * @mixin \Eloquent
+ */
 class Product extends Model implements HasMedia
 {
     use HasFactory;
