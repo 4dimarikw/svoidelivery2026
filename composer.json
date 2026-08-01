@@ -10,12 +10,15 @@
     "license":  "MIT",
     "require":  {
         "php": "^8.2",
+        "ext-ftp": "*",
         "laravel/fortify": "^1.37",
         "laravel/framework": "^12.0",
         "laravel/socialite": "^5.29",
         "laravel/tinker": "^2.10.1",
         "moonshine/moonshine": "^4.18",
-        "socialiteproviders/telegram": "^4.1"
+        "socialiteproviders/telegram": "^4.1",
+        "spatie/laravel-medialibrary": "*",
+        "spatie/laravel-sluggable": "^4.0"
     },
     "require-dev":  {
                         "barryvdh/laravel-debugbar":  "^4.4",
@@ -34,6 +37,7 @@
                                    "App\\":  "app/",
                                    "Database\\Factories\\":  "database/factories/",
                                    "Database\\Seeders\\":  "database/seeders/",
+                                   "Infrastructure\\": "src/Infrastructure/",
                                    "Domain\\":  "src/Domain/",
                                    "Services\\":  "src/Services/",
                                    "Support\\":  "src/Support/"

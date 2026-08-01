@@ -35,4 +35,16 @@ return [
         ],
     ],
 
+    'bcraftfest' => [
+        'base_url' => env('BCRAFTFEST_API_URL', 'https://api.bcraftfest.ru/api/v1'),
+        'db' => env('BCRAFTFEST_DB', 1),
+    ],
+
+    'catalog_1c_ftp' => [
+        'host' => env('DB_1C_FTP_SERVER'),
+        'port' => (int) env('DB_1C_FTP_PORT', 21),
+        'username' => env('DB_1C_FTP_LOGIN'),
+        'password' => env('DB_1C_FTP_PASSWORD'),
+    ],
+
 ];
