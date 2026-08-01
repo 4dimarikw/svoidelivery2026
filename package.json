@@ -6,12 +6,26 @@
         "build": "vite build",
         "dev": "vite"
     },
+    "dependencies": {
+        "@fontsource-variable/geologica": "^5.3.0",
+        "@fontsource-variable/onest": "^5.3.0",
+        "@fontsource/jetbrains-mono": "^5.3.0",
+        "alpinejs": "^3.14.9"
+    },
     "devDependencies": {
-        "@tailwindcss/vite": "^4.0.0",
+        "autoprefixer": "^10.4.20",
         "axios": "^1.11.0",
         "concurrently": "^9.0.1",
         "laravel-vite-plugin": "^2.0.0",
-        "tailwindcss": "^4.0.0",
+        "postcss": "^8.4.49",
+        "tailwindcss": "^3.4.17",
         "vite": "^7.0.7"
-    }
+    },
+    "browserslist": [
+        "> 0.5%",
+        "last 2 versions",
+        "not dead",
+        "Safari >= 13.1",
+        "Chrome >= 80"
+    ]
 }
