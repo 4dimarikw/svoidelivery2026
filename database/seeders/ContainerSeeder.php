@@ -8,14 +8,19 @@ use Illuminate\Database\Seeder;
 class ContainerSeeder extends Seeder
 {
     /**
-     * From data/catalog-database-structure.md §4.4. Anything the CSV's
-     * `Упаковка` can't map to one of these (`штучный товар`, `Упаковка N шт.`)
-     * leaves `products.container_id` NULL rather than forcing a guess.
+     * From data/catalog-database-structure.md §4.4, one code per
+     * `config('catalog_import.container_map')` value — ResolveContainerStage
+     * warns "container code not seeded" for any code missing here.
      */
     private const CONTAINERS = [
+        'pet_keg' => 'ПЭТ-кег',
+        'pet' => 'ПЭТ-бутылка',
         'can' => 'Алюминиевая банка',
         'glass_bottle' => 'Стеклянная бутылка',
-        'pet_keg' => 'ПЭТ-кег',
+        'tin_can' => 'Консервная банка',
+        'piece' => 'Штучный товар',
+        'pack' => 'Пачка',
+        'gas_cylinder' => 'Газовый баллон',
     ];
 
     /**

@@ -2,9 +2,13 @@
 
 Сервис импортирует CSV-выгрузку из 1С в каталог товаров.
 
-**Входные данные:** CSV-файл из 1С (Windows-1251, разделитель `;`, 23 колонки). По умолчанию скачивается с FTP (`DB_1C_FTP_BASE_FILE`); можно передать локальный путь или ключ конфига.  
-**Результат:** записи в таблицах `brands`, `beer_styles`, `products`, `product_variations`, `product_barcodes`, `volumes`, `container_types`  
-**Идемпотентность:** повторные запуски обновляют существующие записи, дубликатов не создают
+**Входные данные:** CSV-файл из 1С (Windows-1251, разделитель `;`, 23 колонки). По умолчанию скачивается с FTP (`DB_1C_FTP_BASE_FILE`); можно передать локальный путь.
+**Результат:** записи в таблицах `manufacturers`, `beer_styles`, `categories` (авто-создание неизвестных slug), `products`, `beer_product_details`, `product_barcodes`, `volumes`, `containers`
+**Идемпотентность:** повторные запуски обновляют существующие записи (ключ — `products.external_code`, он же `КодТовара` 1С), дубликатов не создают
+
+Схема этого проекта **плоская**: нет отдельной таблицы вариаций — цена, остаток,
+объём и тара живут прямо на `products`. Пивные атрибуты (ABV/IBU/Plato/EBC,
+стиль, Untappd-привязка) вынесены в 1:1-таблицу `beer_product_details`.
 
 ---
 
@@ -14,8 +18,12 @@
 
 ```bash
 php artisan db:seed --class=CategorySeeder
-php artisan db:seed --class=ContainerTypeSeeder
+php artisan db:seed --class=ContainerSeeder
 ```
+
+`CategorySeeder` строит категории из `config('catalog_import.categories')` —
+того же реестра, которым пользуется парсер, так что slug в БД никогда не
+расходится с тем, что резолвит `CategorySlugResolver`.
 
 ### Команды
 
@@ -26,11 +34,11 @@ php artisan catalog:import
 # Локальный файл (FTP пропускается)
 php artisan catalog:import storage/imports/catalog-2026.csv
 
-# Другой файл с FTP — ключ конфига catalog_import (base_ftp_file | ref_eq_ftp_file)
-php artisan catalog:import "" ref_eq_ftp_file
-
 # Пропустить загрузку — использовать последний файл из storage/app/private/catalog/
 php artisan catalog:import --no-download
+
+# Только указанные категории (slug через запятую)
+php artisan catalog:import --categories=beer,mead
 
 # Dry-run: полный прогон в транзакции с откатом — БД не меняется
 php artisan catalog:import --dry-run
@@ -41,20 +49,21 @@ php artisan catalog:import --dry-run
 ### Пример отчёта
 
 ```
-+----------------------+------------+
-| Метрика              | Количество |
-+----------------------+------------+
-| Строк обработано     | 94         |
-| Строк пропущено      | 1          |
-| Брендов создано      | 29         |
-| Стилей пива создано  | 31         |
-| Товаров создано      | 76         |
-| Товаров обновлено    | 17         |
-| Вариаций создано     | 81         |
-| Вариаций обновлено   | 12         |
-| Штрихкодов создано   | 93         |
-| Предупреждений       | 39         |
-+----------------------+------------+
++---------------------------+------------+
+| Метрика                   | Количество |
++---------------------------+------------+
+| Строк обработано          | 94         |
+| Строк пропущено           | 1          |
+| Битых строк CSV           | 0          |
+| Производителей создано    | 29         |
+| Стилей пива создано       | 31         |
+| Товаров создано           | 76         |
+| Товаров обновлено         | 17         |
+| Товаров без изменений     | 1          |
+| Штрихкодов создано        | 93         |
+| Изображений загружено     | 12         |
+| Предупреждений            | 39         |
++---------------------------+------------+
 
 Предупреждения:
   строка 22 [ResolveContainerStage] unknown container type: штучный товар
@@ -75,26 +84,31 @@ CsvReader
 ImportContext      ← mutable-контекст, передаётся по всей цепочке
     │
     ▼  Pipeline
-    ├── NormalizeRowStage          пропуск строки при: пустой id_объекта; нет КодТовара и Артикул;
-    │                              цена < normalize.min_price; Категория в normalize.excluded_categories
-    ├── ResolveBrandStage          Производитель → Brand (firstOrCreate)
-    ├── ResolveCategoryStage       Категория/ABV/СтильПива/Наименование → Category (ранний стейдж)
+    ├── ResolveCategoryStage       Категория/ABV/СтильПива/Наименование → Category (первый стейдж)
+    ├── FilterCategoryStage        --categories=slug,... — пропуск строк вне фильтра
+    ├── NormalizeRowStage          пропуск строки при: пустой id_объекта; нет КодТовара И Артикул;
+    │                              цена < normalize.min_price (и категория не price_exempt);
+    │                              Категория в normalize.excluded_categories
+    ├── ResolveBrandStage          Производитель → Manufacturer (firstOrCreate по normalized_name)
     ├── ResolveBeerStyleStage      СтильПива → BeerStyle; синхронизация Untappd по UntappdRef
-    ├── ResolveContainerStage      Упаковка/Артикул → ContainerType (keg/can/bottle/pet_keg/pet_bottle/piece)
-    ├── ResolveVolumeStage         Упаковка → Volume (firstOrCreate по volume_ml)
-    ├── ResolveProductIdentityStage Марка → name (product), Наименование/Товар → title (variation)
+    ├── ResolveContainerStage      Упаковка/категория → Container (только для categories.*.container)
+    ├── ResolveVolumeStage         Упаковка → Volume (только для categories.*.volume)
+    ├── ResolveProductIdentityStage Марка → name, Наименование/Товар → title
     ├── ResolveAbvStage            ABV (Excel-формат "04.фев" → 4.2)
     ├── ResolveIbuStage            IBU
     ├── ResolvePlatoStage          Plato
     ├── ResolveEbcStage            EBC
     ├── ResolveShelfLifeStage      СрокГодности → shelf_life_days
     ├── ResolvePriceStage          Цена → price, Остаток → stock
-    ├── ResolveExternalIdsStage    КодТовара → sku, id_объекта → external_id
-    ├── ResolveFlagsStage          РейтингПродаж: "Акция" → is_featured (is_new вычисляется в PersistVariationStage)
+    ├── ResolveExternalIdsStage    КодТовара → external_code, id_объекта → source_uuid, Артикул → article
+    ├── ResolveFlagsStage          РейтингПродаж → sales_rating (сырая строка)
     ├── ResolveDescriptionStage    Описание → description
-    ├── PersistProductStage        firstOrCreate Product по [name, brand_id]
-    ├── PersistVariationStage      firstOrNew+save ProductVariation по [sku]; is_new по категории+возрасту
-    └── PersistBarcodeStage        firstOrCreate ProductBarcode по [variation_id, barcode]
+    ├── PersistProductStage        updateOrCreate Product по [external_code]
+    ├── PersistBeerDetailsStage    updateOrCreate BeerProductDetail (только если есть пивные атрибуты)
+    └── PersistBarcodeStage        firstOrCreate ProductBarcode по [barcode]
+    │
+    ▼ (post-commit, вне транзакции строки/чанка)
+    └── PersistProductImageStage   Untappd label → медиа-коллекция 'main' (spatie/laravel-medialibrary)
     │
     ▼
 ImportReport (счётчики + warnings)
@@ -106,7 +120,10 @@ ImportReport (счётчики + warnings)
 |---|---|
 | `CsvReader` | Открывает файл, конвертирует Windows-1251→UTF-8, отдаёт `RawRow` через generator |
 | `CsvParserService` | Оркестратор: итерирует строки, запускает pipeline, формирует `ImportReport` |
-| `ImportContext` | Mutable-объект, передаётся между стейджами; содержит `RawRow`, резолвенные модели (`brand`, `category`, `product`, …) и буфер `$attributes` |
+| `CategoryRegistry` | Типизированный доступ к `config('catalog_import.categories')` + `category_resolution` |
+| `CategorySlugResolver` | Резолвит slug категории из сырых колонок CSV через `CategoryRegistry`, без обращения к БД |
+| `LookupCache` | Per-import кэш `Category`/`Container` — устраняет N+1 в Resolve*-стейджах |
+| `ImportContext` | Mutable-объект, передаётся между стейджами; содержит `RawRow`, резолвенные модели (`brand`, `category`, `container`, `volume`, `beerStyle`, `product`, `untappdBeer`) и буфер `$attributes` |
 | `ImportStage` (interface) | `__invoke(ImportContext $ctx, Closure $next): ImportContext` |
 | `ImportReport` | Счётчики + warnings по строкам |
 | `RawRow` | Ассоциативный массив колонок CSV; метод `get(string $col)` с trim |
@@ -120,16 +137,21 @@ src/Services/CatalogImport/
 ├── README.md
 ├── CsvParserService.php          оркестратор
 ├── CsvReader.php                 чтение/перекодировка CSV
+├── CategoryRegistry.php          типизированный доступ к config('catalog_import.categories')
+├── CategorySlugResolver.php      резолв slug категории (без БД)
+├── LookupCache.php               per-import кэш Category/Container
 ├── Contracts/
 │   └── ImportStage.php           interface для всех стейджей
 ├── Dto/
 │   ├── RawRow.php                строка CSV (readonly)
 │   ├── ImportContext.php         контекст между стейджами (mutable)
-│   └── ImportReport.php         итоговый отчёт
+│   ├── ImportOptions.php         опции запуска (dryRun, categoryFilter, ...)
+│   └── ImportReport.php          итоговый отчёт
 └── Stages/
+    ├── ResolveCategoryStage.php
+    ├── FilterCategoryStage.php
     ├── NormalizeRowStage.php
     ├── ResolveBrandStage.php
-    ├── ResolveCategoryStage.php
     ├── ResolveBeerStyleStage.php
     ├── ResolveContainerStage.php
     ├── ResolveVolumeStage.php
@@ -144,19 +166,12 @@ src/Services/CatalogImport/
     ├── ResolveFlagsStage.php
     ├── ResolveDescriptionStage.php
     ├── PersistProductStage.php
-    ├── PersistVariationStage.php
-    └── PersistBarcodeStage.php
+    ├── PersistBeerDetailsStage.php
+    ├── PersistBarcodeStage.php
+    └── PersistProductImageStage.php   (post-commit)
 
-config/catalog_import.php                        маппинги + порядок стейджей
+config/catalog_import.php                        категории + маппинги + порядок стейджей
 app/Console/Commands/CatalogImportCommand.php    Artisan-команда
-tests/Feature/CatalogImport/CsvParserServiceTest.php
-tests/Feature/CatalogImport/CatalogImportCommandTest.php
-tests/Unit/CatalogImport/Stages/NormalizeRowStageTest.php
-tests/Unit/CatalogImport/Stages/ResolveCategoryStageTest.php
-tests/Unit/CatalogImport/Stages/ResolveBeerStyleStageTest.php
-tests/Unit/CatalogImport/Stages/ResolveAbvStageTest.php
-tests/Unit/CatalogImport/Stages/ResolveVolumeStageTest.php
-tests/Unit/CatalogImport/Stages/ResolveContainerStageTest.php
 ```
 
 ---
@@ -165,30 +180,30 @@ tests/Unit/CatalogImport/Stages/ResolveContainerStageTest.php
 
 | CSV колонка | Таблица.колонка | Стейдж |
 |---|---|---|
-| `Производитель` | `brands.name` | `ResolveBrandStage` |
-| `СтильПива` | `beer_styles.name` | `ResolveBeerStyleStage` |
-| `Марка` | `products.name` | `ResolveProductIdentityStage` |
-| `Наименование` (резерв `Товар`) | `product_variations.title` + авто-`slug` | `ResolveProductIdentityStage` |
+| `Производитель` | `manufacturers.name`/`normalized_name` | `ResolveBrandStage` |
+| `СтильПива` | `beer_styles.name`/`normalized_name` | `ResolveBeerStyleStage` |
+| `Марка` | `products.brand` | `ResolveProductIdentityStage` |
+| `Наименование` (резерв `Товар`) | `products.name` + авто-`slug` (из `article`) | `ResolveProductIdentityStage` |
 | `Описание` | `products.description` | `ResolveDescriptionStage` |
-| `ABV` | `products.abv` | `ResolveAbvStage` |
-| `IBU` | `products.ibu` | `ResolveIbuStage` |
-| `Plato` | `products.plato` | `ResolvePlatoStage` |
-| `EBC` | `products.ebc` | `ResolveEbcStage` |
-| `UntappdRef` | синхронизация `untappd_beers` | `ResolveBeerStyleStage` |
+| `ABV` | `beer_product_details.abv` | `ResolveAbvStage` |
+| `IBU` | `beer_product_details.ibu` | `ResolveIbuStage` |
+| `Plato` | `beer_product_details.plato` | `ResolvePlatoStage` |
+| `EBC` | `beer_product_details.ebc` | `ResolveEbcStage` |
+| `UntappdRef` | синхронизация `untappd_beers` → `beer_product_details.untappd_beer_id` | `ResolveBeerStyleStage` |
 | `СрокГодности` | `products.shelf_life_days` | `ResolveShelfLifeStage` |
-| `РейтингПродаж` | `product_variations.is_featured` | `ResolveFlagsStage` |
-| *(категория + возраст вариации)* | `product_variations.is_new` | `PersistVariationStage` |
-| `КодТовара` | `product_variations.sku` | `ResolveExternalIdsStage` |
-| `id_объекта` | `product_variations.external_id` | `ResolveExternalIdsStage` |
-| `Цена` | `product_variations.price` | `ResolvePriceStage` |
-| `Остаток` | `product_variations.stock` | `ResolvePriceStage` |
-| `Упаковка` | `product_variations.pack_info` | `ResolveExternalIdsStage` |
-| `Упаковка` | `volumes` (firstOrCreate) → `product_variations.volume_id` | `ResolveVolumeStage` |
-| `Упаковка` / `Артикул` | `product_variations.container_type_id` | `ResolveContainerStage` |
+| `РейтингПродаж` | `products.sales_rating` (сырая строка) | `ResolveFlagsStage` |
+| `КодТовара` | `products.external_code` (ключ идемпотентности) | `ResolveExternalIdsStage` |
+| `id_объекта` | `products.source_uuid` | `ResolveExternalIdsStage` |
+| `Артикул` | `products.article` (источник slug) | `ResolveExternalIdsStage` |
+| `Цена` | `products.price` | `ResolvePriceStage` |
+| `Остаток` | `products.stock_quantity` + `in_stock` | `ResolvePriceStage` / `PersistProductStage` |
+| `Упаковка` | `products.packaging_raw`, `package_units` | `ResolveExternalIdsStage`, `PersistProductStage` |
+| `Упаковка` | `volumes` (firstOrCreate) → `products.volume_id` | `ResolveVolumeStage` |
+| `Упаковка` / категория | `products.container_id` | `ResolveContainerStage` |
 | `ШтрихКод` | `product_barcodes.barcode` | `PersistBarcodeStage` |
-| `Артикул` | не используется (отображаемое имя) | — |
+| `Категория` (сырая) | `products.source_category_path` | `ResolveCategoryStage` |
+| `Категория` | верхний сегмент → ветвь алгоритма категоризации (`categories.*`) | `ResolveCategoryStage` |
 | `Тип` | не используется | — |
-| `Категория` | верхний сегмент → ветвь алгоритма категоризации | `ResolveCategoryStage` |
 
 ---
 
@@ -241,7 +256,7 @@ final class ResolveMyAttributeStage implements ImportStage
 \Services\CatalogImport\Stages\ResolveMyAttributeStage::class,
 ```
 
-**Шаг 4.** Используй в `PersistProductStage` или `PersistVariationStage`:
+**Шаг 4.** Используй в `PersistProductStage` или `PersistBeerDetailsStage`:
 
 ```php
 $productData = [
@@ -252,41 +267,39 @@ $productData = [
 
 ### 3. Добавить новый тип тары
 
-**a)** Добавь запись в `ContainerTypeSeeder` (или вручную в БД).
+**a)** Добавь запись в `database/seeders/ContainerSeeder.php` (или вручную в БД).
 
 **b)** Добавь маппинг в `config/catalog_import.php`. Порядок важен — первое совпадение выигрывает; более специфичные подстроки должны стоять раньше общих:
 
 ```php
 'container_map' => [
-    'пэт кег'    => 'pet_keg',      // ← до 'кег' (содержит ту же подстроку)
-    'ПЭТ бутылка' => 'pet_bottle',  // ← до 'бут.'
-    'кег'        => 'keg',
-    'ж/б'        => 'can',
-    'ст.'        => 'bottle',
-    'бут.'       => 'bottle',
-    'штучный'    => 'piece',
-    'шт.'        => 'piece',
+    'пэт кег' => 'pet_keg',   // ← до 'пэт' (содержит ту же подстроку)
+    'пэт' => 'pet',
+    'ж/б' => 'can',
+    'ст. бут.' => 'glass_bottle',
     'мой_маркер' => 'my_code',  // ← новая строка
 ],
 ```
 
-### 4. Изменить определение категории
+### 4. Изменить определение категории или добавить новую
 
-Категория определяется `ResolveCategoryStage` из сырых колонок CSV (ранний стейдж, до `ResolveBeerStyleStage`).
+Категория определяется `CategorySlugResolver` (используется и `NormalizeRowStage` для
+price-exemption, и `ResolveCategoryStage` для резолва модели) из реестра
+`config('catalog_import.categories')` — единственного источника правды и для
+парсера, и для `CategorySeeder`.
 
-Алгоритм (порядок ветвей):
-1. `Категория` (первый сегмент) == `alcohol_category_marker` → адвент/безалко/стиль/beer
-2. `Категория` содержит `probes_marker` → `probes`
-3. `Категория` == `accessory_category_marker` → keyword-map `accessory_title_map` по `Наименование`
-4. иначе → `fallback_category`
-
-Все маркеры и slug-и настраиваются в `config/catalog_import.php`. Для добавления новой категории: создай запись в `CategorySeeder`, добавь нужный маркер/ключ в конфиг.
+Чтобы добавить категорию: добавь запись в `categories` с нужными свойствами
+(`container`/`volume`/`price_exempt`/`default_brand`/`name_from_article`/`container_code`)
+и `match[]`-правилами (см. докблок над массивом `categories` в конфиге —
+там расписан приоритет типов `alcohol`/`contains`/`accessory_title`).
+Затем прогони `php artisan db:seed --class=CategorySeeder` — сидер строит
+категории прямо из этого массива.
 
 ### 5. Отключить или переставить стейдж
 
 В `config/catalog_import.php` массив `stages[]` — порядок выполнения. Убери строку → стейдж не выполняется. Перемести → меняется порядок.
 
-**Важно:** стейджи, разрешающие зависимости (Brand, Category, BeerStyle), должны стоять **до** `PersistProductStage`. `ResolveCategoryStage` должен идти до `ResolveBeerStyleStage`.
+**Важно:** стейджи, разрешающие зависимости (Brand, Category, BeerStyle, Container, Volume), должны стоять **до** `PersistProductStage`. `ResolveCategoryStage` должен идти до `ResolveBeerStyleStage`.
 
 ### 6. Добавить обработку новой CSV-колонки
 
@@ -303,80 +316,11 @@ $productData = [
 
 Если колонка ещё не существует в строке — `get()` вернёт пустую строку (без исключений).
 
-### 7. Написать тест на новый стейдж
-
-```php
-class ResolveMyAttributeStageTest extends TestCase
-{
-    public function test_parses_correctly(): void
-    {
-        $ctx = new ImportContext(new RawRow([
-            'НазваниеКолонки1С' => 'входное значение',
-            'id_объекта' => 'test-uuid',
-        ], 1));
-
-        ($stage = new ResolveMyAttributeStage)($ctx, fn($c) => $c);
-
-        $this->assertSame('ожидаемое', $ctx->attributes['my_attribute']);
-    }
-}
-```
-
----
-
-## Тесты
-
-```bash
-# Все тесты сервиса
-php artisan test --compact tests/Feature/CatalogImport/ tests/Unit/CatalogImport/
-
-# По отдельности
-php artisan test --compact tests/Unit/CatalogImport/Stages/NormalizeRowStageTest.php
-php artisan test --compact tests/Unit/CatalogImport/Stages/ResolveCategoryStageTest.php
-php artisan test --compact tests/Unit/CatalogImport/Stages/ResolveBeerStyleStageTest.php
-php artisan test --compact tests/Unit/CatalogImport/Stages/ResolveAbvStageTest.php
-php artisan test --compact tests/Unit/CatalogImport/Stages/ResolveVolumeStageTest.php
-php artisan test --compact tests/Unit/CatalogImport/Stages/ResolveContainerStageTest.php
-php artisan test --compact tests/Feature/CatalogImport/CsvParserServiceTest.php
-php artisan test --compact tests/Feature/CatalogImport/CatalogImportCommandTest.php
-```
-
----
-
-## Конфигурация
-
-`config/catalog_import.php` — центральная точка настройки:
-
-| Ключ | Назначение |
-|---|---|
-| `download_dir` | Путь внутри `storage/` для скачанных FTP-файлов (`app/private/catalog/`) |
-| `base_ftp_file` | Имя основного файла на FTP (env `DB_1C_FTP_BASE_FILE`) |
-| `ref_eq_ftp_file` | Имя справочного файла на FTP (env `DB_1C_FTP_FTP_REF_EQ_FILE`) |
-| `stages` | Список классов стейджей в порядке выполнения |
-| `container_map` | Подстрока из `Упаковка`/`Артикул` → код тары; первое совпадение выигрывает |
-| `alcohol_category_marker` | Маркер алкогольных (`Алкогольная продукция`) |
-| `advent_marker` / `advent_category` | Маркер адвент-коллекций → slug |
-| `non_alcoholic_category` | Slug для строк без ABV (`non-alcoholic`) |
-| `alcohol_style_categories` | Слаги для style-regex (`mead`, `cider`, `sauce`) |
-| `default_beer_category` | Slug пива по умолчанию (`beer`) |
-| `probes_marker` | Маркер пробников в `Категория` (`пробники`) |
-| `probes_category` | Slug для пробников (`probes`) |
-| `accessory_category_marker` | Маркер сопутствующих (`Сопутствующие товары`) |
-| `accessory_title_map` | keyword(lowercase) → slug для сопутствующих |
-| `fallback_category` | Slug если ни одна ветвь не совпала (`not-defined`) |
-| `default_container` | Код тары по умолчанию (`can`) |
-| `normalize.min_price` | Минимальная цена; строки ниже порога пропускаются (2) |
-| `normalize.excluded_categories` | Значения `Категория`, при которых строка пропускается (`Архив`, `Завод Сырье`) |
-| `flags.featured_marker` | Значение `РейтингПродаж`, устанавливающее `is_featured = true` (`Акция`) |
-| `new_flag.categories` | Slug категорий, где флаг `is_new` возможен (`beer`, `mead`, `cider`, `non-alcoholic`) |
-| `new_flag.days` | Вариация считается новинкой N дней с момента создания (7) |
-| `columns` | Map: семантическое имя (англ.) → заголовок CSV-колонки из 1С |
-| `encoding` | Кодировка CSV (`Windows-1251`) |
-| `delimiter` | Разделитель CSV (`;`) |
-
 ---
 
 ## Известные ограничения
 
 - **Штрихкоды теряют точность:** Excel сохранил EAN-13 в научной нотации (`4,63E+12`). Импортируется `4630000000000` — последние цифры могут отличаться от реального штрихкода.
-- **Некоторые аксессуары без контейнера/объёма:** строки с `Упаковка = "Упаковка 6 шт."` без явного суффикса из `container_map` импортируются с warnings и падбэком на `default_container`. Добавь маркер в `container_map` если нужна точная классификация.
+- **Штрихкод глобально уникален** (`product_barcodes.barcode`), а не пара `[product, barcode]` — если один физический штрихкод по ошибке присвоен разным товарам в 1С, к новому товару он не переприкрепится (`PersistBarcodeStage` создаёт запись только при первом появлении штрихкода).
+- **Некоторые аксессуары без контейнера/объёма:** строки с `Упаковка = "Упаковка 6 шт."` без явного маркера из `container_map` импортируются с warning, `container_id` остаётся NULL. Добавь маркер в `container_map` если нужна точная классификация.
+- **`package_units`** (число упаковок из `Упаковка`, напр. "12" из "кор. 12х0,45л") — эвристика на regex, не гарантирует 100% точность для нестандартных форматов упаковки; колонка nullable и не участвует в дальнейшей логике импорта.

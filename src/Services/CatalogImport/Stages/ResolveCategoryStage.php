@@ -29,13 +29,13 @@ use Services\CatalogImport\Dto\ImportContext;
  */
 final readonly class ResolveCategoryStage implements ImportStage
 {
-    public function __construct(private CategorySlugResolver $resolver)
-    {
-    }
+    public function __construct(private CategorySlugResolver $resolver) {}
 
     public function __invoke(ImportContext $ctx, Closure $next): ImportContext
     {
         $slug = $this->resolver->resolve($ctx->row);
+
+        $ctx->attributes['category_path'] = $ctx->row->get(config('catalog_import.columns.category')) ?: null;
 
         $ctx->category = $ctx->lookups?->findCategoryBySlug($slug)
             ?? Category::query()->where('slug', $slug)->first();

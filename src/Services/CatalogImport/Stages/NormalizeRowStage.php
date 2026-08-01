@@ -4,6 +4,7 @@ namespace Services\CatalogImport\Stages;
 
 use Closure;
 use Illuminate\Support\Str;
+use Services\CatalogImport\CategoryRegistry;
 use Services\CatalogImport\Contracts\ImportStage;
 use Services\CatalogImport\Dto\ImportContext;
 
@@ -14,13 +15,15 @@ use Services\CatalogImport\Dto\ImportContext;
  * Строка пропускается, если выполняется хотя бы одно условие:
  * — `id_объекта` пуст (пустая строка или строка заголовка);
  * — отсутствуют оба идентификатора `КодТовара` и `Артикул`;
- * — цена ниже catalog_import.normalize.min_price и категория не в price_exempt_categories;
+ * — цена ниже catalog_import.normalize.min_price и категория не price_exempt;
  * — категория входит в catalog_import.normalize.excluded_categories.
  *
  * Читает $ctx->category (выставляется ResolveCategoryStage, идущим первым).
  */
-final class NormalizeRowStage implements ImportStage
+final readonly class NormalizeRowStage implements ImportStage
 {
+    public function __construct(private CategoryRegistry $categories = new CategoryRegistry) {}
+
     public function __invoke(ImportContext $ctx, Closure $next): ImportContext
     {
         $reason = $this->exclusionReason($ctx);
@@ -39,22 +42,22 @@ final class NormalizeRowStage implements ImportStage
     {
         return match (true) {
             $this->lacksObjectId($ctx) => 'пустой id_объекта',
-            $this->lacksIdentifiers($ctx) => 'нет КодТовара или Артикул',
-            $this->priceBelowMinimum($ctx) && !$this->isPriceExempt($ctx) => 'цена ниже минимума',
+            $this->lacksIdentifiers($ctx) => 'нет КодТовара и Артикул',
+            $this->priceBelowMinimum($ctx) && ! $this->isPriceExempt($ctx) => 'цена ниже минимума',
             $this->isExcludedCategory($ctx) => 'исключённая категория',
             default => null,
         };
     }
 
     /**
-     * Возвращает true если категория (slug) входит в price_exempt_categories.
+     * Возвращает true если категория (slug) отмечена price_exempt в реестре.
      * Читает $ctx->category, установленный ResolveCategoryStage (идёт до Normalize).
      */
     private function isPriceExempt(ImportContext $ctx): bool
     {
-        $exempt = config('catalog_import.normalize.price_exempt_categories', []);
+        $slug = $ctx->category?->slug;
 
-        return $exempt !== [] && in_array($ctx->category?->slug, $exempt, true);
+        return $slug !== null && $this->categories->isPriceExempt($slug);
     }
 
     /**
@@ -66,12 +69,12 @@ final class NormalizeRowStage implements ImportStage
     }
 
     /**
-     * Отсутствуют идентификаторы: КодТовара или Артикул.
+     * Отсутствуют ОБА идентификатора: и КодТовара, и Артикул (любого одного достаточно).
      */
     private function lacksIdentifiers(ImportContext $ctx): bool
     {
         return blank($ctx->row->get(config('catalog_import.columns.product_code')))
-            || blank($ctx->row->get(config('catalog_import.columns.article')));
+            && blank($ctx->row->get(config('catalog_import.columns.article')));
     }
 
     /**
@@ -81,9 +84,9 @@ final class NormalizeRowStage implements ImportStage
     private function priceBelowMinimum(ImportContext $ctx): bool
     {
         $raw = str_replace([',', ' '], ['.', ''], $ctx->row->get(config('catalog_import.columns.price')));
-        $price = is_numeric($raw) ? (float)$raw : 0.0;
+        $price = is_numeric($raw) ? (float) $raw : 0.0;
 
-        return $price < (int)config('catalog_import.normalize.min_price', 2);
+        return $price < (int) config('catalog_import.normalize.min_price', 2);
     }
 
     /**

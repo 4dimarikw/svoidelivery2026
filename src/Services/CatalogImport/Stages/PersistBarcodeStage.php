@@ -11,16 +11,18 @@ use Services\CatalogImport\Dto\ImportContext;
  * Сохранение штрихкода: создаёт запись в product_barcodes, если ещё не существует.
  *
  * Логика:
- * Читает колонку `ШтрихКод`; пропускает, если вариация не резолвлена или штрихкод пуст.
+ * Читает колонку `ШтрихКод`; пропускает, если товар не резолвлен или штрихкод пуст.
  * Excel сохраняет EAN-13 в научной нотации: "4,63E+12" → преобразуется в "4630000000000".
- * Ключ уникальности: [variation_id, barcode] → firstOrCreate не создаёт дубликатов.
+ * Ключ уникальности: [barcode] — колонка глобально уникальна (не пара с product_id),
+ * поэтому firstOrCreate ищет только по barcode; product_id уходит в значения при
+ * создании и не переписывается, если штрихкод уже привязан к другому товару.
  * Счётчик $ctx->barcodesCreatedThisRow увеличивается для итогового отчёта импорта.
  */
 final class PersistBarcodeStage implements ImportStage
 {
     public function __invoke(ImportContext $ctx, Closure $next): ImportContext
     {
-        if ($ctx->variation === null) {
+        if ($ctx->product === null) {
             return $next($ctx);
         }
 
@@ -28,10 +30,10 @@ final class PersistBarcodeStage implements ImportStage
         $barcode = $this->parseBarcode($raw);
 
         if ($barcode !== null && $barcode !== '') {
-            $record = ProductBarcode::firstOrCreate([
-                'variation_id' => $ctx->variation->id,
-                'barcode' => $barcode,
-            ]);
+            $record = ProductBarcode::firstOrCreate(
+                ['barcode' => $barcode],
+                ['product_id' => $ctx->product->id],
+            );
 
             if ($record->wasRecentlyCreated) {
                 $ctx->barcodesCreatedThisRow++;

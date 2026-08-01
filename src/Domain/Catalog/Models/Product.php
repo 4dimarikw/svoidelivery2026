@@ -4,19 +4,26 @@ namespace Domain\Catalog\Models;
 
 use Database\Factories\Catalog\ProductFactory;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Support\Str;
+use Spatie\MediaLibrary\HasMedia;
+use Spatie\MediaLibrary\InteractsWithMedia;
+use Spatie\MediaLibrary\MediaCollections\File;
+use Spatie\MediaLibrary\MediaCollections\Models\Media;
 use Spatie\Sluggable\HasSlug;
 use Spatie\Sluggable\SlugOptions;
 
-class Product extends Model
+class Product extends Model implements HasMedia
 {
     use HasFactory;
     use HasSlug;
+    use InteractsWithMedia;
 
     protected $fillable = [
         'source_uuid',
@@ -68,6 +75,57 @@ class Product extends Model
             ->saveSlugsTo('slug')
             ->usingSeparator('-')
             ->selfHealing();
+    }
+
+    /**
+     * Collection name is read from `catalog_import.untappd_image.collection`
+     * by PersistProductImageStage — keep the two in sync if this changes.
+     */
+    public function registerMediaCollections(): void
+    {
+        $this->addMediaCollection('main')
+            ->singleFile()
+            ->acceptsFile(function (File $file) {
+                return in_array($file->mimeType, ['image/jpeg', 'image/jpg', 'image/png', 'image/webp']);
+            });
+    }
+
+    public function registerMediaConversions(?Media $media = null): void
+    {
+        $this->addMediaConversion('thumb')
+            ->format('webp')
+            ->quality(40)
+            ->width(234)
+            ->nonQueued();
+
+        $this->addMediaConversion('label')
+            ->format('webp')
+            ->nonQueued();
+    }
+
+    protected function label(): Attribute
+    {
+        return Attribute::make(
+            get: fn() => $this->resolveMediaUrl('label')
+        );
+    }
+
+    protected function thumb(): Attribute
+    {
+        return Attribute::make(
+            get: fn() => $this->resolveMediaUrl('thumb')
+        );
+    }
+
+    private function resolveMediaUrl(string $conversion): string
+    {
+        $url = $this->getFirstMedia('label')?->getUrl($conversion);
+
+        if (!$url || Str::contains($url, 'badge-beer-default-thumb')) {
+            return config('project.default_beer_label');
+        }
+
+        return $url;
     }
 
     public function category(): BelongsTo

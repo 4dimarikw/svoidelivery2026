@@ -10,7 +10,7 @@ class ImportReport
 
     public int $malformedRows = 0;
 
-    public int $brandsCreated = 0;
+    public int $manufacturersCreated = 0;
 
     public int $stylesCreated = 0;
 
@@ -19,12 +19,6 @@ class ImportReport
     public int $productsUpdated = 0;
 
     public int $productsUnchanged = 0;
-
-    public int $variationsCreated = 0;
-
-    public int $variationsUpdated = 0;
-
-    public int $variationsUnchanged = 0;
 
     public int $barcodesCreated = 0;
 

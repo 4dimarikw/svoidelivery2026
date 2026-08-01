@@ -3,9 +3,9 @@
 use Services\CatalogImport\Stages\FilterCategoryStage;
 use Services\CatalogImport\Stages\NormalizeRowStage;
 use Services\CatalogImport\Stages\PersistBarcodeStage;
+use Services\CatalogImport\Stages\PersistBeerDetailsStage;
 use Services\CatalogImport\Stages\PersistProductImageStage;
 use Services\CatalogImport\Stages\PersistProductStage;
-use Services\CatalogImport\Stages\PersistVariationStage;
 use Services\CatalogImport\Stages\ResolveAbvStage;
 use Services\CatalogImport\Stages\ResolveBeerStyleStage;
 use Services\CatalogImport\Stages\ResolveBrandStage;
@@ -40,8 +40,8 @@ return [
     | individual stages to change how a specific attribute is resolved.
     |
     | ResolveCategoryStage runs FIRST so that $ctx->category is available to
-    | NormalizeRowStage (price-exempt check) and ResolveBrandStage (equipment
-    | default brand). It must also run before ResolveBeerStyleStage.
+    | NormalizeRowStage (price-exempt check) and ResolveBrandStage (per-category
+    | default_brand). It must also run before ResolveBeerStyleStage.
     | ResolveBeerStyleStage also syncs Untappd data (via Untappd facade)
     | and absorbs the former ResolveUntappdRefStage logic.
     */
@@ -64,7 +64,7 @@ return [
         ResolveFlagsStage::class,
         ResolveDescriptionStage::class,
         PersistProductStage::class,
-        PersistVariationStage::class,
+        PersistBeerDetailsStage::class,
         PersistBarcodeStage::class,
     ],
 
@@ -125,14 +125,13 @@ return [
     |--------------------------------------------------------------------------
     | Источник правды для CategorySeeder, ResolveCategoryStage (авто-создание),
     | CategorySlugResolver (резолв slug из сырых колонок CSV) и всех стейджей,
-    | зависящих от категории (container/volume/is_new/price_exempt/brand).
+    | зависящих от категории (container/volume/price_exempt/brand).
     |
     | Ключи свойств (все опциональны, дефолт — false/null):
     |   name            — отображаемое имя (CategorySeeder, авто-создание).
     |   sort_order       — порядок в CategorySeeder / авто-создании.
-    |   container        — ожидает ContainerType (ResolveContainerStage warning).
+    |   container        — ожидает Container (ResolveContainerStage warning).
     |   volume           — ожидает Volume (ResolveVolumeStage warning).
-    |   is_new           — категория допускает флаг is_new (PersistVariationStage).
     |   price_exempt     — не попадает под normalize.min_price (NormalizeRowStage).
     |   default_brand    — бренд для пустого Производитель (ResolveBrandStage).
     |   name_from_article — пустая Марка → имя из Артикул (ResolveProductIdentityStage).
@@ -154,22 +153,22 @@ return [
     'categories' => [
         'beer' => [
             'name' => 'Пиво', 'sort_order' => 1,
-            'container' => true, 'volume' => true, 'is_new' => true,
+            'container' => true, 'volume' => true,
             'match' => [['type' => 'alcohol', 'when' => 'default']],
         ],
         'mead' => [
             'name' => 'Мёд', 'sort_order' => 2,
-            'container' => true, 'volume' => true, 'is_new' => true,
+            'container' => true, 'volume' => true,
             'match' => [['type' => 'alcohol', 'when' => 'style', 'keyword' => 'mead']],
         ],
         'cider' => [
             'name' => 'Сидр', 'sort_order' => 3,
-            'container' => true, 'volume' => true, 'is_new' => true,
+            'container' => true, 'volume' => true,
             'match' => [['type' => 'alcohol', 'when' => 'style', 'keyword' => 'cider']],
         ],
         'non-alcoholic' => [
             'name' => 'Безалкогольные напитки', 'sort_order' => 4,
-            'container' => true, 'volume' => true, 'is_new' => true,
+            'container' => true, 'volume' => true,
             'match' => [['type' => 'alcohol', 'when' => 'no_abv']],
         ],
         'sauce' => [
@@ -238,29 +237,6 @@ return [
     'normalize' => [
         'min_price' => 2,
         'excluded_categories' => ['Архив', 'Завод Сырье'],
-    ],
-
-    /*
-    |--------------------------------------------------------------------------
-    | ResolveFlagsStage — маркеры статуса из колонки РейтингПродаж
-    |--------------------------------------------------------------------------
-    | featured_marker → is_featured = true (Акция)
-    | is_new вычисляется в PersistVariationStage по categories.*.is_new и возрасту вариации.
-    */
-    'flags' => [
-        'featured_marker' => 'Акция',
-    ],
-
-    /*
-    |--------------------------------------------------------------------------
-    | PersistVariationStage — логика флага is_new (новинка)
-    |--------------------------------------------------------------------------
-    | Допустимость флага — per-category (categories.*.is_new).
-    | days — вариация считается новинкой N дней с момента создания (created_at).
-    |        При создании → true; при обновлении: age > days → false.
-    */
-    'new_flag' => [
-        'days' => 7,
     ],
 
     /*

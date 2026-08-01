@@ -2,7 +2,6 @@
 
 namespace Services\CatalogImport;
 
-
 use Illuminate\Pipeline\Pipeline;
 use Illuminate\Support\Facades\DB;
 use Services\CatalogImport\Dto\ImportContext;
@@ -16,10 +15,8 @@ readonly class CsvParserService
 {
     public function __construct(
         private CsvReader $reader,
-        private Pipeline  $pipeline,
-    )
-    {
-    }
+        private Pipeline $pipeline,
+    ) {}
 
     /**
      * @throws Throwable
@@ -35,9 +32,9 @@ readonly class CsvParserService
         $postCommitStages = config('catalog_import.post_commit_stages', []);
         $encoding = config('catalog_import.encoding', 'Windows-1251');
         $delimiter = config('catalog_import.delimiter', ';');
-        $warningLimit = $options->warningLimit ?? (int)config('catalog_import.warning_limit', 1000);
+        $warningLimit = $options->warningLimit ?? (int) config('catalog_import.warning_limit', 1000);
         $transactionMode = $options->transactionMode ?? config('catalog_import.transaction_mode', 'row');
-        $chunkSize = $options->chunkSize ?? (int)config('catalog_import.chunk_size', 500);
+        $chunkSize = $options->chunkSize ?? (int) config('catalog_import.chunk_size', 500);
 
         try {
             $lookups = new LookupCache;
@@ -54,19 +51,22 @@ readonly class CsvParserService
                     $this->importRows($path, $encoding, $delimiter, $stages, $postCommitStages, $lookups, $report, $options, $warningLimit, $transactionMode);
                 }
 
-                $durationMs = (int)round((hrtime(true) - $startedAt) / 1_000_000);
+                $durationMs = (int) round((hrtime(true) - $startedAt) / 1_000_000);
 
-                if (!$options->dryRun) {
+                if (! $options->dryRun) {
+                    // NB: after the ProductVariation collapse (flat products.* schema), this
+                    // event's signature dropped brandsCreated→manufacturersCreated and lost
+                    // variationsCreated/variationsUpdated entirely. If CatalogImportCompleted
+                    // (transferred separately into Support\Logging\Events) still declares the
+                    // old constructor, update it to match this call.
                     event(new CatalogImportCompleted(
                         path: $path,
                         processed: $report->processed,
                         skipped: $report->skipped,
-                        brandsCreated: $report->brandsCreated,
+                        manufacturersCreated: $report->manufacturersCreated,
                         stylesCreated: $report->stylesCreated,
                         productsCreated: $report->productsCreated,
                         productsUpdated: $report->productsUpdated,
-                        variationsCreated: $report->variationsCreated,
-                        variationsUpdated: $report->variationsUpdated,
                         barcodesCreated: $report->barcodesCreated,
                         warningsCount: $report->warningsTotal,
                         warnings: $report->warnings,
@@ -81,7 +81,7 @@ readonly class CsvParserService
                 }
             }
         } catch (Throwable $e) {
-            if (!$options->dryRun) {
+            if (! $options->dryRun) {
                 event(new CatalogImportFailed($path, $e::class, $e->getMessage()));
             }
             throw $e;
@@ -91,24 +91,24 @@ readonly class CsvParserService
     /**
      * Режим 'row' / 'none': одна транзакция на строку или вообще без транзакции.
      *
-     * @param list<class-string> $stages
-     * @param list<class-string> $postCommitStages
+     * @param  list<class-string>  $stages
+     * @param  list<class-string>  $postCommitStages
+     *
      * @throws Throwable
      */
     private function importRows(
-        string        $path,
-        string        $encoding,
-        string        $delimiter,
-        array         $stages,
-        array         $postCommitStages,
-        LookupCache   $lookups,
-        ImportReport  $report,
+        string $path,
+        string $encoding,
+        string $delimiter,
+        array $stages,
+        array $postCommitStages,
+        LookupCache $lookups,
+        ImportReport $report,
         ImportOptions $options,
-        int           $warningLimit,
-        string        $transactionMode,
-    ): void
-    {
-        foreach ($this->reader->read($path, $encoding, $delimiter, fn() => $report->malformedRows++) as $row) {
+        int $warningLimit,
+        string $transactionMode,
+    ): void {
+        foreach ($this->reader->read($path, $encoding, $delimiter, fn () => $report->malformedRows++) as $row) {
             $report->processed++;
 
             $ctx = new ImportContext($row, $lookups, $options->dryRun, $options->categoryFilter);
@@ -118,7 +118,7 @@ readonly class CsvParserService
             } else {
                 // One transaction per row guarantees no orphan Product without variation/barcode.
                 // Trade-off: O(n) transactions on large files. Use transaction_mode=chunk for bulk runs.
-                $ctx = DB::transaction(fn() => $this->runPipeline($ctx, $stages));
+                $ctx = DB::transaction(fn () => $this->runPipeline($ctx, $stages));
             }
 
             $this->runPostCommitStages($ctx, $postCommitStages);
@@ -130,23 +130,23 @@ readonly class CsvParserService
      * Режим 'chunk': одна транзакция на chunk_size строк.
      * Теряет per-row атомарность — opt-in через конфиг.
      *
-     * @param list<class-string> $stages
-     * @param list<class-string> $postCommitStages
+     * @param  list<class-string>  $stages
+     * @param  list<class-string>  $postCommitStages
+     *
      * @throws Throwable
      */
     private function importChunked(
-        string        $path,
-        string        $encoding,
-        string        $delimiter,
-        array         $stages,
-        array         $postCommitStages,
-        LookupCache   $lookups,
-        ImportReport  $report,
+        string $path,
+        string $encoding,
+        string $delimiter,
+        array $stages,
+        array $postCommitStages,
+        LookupCache $lookups,
+        ImportReport $report,
         ImportOptions $options,
-        int           $warningLimit,
-        int           $chunkSize,
-    ): void
-    {
+        int $warningLimit,
+        int $chunkSize,
+    ): void {
         $buffer = [];
 
         $flushBuffer = function (array $rows) use ($stages, $postCommitStages, $lookups, $report, $options, $warningLimit): void {
@@ -166,7 +166,7 @@ readonly class CsvParserService
             }
         };
 
-        foreach ($this->reader->read($path, $encoding, $delimiter, fn() => $report->malformedRows++) as $row) {
+        foreach ($this->reader->read($path, $encoding, $delimiter, fn () => $report->malformedRows++) as $row) {
             $report->processed++;
             $buffer[] = $row;
 
@@ -184,7 +184,7 @@ readonly class CsvParserService
     /**
      * Запускает пост-коммит стейджи (вне транзакции) для успешно обработанных строк.
      *
-     * @param list<class-string> $stages
+     * @param  list<class-string>  $stages
      */
     private function runPostCommitStages(ImportContext $ctx, array $stages): void
     {
@@ -198,7 +198,7 @@ readonly class CsvParserService
     }
 
     /**
-     * @param list<class-string> $stages
+     * @param  list<class-string>  $stages
      */
     private function runPipeline(ImportContext $ctx, array $stages): ImportContext
     {
@@ -219,7 +219,7 @@ readonly class CsvParserService
         }
 
         if ($ctx->brand?->wasRecentlyCreated) {
-            $report->brandsCreated++;
+            $report->manufacturersCreated++;
         }
 
         if ($ctx->beerStyle?->wasRecentlyCreated) {
@@ -233,16 +233,6 @@ readonly class CsvParserService
                 $report->productsUpdated++;
             } else {
                 $report->productsUnchanged++;
-            }
-        }
-
-        if ($ctx->variation !== null) {
-            if ($ctx->variation->wasRecentlyCreated) {
-                $report->variationsCreated++;
-            } elseif ($ctx->variation->wasChanged()) {
-                $report->variationsUpdated++;
-            } else {
-                $report->variationsUnchanged++;
             }
         }
 

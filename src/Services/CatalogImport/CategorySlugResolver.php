@@ -5,96 +5,116 @@ namespace Services\CatalogImport;
 use Services\CatalogImport\Dto\RawRow;
 
 /**
- * Определяет slug категории из сырых CSV-колонок без обращения к БД.
- *
+ * Определяет slug категории из сырых CSV-колонок без обращения к БД, используя
+ * реестр `config('catalog_import.categories')` через CategoryRegistry.
  * Тот же алгоритм, что и в ResolveCategoryStage, но работает с RawRow напрямую
  * и не создаёт/ищет Category-модель. Переиспользуется в NormalizeRowStage для
  * price-exemption до того, как ResolveCategoryStage запустит DB-lookup.
+ *
+ * Порядок ветвей (см. шапку config/catalog_import.php):
+ * 1. Верхний сегмент Категория == alcohol_marker → advent/no_abv/style/default.
+ * 2. Категория (вся строка) содержит needle любой type=contains категории (порядок объявления).
+ * 3. Верхний сегмент == accessory_marker → единый keyword-regex по всем type=accessory_title.
+ * 4. Иначе → fallback.
  */
 final class CategorySlugResolver
 {
+    public function __construct(private readonly CategoryRegistry $registry = new CategoryRegistry) {}
+
     public function resolve(RawRow $row): string
     {
         $rawCategory = $row->get(config('catalog_import.columns.category'));
         $firstLevel = trim(explode('>', $rawCategory)[0]);
         $catLower = mb_strtolower($rawCategory);
 
-        $alcoholMarker = config('catalog_import.alcohol_category_marker', 'Алкогольная продукция');
-        $accessoryMarker = config('catalog_import.accessory_category_marker', 'Сопутствующие товары');
-        $fallback = config('catalog_import.fallback_category', 'not-defined');
-
         // Branch 1: alcoholic products
-        if ($firstLevel === $alcoholMarker) {
+        if ($firstLevel === $this->registry->alcoholMarker()) {
             return $this->resolveAlcoholicSlug($row, $catLower);
         }
 
-        // Branch 2: probes (any non-alcoholic top segment containing the marker)
-        $probesMarker = config('catalog_import.probes_marker', 'пробники');
-        if ($firstLevel !== '' && str_contains($catLower, $probesMarker)) {
-            return config('catalog_import.probes_category', 'probes');
+        // Branch 2: type=contains — first declared category whose needle matches wins.
+        foreach ($this->registry->rulesOfType('contains') as ['slug' => $slug, 'rule' => $rule]) {
+            $needle = mb_strtolower((string) ($rule['needle'] ?? ''));
+            if ($needle !== '' && str_contains($catLower, $needle)) {
+                return $slug;
+            }
         }
 
-        // Branch 3: equipment (substring, case-insensitive) — ДО accessory,
-        // т.к. реальный формат "Сопутствующие товары>Оборудование"
-        $equipmentMarker = mb_strtolower(config('catalog_import.equipment_category_marker', 'Оборудование'));
-        if (str_contains($catLower, $equipmentMarker)) {
-            return config('catalog_import.equipment_category', 'equipment');
+        // Branch 3: accessories / companion goods
+        if ($firstLevel === $this->registry->accessoryMarker()) {
+            return $this->resolveAccessoryTitleSlug($row);
         }
 
-        // Branch 4: accessories / companion goods
-        if ($firstLevel === $accessoryMarker) {
-            return $this->resolveAccessorySlug($row);
-        }
-
-        // Branch 5: catch-all
-        return $fallback;
+        // Branch 4: catch-all
+        return $this->registry->fallback();
     }
 
     private function resolveAlcoholicSlug(RawRow $row, string $catLower): string
     {
-        $adventMarker = config('catalog_import.advent_marker', 'адвент');
-        $adventCategory = config('catalog_import.advent_category', 'souvenirs');
-        $nonAlcoholicCategory = config('catalog_import.non_alcoholic_category', 'non-alcoholic');
-        $defaultBeer = config('catalog_import.default_beer_category', 'beer');
-
         // a. Advent collections (special seasonal)
-        if (str_contains($catLower, $adventMarker)) {
-            return $adventCategory;
+        if (str_contains($catLower, mb_strtolower($this->registry->adventMarker()))) {
+            $slug = $this->slugForAlcoholWhen('advent');
+            if ($slug !== null) {
+                return $slug;
+            }
         }
 
         // b. No ABV → non-alcoholic beverage
         if (blank($row->get(config('catalog_import.columns.abv')))) {
-            return $nonAlcoholicCategory;
+            $slug = $this->slugForAlcoholWhen('no_abv');
+            if ($slug !== null) {
+                return $slug;
+            }
         }
 
-        // c. Style-based routing: mead / cider / sauce; default to beer
-        $styleCategories = config('catalog_import.alcohol_style_categories', ['mead', 'cider', 'sauce']);
-        $pattern = '/'.implode('|', array_map('preg_quote', $styleCategories)).'/i';
-        $style = $row->get(config('catalog_import.columns.beer_style'));
+        // c. Style-based routing (mead / cider / sauce / ...), declaration order wins
+        $style = mb_strtolower($row->get(config('catalog_import.columns.beer_style')));
 
-        preg_match($pattern, mb_strtolower($style), $matches);
+        foreach ($this->registry->rulesOfType('alcohol') as ['slug' => $slug, 'rule' => $rule]) {
+            $keyword = mb_strtolower((string) ($rule['keyword'] ?? ''));
+            if (($rule['when'] ?? null) === 'style' && $keyword !== '' && str_contains($style, $keyword)) {
+                return $slug;
+            }
+        }
 
-        return $matches[0] ?? $defaultBeer;
+        return $this->slugForAlcoholWhen('default') ?? $this->registry->fallback();
     }
 
-    private function resolveAccessorySlug(RawRow $row): string
+    private function slugForAlcoholWhen(string $when): ?string
     {
-        $titleMap = config('catalog_import.accessory_title_map', []);
-        $fallback = config('catalog_import.fallback_category', 'not-defined');
+        foreach ($this->registry->rulesOfType('alcohol') as ['slug' => $slug, 'rule' => $rule]) {
+            if (($rule['when'] ?? null) === $when) {
+                return $slug;
+            }
+        }
 
-        if (empty($titleMap)) {
+        return null;
+    }
+
+    /**
+     * Единый regex по keywords всех type=accessory_title категорий сразу —
+     * леворасположенное совпадение побеждает (как в едином regex по всем keywords).
+     */
+    private function resolveAccessoryTitleSlug(RawRow $row): string
+    {
+        $fallback = $this->registry->fallback();
+
+        $keywordToSlug = [];
+        foreach ($this->registry->rulesOfType('accessory_title') as ['slug' => $slug, 'rule' => $rule]) {
+            foreach ($rule['keywords'] ?? [] as $keyword) {
+                $keywordToSlug[mb_strtolower($keyword)] = $slug;
+            }
+        }
+
+        if ($keywordToSlug === []) {
             return $fallback;
         }
 
         $title = mb_strtolower($row->get(config('catalog_import.columns.name_full')));
-        $pattern = '/'.implode('|', array_map('preg_quote', array_keys($titleMap))).'/i';
+        $pattern = '/'.implode('|', array_map('preg_quote', array_keys($keywordToSlug))).'/i';
 
         preg_match($pattern, $title, $matches);
 
-        if (isset($matches[0])) {
-            return $titleMap[mb_strtolower($matches[0])] ?? $fallback;
-        }
-
-        return $fallback;
+        return isset($matches[0]) ? ($keywordToSlug[mb_strtolower($matches[0])] ?? $fallback) : $fallback;
     }
 }

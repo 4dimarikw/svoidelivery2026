@@ -4,9 +4,10 @@ namespace Services\CatalogImport\Stages;
 
 use Closure;
 use Domain\Catalog\Models\BeerStyle;
-use Domain\Catalog\Models\UntappdBeer;
+use Domain\Untappd\Models\UntappdBeer;
 use Services\CatalogImport\Contracts\ImportStage;
 use Services\CatalogImport\Dto\ImportContext;
+use Services\CatalogImport\UniqueSlugResolver;
 use Services\Untappd\DTOs\BeerResponseDTO;
 use Services\Untappd\Facades\Untappd;
 use Support\Logging\Events\UntappdBeerSynced;
@@ -23,16 +24,19 @@ use Support\Logging\Events\UntappdBeerSyncFailed;
  *       - Успех → upsert untappd_beers, диспатч UntappdBeerSynced; стиль = $beer->beer_style.
  *       - Ошибка → warning в $ctx, диспатч UntappdBeerSyncFailed; переходим к fallback.
  * 3. Fallback: если стиль пуст → берём `СтильПива` из CSV.
- * 4. Если итоговый стиль непуст → BeerStyle::firstOrCreate(['name' => ...]).
+ * 4. Если итоговый стиль непуст → BeerStyle::firstOrCreate по normalized_name
+ *    (NOT NULL unique, моделью не генерируется); name/slug заполняются явно.
  * 5. Всегда вызывает $next($ctx).
  */
 final class ResolveBeerStyleStage implements ImportStage
 {
+    public function __construct(private readonly UniqueSlugResolver $slugs = new UniqueSlugResolver) {}
+
     public function __invoke(ImportContext $ctx, Closure $next): ImportContext
     {
         // Step 1: parse UntappdRef
         $raw = $ctx->row->get(config('catalog_import.columns.untappd_ref'));
-        $untappdRef = $raw !== '' && is_numeric($raw) ? (int)$raw : null;
+        $untappdRef = $raw !== '' && is_numeric($raw) ? (int) $raw : null;
         $ctx->attributes['untappd_ref'] = $untappdRef;
 
         // Step 2: Untappd-first style resolution (cache-first)
@@ -41,7 +45,7 @@ final class ResolveBeerStyleStage implements ImportStage
         if ($untappdRef !== null) {
             $beer = UntappdBeer::query()->where('beer_id', $untappdRef)->first();
 
-            if ($beer === null && !$ctx->dryRun) {
+            if ($beer === null && ! $ctx->dryRun) {
                 $beer = $this->fetchAndStore($untappdRef, $ctx);
             }
 
@@ -58,9 +62,12 @@ final class ResolveBeerStyleStage implements ImportStage
         }
 
         // Step 4: resolve BeerStyle model
-        if (!blank($styleName)) {
+        if (! blank($styleName)) {
+            $normalized = $this->normalize($styleName);
+
             $ctx->beerStyle = BeerStyle::firstOrCreate(
-                ['name' => $styleName],
+                ['normalized_name' => $normalized],
+                ['name' => $styleName, 'slug' => $this->slugs->resolve(BeerStyle::class, $styleName)],
             );
         }
 
@@ -74,7 +81,7 @@ final class ResolveBeerStyleStage implements ImportStage
 
         if ($beerDto === null || $result?->meta?->code !== 200) {
             $detail = $result?->meta?->error_detail ?? 'no beer in response';
-            $ctx->addWarning(self::class, 'untappd sync failed: ' . $detail, (string)$beerId);
+            $ctx->addWarning(self::class, 'untappd sync failed: '.$detail, (string) $beerId);
             event(new UntappdBeerSyncFailed($beerId, 'UntappdApiError', $detail));
 
             return null;
@@ -89,7 +96,7 @@ final class ResolveBeerStyleStage implements ImportStage
                 'rating_count' => $beerDto->rating_count,
                 'rating_score' => $beerDto->rating_score,
                 'label' => $beerDto->beer_image,
-                'url' => '/b/' . $beerDto->beer_slug . '/' . $beerDto->bid,
+                'url' => '/b/'.$beerDto->beer_slug.'/'.$beerDto->bid,
             ],
         );
 
@@ -98,9 +105,14 @@ final class ResolveBeerStyleStage implements ImportStage
             name: $model->name,
             brewery: $model->brewery,
             ratingCount: $model->rating_count,
-            ratingScore: (float)$model->rating_score,
+            ratingScore: (float) $model->rating_score,
         ));
 
         return $model;
+    }
+
+    private function normalize(string $name): string
+    {
+        return trim(preg_replace('/\s+/', ' ', mb_strtolower($name)));
     }
 }

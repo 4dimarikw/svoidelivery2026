@@ -3,18 +3,21 @@
 namespace Services\CatalogImport\Stages;
 
 use Closure;
-use Domain\Product\Models\Product;
+use Domain\Catalog\Models\Product;
 use Services\CatalogImport\Contracts\ImportStage;
 use Services\CatalogImport\Dto\ImportContext;
 
 /**
- * Сохранение Product: создаёт или обновляет запись в таблице products.
+ * Сохранение Product: создаёт или обновляет плоскую запись в таблице products
+ * (эта схема не разделяет товар/вариацию — price/stock/volume/container живут
+ * на самом товаре).
  *
  * Логика:
- * Требует $ctx->brand и $ctx->category (иначе skip).
- * Ключ уникальности: ['name', 'brand_id'] — один товар не дублируется при повторном импорте.
- * Заполняет все атрибуты из $ctx->attributes (abv, ibu, plato, ebc, описание и т.д.)
- * и сохраняет модель в $ctx->product. Флаги is_new/is_featured теперь на вариации.
+ * Требует $ctx->brand и $ctx->category (иначе skip); пустой external_code
+ * (КодТовара) тоже skip — это ключ уникальности повторного импорта.
+ * Ключ уникальности: [external_code] — updateOrCreate не дублирует товар.
+ * `source_uuid` берётся из id_объекта (RawRow-UUID из 1С, уже провалидирован
+ * NormalizeRowStage как непустой).
  */
 final class PersistProductStage implements ImportStage
 {
@@ -27,30 +30,63 @@ final class PersistProductStage implements ImportStage
         }
 
         $attrs = $ctx->attributes;
+        $externalCode = $attrs['external_code'] ?? '';
 
-        $alwaysUpdate = [
-            'category_id' => $ctx->category->id,
-            'beer_style_id' => $ctx->beerStyle?->id,
-            'description' => $attrs['description'] ?? null,
-            'abv' => $attrs['abv'] ?? null,
-            'ibu' => $attrs['ibu'] ?? null,
-            'plato' => $attrs['plato'] ?? null,
-            'ebc' => $attrs['ebc'] ?? null,
-            'untappd_beer_id' => $ctx->untappdBeer?->id,
-        ];
+        if ($externalCode === '') {
+            $ctx->addWarning(self::class, 'empty external_code (КодТовара), product skipped', '');
+            $ctx->skip = true;
 
-        $ctx->product = Product::firstOrCreate(
-            ['name' => $attrs['name'], 'vendor_id' => $ctx->brand->id],
-            $alwaysUpdate,
+            return $ctx;
+        }
+
+        $stock = (int) ($attrs['stock'] ?? 0);
+        [$packageUnits, $packagingRaw] = $this->parsePackaging($attrs['pack_info'] ?? null);
+
+        $ctx->product = Product::updateOrCreate(
+            ['external_code' => $externalCode],
+            [
+                'source_uuid' => $attrs['external_id'],
+                'article' => $attrs['article'] ?? null,
+                'name' => $attrs['title'] ?? $attrs['name'],
+                'description' => $attrs['description'] ?? null,
+                'category_id' => $ctx->category->id,
+                'manufacturer_id' => $ctx->brand->id,
+                'volume_id' => $ctx->volume?->id,
+                'container_id' => $ctx->container?->id,
+                'price' => $attrs['price'] ?? 0,
+                'stock_quantity' => $stock,
+                'in_stock' => $stock > 0,
+                'package_units' => $packageUnits,
+                'packaging_raw' => $packagingRaw,
+                'source_category_path' => $attrs['category_path'] ?? null,
+                'shelf_life_days' => $attrs['shelf_life_days'] ?? null,
+                'brand' => $attrs['name'] ?? null,
+                'sales_rating' => $attrs['sales_rating'] ?? null,
+                'is_active' => true,
+                'synced_at' => now(),
+            ],
         );
 
-//        if (!$ctx->product->wasRecentlyCreated) {
-//            $ctx->product->fill($alwaysUpdate);
-//            if ($ctx->product->isDirty()) {
-//                $ctx->product->save();
-//            }
-//        }
-
         return $next($ctx);
+    }
+
+    /**
+     * Извлекает число упаковок из строки `Упаковка` (напр. "кор. 12х0,45л ж/б" → 12,
+     * "Упаковка 6 шт." → 6). Эвристика, не найдено → null (package_units — nullable,
+     * только для отображения, не участвует в дальнейшей логике импорта).
+     *
+     * @return array{int|null, string|null}
+     */
+    private function parsePackaging(?string $package): array
+    {
+        if ($package === null || $package === '') {
+            return [null, null];
+        }
+
+        if (preg_match('/(\d+)\s*[xх×]/iu', $package, $m) || preg_match('/(\d+)\s*шт/iu', $package, $m)) {
+            return [(int) $m[1], $package];
+        }
+
+        return [null, $package];
     }
 }
