@@ -16,7 +16,8 @@ use Services\CatalogImport\Dto\ImportContext;
  * — `id_объекта` пуст (пустая строка или строка заголовка);
  * — отсутствуют оба идентификатора `КодТовара` и `Артикул`;
  * — цена ниже catalog_import.normalize.min_price и категория не price_exempt;
- * — категория входит в catalog_import.normalize.excluded_categories.
+ * — категория входит в catalog_import.normalize.excluded_categories;
+ * — упаковка (Упаковка) содержит одну из catalog_import.normalize.excluded_packages.
  *
  * Читает $ctx->category (выставляется ResolveCategoryStage, идущим первым).
  */
@@ -45,6 +46,7 @@ final readonly class NormalizeRowStage implements ImportStage
             $this->lacksIdentifiers($ctx) => 'нет КодТовара и Артикул',
             $this->priceBelowMinimum($ctx) && ! $this->isPriceExempt($ctx) => 'цена ниже минимума',
             $this->isExcludedCategory($ctx) => 'исключённая категория',
+            $this->isExcludedPackage($ctx) => 'исключённая упаковка',
             default => null,
         };
     }
@@ -97,6 +99,19 @@ final readonly class NormalizeRowStage implements ImportStage
         return Str::contains(
             $ctx->row->get(config('catalog_import.columns.category')),
             config('catalog_import.normalize.excluded_categories', []),
+        );
+    }
+
+    /**
+     * Упаковка товара (Упаковка) содержит одну из catalog_import.normalize.excluded_packages
+     * (например «пэт кег» или объёмы «0,75»/«0.75»/«1,5»/«1.5»).
+     */
+    private function isExcludedPackage(ImportContext $ctx): bool
+    {
+        return Str::contains(
+            $ctx->row->get(config('catalog_import.columns.package')),
+            config('catalog_import.normalize.excluded_packages', []),
+            ignoreCase: true,
         );
     }
 }

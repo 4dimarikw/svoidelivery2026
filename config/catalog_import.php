@@ -237,6 +237,7 @@ return [
     'normalize' => [
         'min_price' => 2,
         'excluded_categories' => ['Архив', 'Завод Сырье'],
+        'excluded_packages' => ['пэт кег', '0,75', '0.75', '1,5', '1.5'],
     ],
 
     /*
