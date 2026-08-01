@@ -48,7 +48,7 @@ final class PersistProductStage implements ImportStage
                 'source_uuid' => $attrs['external_id'],
                 'article' => $attrs['article'] ?? null,
                 'name' => $attrs['title'] ?? $attrs['name'],
-                'description' => $attrs['description'] ?? null,
+                'description' => $this->resolveDescription($ctx),
                 'category_id' => $ctx->category->id,
                 'manufacturer_id' => $ctx->brand->id,
                 'volume_id' => $ctx->volume?->id,
@@ -68,6 +68,20 @@ final class PersistProductStage implements ImportStage
         );
 
         return $next($ctx);
+    }
+
+    /**
+     * Untappd-описание в приоритете над `Описание` из CSV — но только если
+     * ResolveBeerStyleStage реально сходил в API в этой строке (cache-hit
+     * $ctx->untappdBeer не несёт description, он нигде не персистится).
+     */
+    private function resolveDescription(ImportContext $ctx): ?string
+    {
+        if ($ctx->untappdBeer !== null && ($ctx->attributes['untappd_description'] ?? null) !== null) {
+            return $ctx->attributes['untappd_description'];
+        }
+
+        return $ctx->attributes['description'] ?? null;
     }
 
     /**

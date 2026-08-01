@@ -21,7 +21,9 @@ use Support\Logging\Events\UntappdBeerSyncFailed;
  * 2. Если UntappdRef задан:
  *    a. Cache-first: ищем в untappd_beers по beer_id. Если найдено — берём стиль без HTTP.
  *    b. Cache miss → `Untappd::get("beer/info/$beerId", ['db' => 1])`:
- *       - Успех → upsert untappd_beers, диспатч UntappdBeerSynced; стиль = $beer->beer_style.
+ *       - Успех → upsert untappd_beers, диспатч UntappdBeerSynced; стиль = $beer->beer_style;
+ *         $ctx->attributes['untappd_description'] — beer_description из ответа API (не
+ *         персистится в untappd_beers, доступен только на свежем запросе, не на cache-hit).
  *       - Ошибка → warning в $ctx, диспатч UntappdBeerSyncFailed; переходим к fallback.
  * 3. Fallback: если стиль пуст → берём `СтильПива` из CSV.
  * 4. Если итоговый стиль непуст → BeerStyle::firstOrCreate по normalized_name
@@ -99,6 +101,9 @@ final class ResolveBeerStyleStage implements ImportStage
                 'url' => '/b/'.$beerDto->beer_slug.'/'.$beerDto->bid,
             ],
         );
+
+        // Not persisted on untappd_beers — only available here, at the API call itself.
+        $ctx->attributes['untappd_description'] = $beerDto->beer_description !== '' ? $beerDto->beer_description : null;
 
         event(new UntappdBeerSynced(
             beerId: $model->beer_id,
