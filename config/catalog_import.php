@@ -138,7 +138,6 @@ return [
     |
     | Ключи свойств (все опциональны, дефолт — false/null):
     |   name            — отображаемое имя (CategorySeeder, авто-создание).
-    |   sort_order       — порядок в CategorySeeder / авто-создании.
     |   container        — ожидает Container (ResolveContainerStage warning).
     |   volume           — ожидает Volume (ResolveVolumeStage warning).
     |   price_exempt     — не попадает под normalize.min_price (NormalizeRowStage).
@@ -161,54 +160,54 @@ return [
     */
     'categories' => [
         'beer' => [
-            'name' => 'Пиво', 'sort_order' => 1,
+            'name' => 'Пиво',
             'container' => true, 'volume' => true,
             'match' => [['type' => 'alcohol', 'when' => 'default']],
         ],
         'mead' => [
-            'name' => 'Мёд', 'sort_order' => 2,
+            'name' => 'Мёд',
             'container' => true, 'volume' => true,
             'match' => [['type' => 'alcohol', 'when' => 'style', 'keyword' => 'mead']],
         ],
         'cider' => [
-            'name' => 'Сидр', 'sort_order' => 3,
+            'name' => 'Сидр',
             'container' => true, 'volume' => true,
             'match' => [['type' => 'alcohol', 'when' => 'style', 'keyword' => 'cider']],
         ],
         'non-alcoholic' => [
-            'name' => 'Безалкогольные напитки', 'sort_order' => 4,
+            'name' => 'Безалкогольные напитки',
             'container' => true, 'volume' => true,
             'match' => [['type' => 'alcohol', 'when' => 'no_abv']],
         ],
         'sauce' => [
-            'name' => 'Соус', 'sort_order' => 5,
+            'name' => 'Соус',
             'container' => true, 'volume' => true,
             'match' => [['type' => 'alcohol', 'when' => 'style', 'keyword' => 'sauce']],
         ],
         'not-defined' => [
-            'name' => 'не определена', 'sort_order' => 6,
+            'name' => 'не определена',
             // Нет match[] — категория служит catch-all (category_resolution.fallback).
         ],
         'pet-tare-packages' => [
-            'name' => 'ПЭТ ТАРА ПАКЕТЫ', 'sort_order' => 7,
+            'name' => 'ПЭТ ТАРА ПАКЕТЫ',
             'container' => true, 'volume' => true,
             'container_code' => 'pet',
             'match' => [['type' => 'accessory_title', 'keywords' => ['пэт', 'тара', 'пакет']]],
         ],
         'for-beer' => [
-            'name' => 'К пиву', 'sort_order' => 8,
+            'name' => 'К пиву',
             'match' => [['type' => 'accessory_title', 'keywords' => ['арахис', 'снэки', 'чипсы']]],
         ],
         'clothes' => [
-            'name' => 'Одежда', 'sort_order' => 9,
+            'name' => 'Одежда',
             'match' => [['type' => 'accessory_title', 'keywords' => ['футболка', 'толстовка', 'шапка']]],
         ],
         'attributes' => [
-            'name' => 'Атрибутика', 'sort_order' => 10,
+            'name' => 'Атрибутика',
             'match' => [['type' => 'accessory_title', 'keywords' => ['шеврон', 'маска', 'флаг', 'атрибутика', 'коврик']]],
         ],
         'souvenirs' => [
-            'name' => 'Сувениры', 'sort_order' => 11,
+            'name' => 'Сувениры',
             'match' => [
                 ['type' => 'alcohol', 'when' => 'advent'],
                 ['type' => 'accessory_title', 'keywords' => ['адвент']],
@@ -216,9 +215,16 @@ return [
         ],
         // probes ДО equipment: обе — type=contains, порядок объявления = порядок проверки.
         'probes' => [
-            'name' => 'Пробники', 'sort_order' => 12,
+            'name' => 'Пробники',
             'container' => true, 'volume' => true,
             'match' => [['type' => 'contains', 'needle' => 'пробники']],
+        ],
+        // Средний сегмент "СВОИ" не совпадает ни с одной accessory_title-категорией
+        // (у них keyword ищется в Наименование, не в Категория) — матчим по всей
+        // строке Категория через type=contains, как probes.
+        'souvenir-glasses' => [
+            'name' => 'Сувенирные бокалы',
+            'match' => [['type' => 'contains', 'needle' => 'сувенирные бокалы']],
         ],
     ],
 

@@ -70,7 +70,6 @@ return [
             'name' => 'Name',
             'slug' => 'Slug',
             'is_active' => 'Active',
-            'sort_order' => 'Sort order',
             'products_count' => 'Products',
         ],
     ],

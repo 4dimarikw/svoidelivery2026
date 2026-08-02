@@ -29,7 +29,6 @@ final class CategoryIndexPage extends IndexPage
             Text::make(__('moonshine.category.fields.name'), 'name')->sortable(),
             Text::make(__('moonshine.category.fields.slug'), 'slug'),
             Switcher::make(__('moonshine.category.fields.is_active'), 'is_active'),
-            Number::make(__('moonshine.category.fields.sort_order'), 'sort_order')->sortable(),
             Number::make(__('moonshine.category.fields.products_count'), 'products_count')->badge(Color::GRAY),
         ];
     }

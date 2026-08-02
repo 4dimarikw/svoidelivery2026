@@ -13,7 +13,6 @@ use MoonShine\Laravel\Resources\ModelResource;
 use MoonShine\MenuManager\Attributes\Group;
 use MoonShine\MenuManager\Attributes\Order;
 use MoonShine\Support\Attributes\Icon;
-use MoonShine\Support\Enums\SortDirection;
 
 /**
  * @extends ModelResource<Category, CategoryIndexPage, CategoryFormPage, null>
@@ -34,10 +33,6 @@ class CategoryResource extends ModelResource
     protected bool $editInModal = true;
 
     protected bool $detailInModal = true;
-
-    protected string $sortColumn = 'sort_order';
-
-    protected SortDirection $sortDirection = SortDirection::ASC;
 
     public function getTitle(): string
     {

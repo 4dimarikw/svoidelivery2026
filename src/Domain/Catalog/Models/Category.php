@@ -19,7 +19,6 @@ use Spatie\Sluggable\SlugOptions;
  * @property string $name
  * @property string $slug
  * @property bool $is_active
- * @property int $sort_order
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property-read Collection<int, Product> $products
@@ -37,7 +36,6 @@ use Spatie\Sluggable\SlugOptions;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Category whereIsActive($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Category whereName($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Category whereSlug($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|Category whereSortOrder($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Category whereUpdatedAt($value)
  *
  * @mixin \Eloquent
@@ -52,7 +50,6 @@ class Category extends Model
         'name',
         'slug',
         'is_active',
-        'sort_order',
     ];
 
     protected function casts(): array
@@ -86,8 +83,8 @@ class Category extends Model
      * makes generation a pure fallback: it only fires if slug is still
      * null (e.g. a future ad-hoc Category::create() without one), and never
      * touches an already-set slug again, on either create or update — so a
-     * CategorySeeder re-run (which updates name/code/sort_order but never
-     * slug) can't drift a category's slug away from its config key.
+     * CategorySeeder re-run (which updates name/code but never slug) can't
+     * drift a category's slug away from its config key.
      */
     public function getSlugOptions(): SlugOptions
     {

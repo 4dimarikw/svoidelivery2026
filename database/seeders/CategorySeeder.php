@@ -30,7 +30,6 @@ class CategorySeeder extends Seeder
                 [
                     'code' => str_replace('-', '_', $slug),
                     'name' => $config['name'] ?? Str::headline($slug),
-                    'sort_order' => $config['sort_order'] ?? 0,
                 ],
             );
         }

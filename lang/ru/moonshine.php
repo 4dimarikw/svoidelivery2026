@@ -70,7 +70,6 @@ return [
             'name' => 'Название',
             'slug' => 'Slug',
             'is_active' => 'Активна',
-            'sort_order' => 'Порядок сортировки',
             'products_count' => 'Товаров',
         ],
     ],

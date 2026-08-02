@@ -13,7 +13,6 @@ use MoonShine\Contracts\UI\FieldContract;
 use MoonShine\Laravel\Pages\Crud\FormPage;
 use MoonShine\UI\Components\Layout\Box;
 use MoonShine\UI\Fields\ID;
-use MoonShine\UI\Fields\Number;
 use MoonShine\UI\Fields\Switcher;
 use MoonShine\UI\Fields\Text;
 
@@ -42,11 +41,6 @@ final class CategoryFormPage extends FormPage
                 Text::make(__('moonshine.category.fields.slug'), 'slug')
                     ->hint('Импорт-ключ (config/catalog_import.php) — по нему CategorySeeder ищет категорию. Генерируется из name только при пустом значении, повторно не перезаписывается.'),
 
-                Number::make(__('moonshine.category.fields.sort_order'), 'sort_order')
-                    ->required()
-                    ->min(0)
-                    ->hint('Перезаписывается каждым запуском CategorySeeder.'),
-
                 Switcher::make(__('moonshine.category.fields.is_active'), 'is_active'),
             ]),
         ];
@@ -65,7 +59,6 @@ final class CategoryFormPage extends FormPage
                 'string', 'max:255',
                 Rule::unique('categories', 'slug')->ignore($item->getKey()),
             ],
-            'sort_order' => ['required', 'integer', 'min:0', 'max:65535'],
             'is_active' => ['nullable', 'boolean'],
         ];
     }
