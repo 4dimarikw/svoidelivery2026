@@ -27,13 +27,10 @@ return [
             'status' => 'Status',
             'external_code' => 'External code',
             'description' => 'Description',
-            'synced_at' => 'Synced at',
             'brand' => 'Brand',
             'package_units' => 'Units per package',
             'packaging_raw' => 'Packaging (as in 1C)',
             'shelf_life_days' => 'Shelf life, days',
-            'sales_rating' => 'Sales rating',
-            'source_uuid' => 'Source UUID',
             'main_image' => 'Upload image',
             'current_image' => 'Current image',
             'beer_details' => 'Beer characteristics',
@@ -42,7 +39,6 @@ return [
             'ibu' => 'IBU',
             'plato' => 'Plato, °P',
             'ebc' => 'Color, EBC',
-            'barcodes' => 'Barcodes',
         ],
         'tabs' => [
             'main' => 'Main',
@@ -51,15 +47,6 @@ return [
             'extra' => 'Extra',
             'image' => 'Image',
             'beer' => 'Beer',
-            'barcodes' => 'Barcodes',
-        ],
-    ],
-
-    'product_barcode' => [
-        'title' => 'Barcodes',
-        'fields' => [
-            'barcode' => 'Barcode',
-            'product' => 'Product',
         ],
     ],
 

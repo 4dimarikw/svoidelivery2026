@@ -7,12 +7,10 @@ use Domain\Catalog\Enums\ProductStatus;
 use Eloquent;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
-use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
@@ -28,7 +26,6 @@ use Support\Casts\HtmlEntityDecoder;
 
 /**
  * @property int $id
- * @property string $source_uuid
  * @property string $external_code
  * @property string|null $article
  * @property string $name
@@ -46,13 +43,10 @@ use Support\Casts\HtmlEntityDecoder;
  * @property string|null $source_category_path
  * @property int|null $shelf_life_days
  * @property string|null $brand
- * @property string|null $sales_rating
  * @property ProductStatus $status
- * @property Carbon|null $synced_at
+ * @property array|null $flags
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
- * @property-read Collection<int, ProductBarcode> $barcodes
- * @property-read int|null $barcodes_count
  * @property-read BeerProductDetail|null $beerDetails
  * @property-read Category $category
  * @property-read Container|null $container
@@ -85,13 +79,10 @@ use Support\Casts\HtmlEntityDecoder;
  * @method static Builder<static>|Product wherePackageUnits($value)
  * @method static Builder<static>|Product wherePackagingRaw($value)
  * @method static Builder<static>|Product wherePrice($value)
- * @method static Builder<static>|Product whereSalesRating($value)
  * @method static Builder<static>|Product whereShelfLifeDays($value)
  * @method static Builder<static>|Product whereSlug($value)
  * @method static Builder<static>|Product whereSourceCategoryPath($value)
- * @method static Builder<static>|Product whereSourceUuid($value)
  * @method static Builder<static>|Product whereStockQuantity($value)
- * @method static Builder<static>|Product whereSyncedAt($value)
  * @method static Builder<static>|Product whereUpdatedAt($value)
  * @method static Builder<static>|Product whereVolumeId($value)
  *
@@ -104,7 +95,6 @@ class Product extends Model implements HasMedia
     use InteractsWithMedia;
 
     protected $fillable = [
-        'source_uuid',
         'external_code',
         'article',
         'name',
@@ -121,9 +111,8 @@ class Product extends Model implements HasMedia
         'source_category_path',
         'shelf_life_days',
         'brand',
-        'sales_rating',
         'status',
-        'synced_at',
+        'flags',
     ];
 
     protected function casts(): array
@@ -132,7 +121,7 @@ class Product extends Model implements HasMedia
             'price' => 'decimal:2',
             'in_stock' => 'boolean',
             'status' => ProductStatus::class,
-            'synced_at' => 'datetime',
+            'flags' => 'json',
             'article' => HtmlEntityDecoder::class,
             'description' => HtmlEntityDecoder::class,
             'name' => HtmlEntityDecoder::class,
@@ -152,7 +141,7 @@ class Product extends Model implements HasMedia
     public function getSlugOptions(): SlugOptions
     {
         return SlugOptions::create()
-            ->generateSlugsFrom(fn(Product $product) => $product->article ?: $product->name)
+            ->generateSlugsFrom(fn (Product $product) => $product->article ?: $product->name)
             ->saveSlugsTo('slug')
             ->usingSeparator('-')
             ->selfHealing();
@@ -187,14 +176,14 @@ class Product extends Model implements HasMedia
     protected function label(): Attribute
     {
         return Attribute::make(
-            get: fn() => $this->resolveMediaUrl('label')
+            get: fn () => $this->resolveMediaUrl('label')
         );
     }
 
     protected function thumb(): Attribute
     {
         return Attribute::make(
-            get: fn() => $this->resolveMediaUrl('thumb')
+            get: fn () => $this->resolveMediaUrl('thumb')
         );
     }
 
@@ -202,7 +191,7 @@ class Product extends Model implements HasMedia
     {
         $url = $this->getFirstMedia('main')?->getUrl($conversion);
 
-        if (!$url || Str::contains($url, 'badge-beer-default-thumb')) {
+        if (! $url || Str::contains($url, 'badge-beer-default-thumb')) {
             return config('project.default_beer_label');
         }
 
@@ -229,11 +218,6 @@ class Product extends Model implements HasMedia
         return $this->belongsTo(Container::class);
     }
 
-    public function barcodes(): HasMany
-    {
-        return $this->hasMany(ProductBarcode::class);
-    }
-
     public function beerDetails(): HasOne
     {
         return $this->hasOne(BeerProductDetail::class);
@@ -242,7 +226,7 @@ class Product extends Model implements HasMedia
     protected function isNew(): Attribute
     {
         return Attribute::get(
-            fn(): bool => $this->created_at !== null
+            fn (): bool => $this->created_at !== null
                 && $this->created_at->gt(now()->subDays(app(GeneralSettings::class)->new_days))
         );
     }
@@ -265,7 +249,7 @@ class Product extends Model implements HasMedia
     public function scopeInPriceRange(Builder $query, ?string $min, ?string $max): Builder
     {
         return $query
-            ->when($min !== null, fn(Builder $q) => $q->where('price', '>=', $min))
-            ->when($max !== null, fn(Builder $q) => $q->where('price', '<=', $max));
+            ->when($min !== null, fn (Builder $q) => $q->where('price', '>=', $min))
+            ->when($max !== null, fn (Builder $q) => $q->where('price', '<=', $max));
     }
 }

@@ -3,7 +3,7 @@
 Сервис импортирует CSV-выгрузку из 1С в каталог товаров.
 
 **Входные данные:** CSV-файл из 1С (Windows-1251, разделитель `;`, 23 колонки). По умолчанию скачивается с FTP (`DB_1C_FTP_BASE_FILE`); можно передать локальный путь.
-**Результат:** записи в таблицах `manufacturers`, `beer_styles`, `categories` (авто-создание неизвестных slug), `products`, `beer_product_details`, `product_barcodes`, `volumes`, `containers`
+**Результат:** записи в таблицах `manufacturers`, `beer_styles`, `categories` (авто-создание неизвестных slug), `products`, `beer_product_details`, `volumes`, `containers`
 **Идемпотентность:** повторные запуски обновляют существующие записи (ключ — `products.external_code`, он же `КодТовара` 1С), дубликатов не создают
 
 Схема этого проекта **плоская**: нет отдельной таблицы вариаций — цена, остаток,
@@ -60,7 +60,6 @@ php artisan catalog:import --dry-run
 | Товаров создано           | 76         |
 | Товаров обновлено         | 17         |
 | Товаров без изменений     | 1          |
-| Штрихкодов создано        | 93         |
 | Изображений загружено     | 12         |
 | Предупреждений            | 39         |
 +---------------------------+------------+
@@ -100,12 +99,12 @@ ImportContext      ← mutable-контекст, передаётся по вс�
     ├── ResolveEbcStage            EBC
     ├── ResolveShelfLifeStage      СрокГодности → shelf_life_days
     ├── ResolvePriceStage          Цена → price, Остаток → stock
-    ├── ResolveExternalIdsStage    КодТовара → external_code, id_объекта → source_uuid, Артикул → article
-    ├── ResolveFlagsStage          РейтингПродаж → sales_rating (сырая строка)
+    ├── ResolveExternalIdsStage    КодТовара → external_code, Артикул → article
+    ├── ResolveFlagsStage          РейтингПродаж + product_flags → products.flags (json, только create)
     ├── ResolveDescriptionStage    Описание → description
-    ├── PersistProductStage        updateOrCreate Product по [external_code]
-    ├── PersistBeerDetailsStage    updateOrCreate BeerProductDetail (только если есть пивные атрибуты)
-    └── PersistBarcodeStage        firstOrCreate ProductBarcode по [barcode]
+    ├── PersistProductStage        firstWhere по [external_code]: обновляет price/stock_quantity/
+    │                              in_stock у существующего товара, иначе полное create
+    └── PersistBeerDetailsStage    firstOrCreate BeerProductDetail (только если есть пивные атрибуты)
     │
     ▼ (post-commit, вне транзакции строки/чанка)
     └── PersistProductImageStage   Untappd label → медиа-коллекция 'main' (spatie/laravel-medialibrary)
@@ -167,7 +166,6 @@ src/Services/CatalogImport/
     ├── ResolveDescriptionStage.php
     ├── PersistProductStage.php
     ├── PersistBeerDetailsStage.php
-    ├── PersistBarcodeStage.php
     └── PersistProductImageStage.php   (post-commit)
 
 config/catalog_import.php                        категории + маппинги + порядок стейджей
@@ -191,16 +189,14 @@ app/Console/Commands/CatalogImportCommand.php    Artisan-команда
 | `EBC` | `beer_product_details.ebc` | `ResolveEbcStage` |
 | `UntappdRef` | синхронизация `untappd_beers` (вкл. `description`, в приоритете над CSV `Описание`) → `beer_product_details.untappd_beer_id` | `ResolveBeerStyleStage` |
 | `СрокГодности` | `products.shelf_life_days` | `ResolveShelfLifeStage` |
-| `РейтингПродаж` | `products.sales_rating` (сырая строка) | `ResolveFlagsStage` |
+| `РейтингПродаж` | `products.flags` (json, вместе с `GeneralSettings::$product_flags`; только при создании) | `ResolveFlagsStage` |
 | `КодТовара` | `products.external_code` (ключ идемпотентности) | `ResolveExternalIdsStage` |
-| `id_объекта` | `products.source_uuid` | `ResolveExternalIdsStage` |
 | `Артикул` | `products.article` (источник slug) | `ResolveExternalIdsStage` |
 | `Цена` | `products.price` | `ResolvePriceStage` |
 | `Остаток` | `products.stock_quantity` + `in_stock` | `ResolvePriceStage` / `PersistProductStage` |
 | `Упаковка` | `products.packaging_raw`, `package_units` | `ResolveExternalIdsStage`, `PersistProductStage` |
 | `Упаковка` | `volumes` (firstOrCreate) → `products.volume_id` | `ResolveVolumeStage` |
 | `Упаковка` / категория | `products.container_id` | `ResolveContainerStage` |
-| `ШтрихКод` | `product_barcodes.barcode` | `PersistBarcodeStage` |
 | `Категория` (сырая) | `products.source_category_path` | `ResolveCategoryStage` |
 | `Категория` | верхний сегмент → ветвь алгоритма категоризации (`categories.*`) | `ResolveCategoryStage` |
 | `Тип` | не используется | — |
@@ -320,7 +316,5 @@ price-exemption, и `ResolveCategoryStage` для резолва модели) �
 
 ## Известные ограничения
 
-- **Штрихкоды теряют точность:** Excel сохранил EAN-13 в научной нотации (`4,63E+12`). Импортируется `4630000000000` — последние цифры могут отличаться от реального штрихкода.
-- **Штрихкод глобально уникален** (`product_barcodes.barcode`), а не пара `[product, barcode]` — если один физический штрихкод по ошибке присвоен разным товарам в 1С, к новому товару он не переприкрепится (`PersistBarcodeStage` создаёт запись только при первом появлении штрихкода).
 - **Некоторые аксессуары без контейнера/объёма:** строки с `Упаковка = "Упаковка 6 шт."` без явного маркера из `container_map` импортируются с warning, `container_id` остаётся NULL. Добавь маркер в `container_map` если нужна точная классификация.
 - **`package_units`** (число упаковок из `Упаковка`, напр. "12" из "кор. 12х0,45л") — эвристика на regex, не гарантирует 100% точность для нестандартных форматов упаковки; колонка nullable и не участвует в дальнейшей логике импорта.

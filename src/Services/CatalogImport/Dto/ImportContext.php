@@ -35,8 +35,6 @@ class ImportContext
 
     public bool $skip = false;
 
-    public int $barcodesCreatedThisRow = 0;
-
     public bool $imageAttachedThisRow = false;
 
     public function __construct(

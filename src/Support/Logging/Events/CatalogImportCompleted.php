@@ -5,23 +5,20 @@ namespace Support\Logging\Events;
 final readonly class CatalogImportCompleted implements LoggableEvent
 {
     /**
-     * @param list<array{line: int, stage: string, message: string, value: string}> $warnings
+     * @param  list<array{line: int, stage: string, message: string, value: string}>  $warnings
      */
     public function __construct(
         public string $path,
-        public int    $processed,
-        public int    $skipped,
-        public int    $manufacturersCreated,
-        public int    $stylesCreated,
-        public int    $productsCreated,
-        public int    $productsUpdated,
-        public int    $barcodesCreated,
-        public int    $warningsCount,
-        public array  $warnings,
-        public int    $durationMs,
-    )
-    {
-    }
+        public int $processed,
+        public int $skipped,
+        public int $manufacturersCreated,
+        public int $stylesCreated,
+        public int $productsCreated,
+        public int $productsUpdated,
+        public int $warningsCount,
+        public array $warnings,
+        public int $durationMs,
+    ) {}
 
     public function eventType(): string
     {
@@ -48,7 +45,6 @@ final readonly class CatalogImportCompleted implements LoggableEvent
             'styles_created' => $this->stylesCreated,
             'products_created' => $this->productsCreated,
             'products_updated' => $this->productsUpdated,
-            'barcodes_created' => $this->barcodesCreated,
             'warnings_count' => $this->warningsCount,
             'warnings' => $this->warnings,
             'duration_ms' => $this->durationMs,

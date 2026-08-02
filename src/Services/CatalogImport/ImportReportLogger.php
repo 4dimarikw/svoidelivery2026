@@ -39,7 +39,6 @@ final class ImportReportLogger
             'Товаров создано' => $report->productsCreated,
             'Товаров обновлено' => $report->productsUpdated,
             'Товаров без изменений' => $report->productsUnchanged,
-            'Штрихкодов создано' => $report->barcodesCreated,
             'Изображений загружено' => $report->imagesAttached,
             'Предупреждений' => $report->warningsTotal,
             'Длительность' => self::formatDuration($report->durationMs),

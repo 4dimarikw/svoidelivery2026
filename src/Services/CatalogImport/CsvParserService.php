@@ -69,7 +69,6 @@ readonly class CsvParserService
                         stylesCreated: $report->stylesCreated,
                         productsCreated: $report->productsCreated,
                         productsUpdated: $report->productsUpdated,
-                        barcodesCreated: $report->barcodesCreated,
                         warningsCount: $report->warningsTotal,
                         warnings: $report->warnings,
                         durationMs: $report->durationMs,
@@ -118,7 +117,7 @@ readonly class CsvParserService
             if ($transactionMode === 'none') {
                 $ctx = $this->runPipeline($ctx, $stages);
             } else {
-                // One transaction per row guarantees no orphan Product without variation/barcode.
+                // One transaction per row guarantees no orphan Product without variation.
                 // Trade-off: O(n) transactions on large files. Use transaction_mode=chunk for bulk runs.
                 $ctx = DB::transaction(fn () => $this->runPipeline($ctx, $stages));
             }
@@ -237,8 +236,6 @@ readonly class CsvParserService
                 $report->productsUnchanged++;
             }
         }
-
-        $report->barcodesCreated += $ctx->barcodesCreatedThisRow;
 
         if ($ctx->imageAttachedThisRow) {
             $report->imagesAttached++;

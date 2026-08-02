@@ -2,7 +2,6 @@
 
 use Services\CatalogImport\Stages\FilterCategoryStage;
 use Services\CatalogImport\Stages\NormalizeRowStage;
-use Services\CatalogImport\Stages\PersistBarcodeStage;
 use Services\CatalogImport\Stages\PersistBeerDetailsStage;
 use Services\CatalogImport\Stages\PersistProductImageStage;
 use Services\CatalogImport\Stages\PersistProductStage;
@@ -76,7 +75,6 @@ return [
         ResolveDescriptionStage::class,
         PersistProductStage::class,
         PersistBeerDetailsStage::class,
-        PersistBarcodeStage::class,
     ],
 
     /*
@@ -96,7 +94,7 @@ return [
     |--------------------------------------------------------------------------
     | Transaction mode
     |--------------------------------------------------------------------------
-    | 'row'   — одна транзакция на строку (по умолчанию; атомарность product+variation+barcode).
+    | 'row'   — одна транзакция на строку (по умолчанию; атомарность product+variation).
     | 'chunk' — одна транзакция на chunk_size строк (быстрее на больших файлах, но теряет per-row атомарность).
     | 'none'  — без транзакций (опасно; только для отладки).
     */
@@ -280,7 +278,6 @@ return [
         'stock' => 'Остаток',       // ResolvePriceStage
         'sales_rating' => 'РейтингПродаж', // ResolveFlagsStage
         'description' => 'Описание',      // ResolveDescriptionStage
-        'barcode' => 'ШтрихКод',      // PersistBarcodeStage
     ],
 
     /*

@@ -21,10 +21,12 @@ use Services\CatalogImport\Dto\ImportContext;
  * импорт больше не переписывает карточку целиком — иначе правки admin'а
  * терялись бы на следующем catalog:import. Для уже существующего товара
  * обновляются только оперативные поля ($syncData: price/stock_quantity/
- * in_stock/synced_at); name/description/category/status и т.д. трогает
- * только create-ветка (первый импорт) или сама админка.
- * `source_uuid` берётся из id_объекта (RawRow-UUID из 1С, уже провалидирован
- * NormalizeRowStage как непустой) и задаётся только при создании.
+ * in_stock); name/description/category/status/flags и т.д. трогает только
+ * create-ветка (первый импорт) или сама админка.
+ * `flags` берётся из $ctx->attributes['flags'] (см. ResolveFlagsStage) и,
+ * как и остальные создаваемые-один-раз поля, не пересчитывается повторным
+ * импортом — если нужно освежить flags у существующего товара, это делает
+ * админка, а не catalog:import.
  */
 final class PersistProductStage implements ImportStage
 {
@@ -54,7 +56,6 @@ final class PersistProductStage implements ImportStage
             'price' => $attrs['price'] ?? 0,
             'stock_quantity' => $stock,
             'in_stock' => $stock > 0,
-            'synced_at' => now(),
         ];
 
         $product = Product::query()->firstWhere('external_code', $externalCode);
@@ -66,7 +67,6 @@ final class PersistProductStage implements ImportStage
 
             $product = Product::create([
                 'external_code' => $externalCode,
-                'source_uuid' => $attrs['external_id'],
                 'article' => $attrs['article'] ?? null,
                 'name' => $attrs['title'] ?? $attrs['name'],
                 'description' => $this->resolveDescription($ctx),
@@ -79,8 +79,8 @@ final class PersistProductStage implements ImportStage
                 'source_category_path' => $attrs['category_path'] ?? null,
                 'shelf_life_days' => $attrs['shelf_life_days'] ?? null,
                 'brand' => $attrs['name'] ?? null,
-                'sales_rating' => $attrs['sales_rating'] ?? null,
                 'status' => $this->settings->product_status,
+                'flags' => $attrs['flags'] ?? [],
                 ...$syncData,
             ]);
         }

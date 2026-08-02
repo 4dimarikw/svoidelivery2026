@@ -27,13 +27,10 @@ return [
             'status' => 'Статус',
             'external_code' => 'Внешний код',
             'description' => 'Описание',
-            'synced_at' => 'Синхронизирован',
             'brand' => 'Бренд',
             'package_units' => 'Штук в упаковке',
             'packaging_raw' => 'Упаковка (как в 1С)',
             'shelf_life_days' => 'Срок годности, дней',
-            'sales_rating' => 'Рейтинг продаж',
-            'source_uuid' => 'UUID источника',
             'main_image' => 'Загрузить изображение',
             'current_image' => 'Текущее изображение',
             'beer_details' => 'Пивные характеристики',
@@ -42,7 +39,6 @@ return [
             'ibu' => 'IBU',
             'plato' => 'Плотность, °P',
             'ebc' => 'Цвет, EBC',
-            'barcodes' => 'Штрихкоды',
         ],
         'tabs' => [
             'main' => 'Основное',
@@ -51,15 +47,6 @@ return [
             'extra' => 'Дополнительно',
             'image' => 'Изображение',
             'beer' => 'Пиво',
-            'barcodes' => 'Штрихкоды',
-        ],
-    ],
-
-    'product_barcode' => [
-        'title' => 'Штрихкоды',
-        'fields' => [
-            'barcode' => 'Штрихкод',
-            'product' => 'Товар',
         ],
     ],
 

@@ -20,8 +20,6 @@ class ImportReport
 
     public int $productsUnchanged = 0;
 
-    public int $barcodesCreated = 0;
-
     public int $imagesAttached = 0;
 
     /** Длительность импорта, мс. Заполняется CsvParserService, в т.ч. в dry-run. */

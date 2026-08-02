@@ -22,7 +22,6 @@ class ProductFactory extends Factory
     public function definition(): array
     {
         return [
-            'source_uuid' => fake()->unique()->uuid(),
             'external_code' => fake()->unique()->bothify('##-#####??'),
             'article' => fake()->unique()->bothify('ARTICLE-####'),
             'name' => fake()->sentence(6),
@@ -39,9 +38,7 @@ class ProductFactory extends Factory
             'source_category_path' => null,
             'shelf_life_days' => fake()->optional()->numberBetween(30, 730),
             'brand' => fake()->optional()->company(),
-            'sales_rating' => null,
             'status' => ProductStatus::PUBLISHED,
-            'synced_at' => now(),
         ];
     }
 }

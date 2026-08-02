@@ -8,8 +8,6 @@ use App\MoonShine\Resources\Product\Pages\ProductDetailPage;
 use App\MoonShine\Resources\Product\Pages\ProductFormPage;
 use App\MoonShine\Resources\Product\Pages\ProductIndexPage;
 use Domain\Catalog\Models\Product;
-use Illuminate\Support\Str;
-use MoonShine\Contracts\Core\TypeCasts\DataWrapperContract;
 use MoonShine\Laravel\Resources\ModelResource;
 use MoonShine\MenuManager\Attributes\Group;
 use MoonShine\MenuManager\Attributes\Order;
@@ -20,11 +18,13 @@ use MoonShine\Support\ListOf;
 /**
  * Товар редактируется из админки, но не полностью: catalog:import
  * (PersistProductStage::__invoke()) при повторном запуске обновляет только
- * price/stock_quantity/in_stock/synced_at у уже существующего товара — эти
- * поля всегда возвращаются к состоянию 1С на следующем синке, остальные
- * (name/description/классификация/status/media/пивные детали/штрихкоды)
- * принадлежат админке. Delete/MassDelete отключены: товар из 1С нельзя
- * удалить руками, для вывода из продажи есть status = archived.
+ * price/stock_quantity/in_stock у уже существующего товара — эти поля всегда
+ * возвращаются к состоянию 1С на следующем синке, остальные (name/
+ * description/классификация/status/media/пивные детали/штрихкоды)
+ * принадлежат админке. `flags` заполняется импортом только при создании
+ * товара (см. ResolveFlagsStage/PersistProductStage) и в этой форме не
+ * редактируется — чисто backend-поле. Delete/MassDelete отключены: товар из
+ * 1С нельзя удалить руками, для вывода из продажи есть status = archived.
  *
  * @extends ModelResource<Product, ProductIndexPage, ProductFormPage, ProductDetailPage>
  */
@@ -63,16 +63,5 @@ class ProductResource extends ModelResource
     protected function search(): array
     {
         return ['id', 'name', 'article', 'external_code'];
-    }
-
-    protected function beforeCreating(DataWrapperContract $item): DataWrapperContract
-    {
-        $model = $item->getOriginal();
-
-        if (blank($model->source_uuid)) {
-            $model->source_uuid = (string) Str::uuid();
-        }
-
-        return $item;
     }
 }
