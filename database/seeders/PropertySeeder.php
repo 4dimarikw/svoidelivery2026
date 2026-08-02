@@ -28,12 +28,17 @@ class PropertySeeder extends Seeder
      * Category → property codes to attach, per §4.11's proposed initial set.
      * `is_filterable` is true for everything here; the beer-only fields are
      * left off non-beer categories entirely rather than attached-but-hidden.
+     *
+     * Keys are `categories.code`, derived by CategorySeeder as
+     * str_replace('-', '_', slug) — 'soft_drinks' here used to drift from
+     * the actual code ('non-alcoholic' slug → 'non_alcoholic' code), so that
+     * category silently got no properties; fixed to match reality.
      */
     private const CATEGORY_PROPERTIES = [
         'beer' => ['volume', 'container', 'abv', 'ibu', 'plato', 'ebc', 'beer_style', 'untappd'],
         'mead' => ['volume', 'container', 'abv', 'beer_style', 'untappd'],
         'cider' => ['volume', 'container', 'abv', 'beer_style', 'untappd'],
-        'soft_drinks' => ['volume', 'container'],
+        'non_alcoholic' => ['volume', 'container'],
         'sauce' => ['volume', 'container'],
     ];
 
@@ -55,6 +60,14 @@ class PropertySeeder extends Seeder
             $category = Category::query()->where('code', $categoryCode)->first();
 
             if (! $category) {
+                continue;
+            }
+
+            // sync() would silently wipe admin-edited pivot values
+            // (is_required/is_filterable/is_visible/sort_order) on every
+            // re-run — only attach the initial set once, when the category
+            // has no properties yet.
+            if ($category->properties()->exists()) {
                 continue;
             }
 

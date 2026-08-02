@@ -21,9 +21,14 @@ use Services\CatalogImport\Dto\ImportContext;
  *
  * Читает $ctx->category (выставляется ResolveCategoryStage, идущим первым).
  */
-final readonly class NormalizeRowStage implements ImportStage
+final class NormalizeRowStage implements ImportStage
 {
-    public function __construct(private CategoryRegistry $categories = new CategoryRegistry) {}
+    private readonly CategoryRegistry $categories;
+
+    public function __construct(?CategoryRegistry $categories = null)
+    {
+        $this->categories = $categories ?? app(CategoryRegistry::class);
+    }
 
     public function __invoke(ImportContext $ctx, Closure $next): ImportContext
     {

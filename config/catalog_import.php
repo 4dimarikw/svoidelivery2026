@@ -132,114 +132,16 @@ return [
     |--------------------------------------------------------------------------
     | Categories — единый реестр (свойства + правила резолва slug)
     |--------------------------------------------------------------------------
-    | Источник правды для CategorySeeder, ResolveCategoryStage (авто-создание),
-    | CategorySlugResolver (резолв slug из сырых колонок CSV) и всех стейджей,
-    | зависящих от категории (container/volume/price_exempt/brand).
-    |
-    | Ключи свойств (все опциональны, дефолт — false/null):
-    |   name            — отображаемое имя (CategorySeeder, авто-создание).
-    |   container        — ожидает Container (ResolveContainerStage warning).
-    |   volume           — ожидает Volume (ResolveVolumeStage warning).
-    |   price_exempt     — не попадает под normalize.min_price (NormalizeRowStage).
-    |   default_brand    — бренд для пустого Производитель (ResolveBrandStage).
-    |   name_from_article — пустая Марка → имя из Артикул (ResolveProductIdentityStage).
-    |   container_code   — фиксированный код тары независимо от Упаковки (ResolveContainerStage).
-    |
-    | match[] — правила резолва slug, интерпретируются CategorySlugResolver
-    | в фиксированном порядке приоритета типов (см. класс):
-    |   1. type=alcohol   — верхний сегмент Категория == category_resolution.alcohol_marker.
-    |      when: advent (Категория содержит advent_marker) → no_abv (ABV пуст) →
-    |            style (keyword в СтильПива) → default (ничего не подошло).
-    |   2. type=contains  — Категория (вся строка) содержит needle (case-insensitive).
-    |      Порядок вычисления = порядок объявления категорий ниже (probes ДО equipment,
-    |      т.к. реальный CSV-формат "Сопутствующие товары>Оборудование").
-    |   3. type=accessory_title — верхний сегмент == category_resolution.accessory_marker,
-    |      keyword ищется в Наименование (леворасположенное совпадение побеждает,
-    |      как в едином regex по всем keywords сразу).
-    |   4. Ничего не подошло → category_resolution.fallback.
+    | Переехал в БД: таблицы `categories` (флаги expects_container/
+    | expects_volume/price_exempt/name_from_article/default_brand/
+    | container_code) и `category_match_rules` (правила резолва slug,
+    | приоритет — колонка `priority`), плюс глобальные маркеры сегментов
+    | (alcohol_marker/accessory_marker/advent_marker/fallback_slug) в
+    | Infrastructure\Settings\CatalogImportSettings. Управляется из MoonShine
+    | (раздел «Категории»). Единственная точка чтения — CategoryRegistry;
+    | CategorySlugResolver и Resolve*-стейджи по-прежнему обращаются только
+    | к ней и не знают, что источник сменился.
     */
-    'categories' => [
-        'beer' => [
-            'name' => 'Пиво',
-            'container' => true, 'volume' => true,
-            'match' => [['type' => 'alcohol', 'when' => 'default']],
-        ],
-        'mead' => [
-            'name' => 'Мёд',
-            'container' => true, 'volume' => true,
-            'match' => [['type' => 'alcohol', 'when' => 'style', 'keyword' => 'mead']],
-        ],
-        'cider' => [
-            'name' => 'Сидр',
-            'container' => true, 'volume' => true,
-            'match' => [['type' => 'alcohol', 'when' => 'style', 'keyword' => 'cider']],
-        ],
-        'non-alcoholic' => [
-            'name' => 'Безалкогольные напитки',
-            'container' => true, 'volume' => true,
-            'match' => [['type' => 'alcohol', 'when' => 'no_abv']],
-        ],
-        'sauce' => [
-            'name' => 'Соус',
-            'container' => true, 'volume' => true,
-            'match' => [['type' => 'alcohol', 'when' => 'style', 'keyword' => 'sauce']],
-        ],
-        'not-defined' => [
-            'name' => 'не определена',
-            // Нет match[] — категория служит catch-all (category_resolution.fallback).
-        ],
-        'pet-tare-packages' => [
-            'name' => 'ПЭТ ТАРА ПАКЕТЫ',
-            'container' => true, 'volume' => true,
-            'container_code' => 'pet',
-            'match' => [['type' => 'accessory_title', 'keywords' => ['пэт', 'тара', 'пакет']]],
-        ],
-        'for-beer' => [
-            'name' => 'К пиву',
-            'match' => [['type' => 'accessory_title', 'keywords' => ['арахис', 'снэки', 'чипсы']]],
-        ],
-        'clothes' => [
-            'name' => 'Одежда',
-            'match' => [['type' => 'accessory_title', 'keywords' => ['футболка', 'толстовка', 'шапка']]],
-        ],
-        'attributes' => [
-            'name' => 'Атрибутика',
-            'match' => [['type' => 'accessory_title', 'keywords' => ['шеврон', 'маска', 'флаг', 'атрибутика', 'коврик']]],
-        ],
-        'souvenirs' => [
-            'name' => 'Сувениры',
-            'match' => [
-                ['type' => 'alcohol', 'when' => 'advent'],
-                ['type' => 'accessory_title', 'keywords' => ['адвент']],
-            ],
-        ],
-        // probes ДО equipment: обе — type=contains, порядок объявления = порядок проверки.
-        'probes' => [
-            'name' => 'Пробники',
-            'container' => true, 'volume' => true,
-            'match' => [['type' => 'contains', 'needle' => 'пробники']],
-        ],
-        // Средний сегмент "СВОИ" не совпадает ни с одной accessory_title-категорией
-        // (у них keyword ищется в Наименование, не в Категория) — матчим по всей
-        // строке Категория через type=contains, как probes.
-        'souvenir-glasses' => [
-            'name' => 'Сувенирные бокалы',
-            'match' => [['type' => 'contains', 'needle' => 'сувенирные бокалы']],
-        ],
-    ],
-
-    /*
-    |--------------------------------------------------------------------------
-    | category_resolution — общие маркеры сегментов "Категория", не привязанные
-    | к конкретной категории (используются несколькими match-правилами выше).
-    |--------------------------------------------------------------------------
-    */
-    'category_resolution' => [
-        'alcohol_marker' => 'Алкогольная продукция',
-        'accessory_marker' => 'Сопутствующие товары',
-        'advent_marker' => 'адвент',
-        'fallback' => 'not-defined',
-    ],
 
     /*
     |--------------------------------------------------------------------------

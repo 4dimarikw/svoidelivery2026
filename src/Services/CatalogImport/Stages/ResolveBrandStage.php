@@ -22,9 +22,12 @@ use Services\CatalogImport\Dto\ImportContext;
  */
 final class ResolveBrandStage implements ImportStage
 {
-    public function __construct(
-        private readonly CategoryRegistry $categories = new CategoryRegistry,
-    ) {}
+    private readonly CategoryRegistry $categories;
+
+    public function __construct(?CategoryRegistry $categories = null)
+    {
+        $this->categories = $categories ?? app(CategoryRegistry::class);
+    }
 
     public function __invoke(ImportContext $ctx, Closure $next): ImportContext
     {

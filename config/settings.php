@@ -1,5 +1,6 @@
 <?php
 
+use Infrastructure\Settings\CatalogImportSettings;
 use Infrastructure\Settings\GeneralSettings;
 use Infrastructure\Settings\VKSyncSettings;
 use Spatie\LaravelSettings\SettingsCasts\DataCast;
@@ -17,6 +18,7 @@ return [
     'settings' => [
         GeneralSettings::class,
         VKSyncSettings::class,
+        CatalogImportSettings::class,
     ],
 
     /*

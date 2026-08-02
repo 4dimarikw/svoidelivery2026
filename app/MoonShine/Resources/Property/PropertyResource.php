@@ -14,10 +14,11 @@ use MoonShine\Support\Attributes\Icon;
 
 /**
  * Plain CRUD over the `properties` dictionary only — the
- * `category_properties` pivot is deliberately not exposed here:
- * PropertySeeder::run() does `$category->properties()->sync($sync)` on every
- * run, which would silently wipe any admin-edited pivot values
- * (is_required/is_filterable/is_visible/sort_order).
+ * `category_properties` pivot is edited from the Category side
+ * (App\MoonShine\Resources\Category\Pages\CategoryFormPage's "Свойства"
+ * tab), not here. PropertySeeder only attaches the initial pivot set once
+ * (skips categories that already have properties), so admin edits there
+ * survive re-seeding.
  *
  * @extends ModelResource<Property, PropertyIndexPage, PropertyFormPage, null>
  */

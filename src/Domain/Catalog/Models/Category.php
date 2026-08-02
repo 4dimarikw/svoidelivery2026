@@ -10,6 +10,8 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Cache;
+use Services\CatalogImport\CategoryRegistry;
 use Spatie\Sluggable\HasSlug;
 use Spatie\Sluggable\SlugOptions;
 
@@ -19,12 +21,20 @@ use Spatie\Sluggable\SlugOptions;
  * @property string $name
  * @property string $slug
  * @property bool $is_active
+ * @property bool $expects_container
+ * @property bool $expects_volume
+ * @property bool $price_exempt
+ * @property bool $name_from_article
+ * @property string|null $default_brand
+ * @property string|null $container_code
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property-read Collection<int, Product> $products
  * @property-read int|null $products_count
  * @property-read Collection<int, Property> $properties
  * @property-read int|null $properties_count
+ * @property-read Collection<int, CategoryMatchRule> $matchRules
+ * @property-read int|null $match_rules_count
  *
  * @method static \Database\Factories\Catalog\CategoryFactory factory($count = null, $state = [])
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Category newModelQuery()
@@ -50,12 +60,22 @@ class Category extends Model
         'name',
         'slug',
         'is_active',
+        'expects_container',
+        'expects_volume',
+        'price_exempt',
+        'name_from_article',
+        'default_brand',
+        'container_code',
     ];
 
     protected function casts(): array
     {
         return [
             'is_active' => 'boolean',
+            'expects_container' => 'boolean',
+            'expects_volume' => 'boolean',
+            'price_exempt' => 'boolean',
+            'name_from_article' => 'boolean',
         ];
     }
 
@@ -73,6 +93,23 @@ class Category extends Model
     {
         return $this->belongsToMany(Property::class, 'category_properties')
             ->withPivot(['is_required', 'is_filterable', 'is_visible', 'sort_order']);
+    }
+
+    public function matchRules(): HasMany
+    {
+        return $this->hasMany(CategoryMatchRule::class)->orderBy('priority')->orderBy('id');
+    }
+
+    /**
+     * Category + its match rules are cached wholesale by CategoryRegistry —
+     * catalog:import evaluates the resolver once per CSV row (thousands per
+     * run), so a per-row query is out. Any admin edit here or on
+     * CategoryMatchRule must invalidate that cache immediately.
+     */
+    protected static function booted(): void
+    {
+        static::saved(fn () => Cache::forget(CategoryRegistry::CACHE_KEY));
+        static::deleted(fn () => Cache::forget(CategoryRegistry::CACHE_KEY));
     }
 
     /**

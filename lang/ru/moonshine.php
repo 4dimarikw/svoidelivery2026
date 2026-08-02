@@ -71,6 +71,47 @@ return [
             'slug' => 'Slug',
             'is_active' => 'Активна',
             'products_count' => 'Товаров',
+            'match_rules_count' => 'Правил',
+            'expects_container' => 'Ожидает тару',
+            'expects_volume' => 'Ожидает объём',
+            'price_exempt' => 'Не фильтровать по мин. цене',
+            'name_from_article' => 'Имя из артикула',
+            'default_brand' => 'Бренд по умолчанию',
+            'container_code' => 'Фиксированная тара',
+            'match_rules' => 'Правила резолва',
+            'properties' => 'Свойства',
+            'pivot_is_required' => 'Обязательное',
+            'pivot_is_filterable' => 'Фильтруемое',
+            'pivot_is_visible' => 'Видимое',
+            'pivot_sort_order' => 'Порядок',
+        ],
+        'tabs' => [
+            'main' => 'Основное',
+            'import' => 'Импорт',
+            'match_rules' => 'Правила резолва',
+            'properties' => 'Свойства',
+        ],
+    ],
+
+    'category_match_rule' => [
+        'title' => 'Правила резолва категории',
+        'fields' => [
+            'type' => 'Тип',
+            'match_when' => 'Когда',
+            'value' => 'Значение',
+            'priority' => 'Приоритет',
+            'is_active' => 'Активно',
+        ],
+    ],
+
+    'catalog_import_settings' => [
+        'title' => 'Настройки импорта',
+        'saved' => 'Настройки сохранены',
+        'fields' => [
+            'alcohol_marker' => 'Маркер алкоголя',
+            'accessory_marker' => 'Маркер сопутствующих товаров',
+            'advent_marker' => 'Маркер адвент-календарей',
+            'fallback_slug' => 'Категория по умолчанию',
         ],
     ],
 

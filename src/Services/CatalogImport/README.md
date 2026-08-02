@@ -119,7 +119,7 @@ ImportReport (счётчики + warnings)
 |---|---|
 | `CsvReader` | Открывает файл, конвертирует Windows-1251→UTF-8, отдаёт `RawRow` через generator |
 | `CsvParserService` | Оркестратор: итерирует строки, запускает pipeline, формирует `ImportReport` |
-| `CategoryRegistry` | Типизированный доступ к `config('catalog_import.categories')` + `category_resolution` |
+| `CategoryRegistry` | Типизированный доступ к реестру категорий (БД: `categories`+`category_match_rules`, кэшируется) + `CatalogImportSettings` |
 | `CategorySlugResolver` | Резолвит slug категории из сырых колонок CSV через `CategoryRegistry`, без обращения к БД |
 | `LookupCache` | Per-import кэш `Category`/`Container` — устраняет N+1 в Resolve*-стейджах |
 | `ImportContext` | Mutable-объект, передаётся между стейджами; содержит `RawRow`, резолвенные модели (`brand`, `category`, `container`, `volume`, `beerStyle`, `product`, `untappdBeer`) и буфер `$attributes` |
@@ -136,7 +136,7 @@ src/Services/CatalogImport/
 ├── README.md
 ├── CsvParserService.php          оркестратор
 ├── CsvReader.php                 чтение/перекодировка CSV
-├── CategoryRegistry.php          типизированный доступ к config('catalog_import.categories')
+├── CategoryRegistry.php          типизированный доступ к реестру категорий (БД, кэш)
 ├── CategorySlugResolver.php      резолв slug категории (без БД)
 ├── LookupCache.php               per-import кэш Category/Container
 ├── Contracts/
@@ -280,16 +280,33 @@ $productData = [
 ### 4. Изменить определение категории или добавить новую
 
 Категория определяется `CategorySlugResolver` (используется и `NormalizeRowStage` для
-price-exemption, и `ResolveCategoryStage` для резолва модели) из реестра
-`config('catalog_import.categories')` — единственного источника правды и для
-парсера, и для `CategorySeeder`.
+price-exemption, и `ResolveCategoryStage` для резолва модели) из реестра,
+который читает `CategoryRegistry` — единственная точка доступа. Реестр живёт
+в БД (`categories` + `category_match_rules`), не в конфиге, и редактируется
+из MoonShine («Категории» в разделе «Каталог»):
 
-Чтобы добавить категорию: добавь запись в `categories` с нужными свойствами
-(`container`/`volume`/`price_exempt`/`default_brand`/`name_from_article`/`container_code`)
-и `match[]`-правилами (см. докблок над массивом `categories` в конфиге —
-там расписан приоритет типов `alcohol`/`contains`/`accessory_title`).
-Затем прогони `php artisan db:seed --class=CategorySeeder` — сидер строит
-категории прямо из этого массива.
+- флаги импорта (`expects_container`/`expects_volume`/`price_exempt`/
+  `default_brand`/`name_from_article`/`container_code`) — на вкладке «Импорт»
+  формы категории;
+- `match`-правила резолва slug (тип `alcohol`/`contains`/`accessory_title`,
+  `match_when`, `value`, `priority`) — на вкладке «Правила резолва», через
+  репитер над `category_match_rules`; порядок проверки = `priority ASC`;
+- глобальные маркеры сегментов (`alcohol_marker`/`accessory_marker`/
+  `advent_marker`/`fallback_slug`) — отдельная страница настроек импорта
+  в MoonShine (`Infrastructure\Settings\CatalogImportSettings`).
+
+Чтобы добавить категорию: создай запись в «Категории», заполни нужные флаги
+и добавь правила резолва. Изменения читаются сразу — `CategoryRegistry`
+кэширует реестр целиком и сбрасывает кэш по `saved`/`deleted` на `Category`/
+`CategoryMatchRule`. Инварианты, которые раньше держались «правильным
+порядком в конфиге» (не больше одного активного `alcohol`-правила на каждый
+`match_when`, уникальность `accessory_title`-значений), теперь проверяет
+`php artisan catalog:validate-registry` — гоняй её после правок вручную в БД
+или перед импортом.
+
+`database/seeders/CategorySeeder.php` только гарантирует наличие исходного
+набора категорий (`firstOrCreate` по slug, никогда не перезаписывает) — не
+источник правды для резолва, как раньше.
 
 ### 5. Отключить или переставить стейдж
 

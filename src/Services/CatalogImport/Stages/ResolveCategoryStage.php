@@ -11,21 +11,11 @@ use Services\CatalogImport\Dto\ImportContext;
 /**
  * Определяет категорию продукта из сырых колонок CSV до парсинга ABV.
  *
- * Алгоритм (порядок ветвей важен):
- *
- * 1. Верхний сегмент `Категория` (до `>`) == `alcohol_category_marker`:
- *    a. `Категория` содержит `advent_marker` (без учёта регистра) → `advent_category`
- *    b. `ABV` пустой (blank) → `non_alcoholic_category`
- *    c. Иначе: preg_match(`/mead|cider|sauce/i`, `СтильПива`) → совпавший slug,
- *       без совпадения → `default_beer_category`
- *
- * 2. Верхний сегмент непустой AND `Категория` содержит `probes_marker` → `probes_category`
- *
- * 3. Верхний сегмент == `accessory_category_marker`:
- *    Regex по ключам `accessory_title_map` против mb_strtolower(`Наименование`)
- *    → map[match] ?? `fallback_category`
- *
- * 4. Иначе → `fallback_category`
+ * Резолвит slug через CategorySlugResolver (см. этот класс для точного
+ * порядка ветвей: alcohol → contains → accessory_title → fallback, все
+ * маркеры и правила читаются из CategoryRegistry, т.е. из БД), затем ищет
+ * Category по slug. Категория НЕ создаётся автоматически — если slug не
+ * найден в БД, строка помечается warning'ом и пропускается ($ctx->skip).
  */
 final readonly class ResolveCategoryStage implements ImportStage
 {

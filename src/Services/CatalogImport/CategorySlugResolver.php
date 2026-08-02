@@ -6,7 +6,7 @@ use Services\CatalogImport\Dto\RawRow;
 
 /**
  * Определяет slug категории из сырых CSV-колонок без обращения к БД, используя
- * реестр `config('catalog_import.categories')` через CategoryRegistry.
+ * реестр категорий (таблицы categories/category_match_rules) через CategoryRegistry.
  * Тот же алгоритм, что и в ResolveCategoryStage, но работает с RawRow напрямую
  * и не создаёт/ищет Category-модель. Переиспользуется в NormalizeRowStage для
  * price-exemption до того, как ResolveCategoryStage запустит DB-lookup.
@@ -19,7 +19,12 @@ use Services\CatalogImport\Dto\RawRow;
  */
 final class CategorySlugResolver
 {
-    public function __construct(private readonly CategoryRegistry $registry = new CategoryRegistry) {}
+    private readonly CategoryRegistry $registry;
+
+    public function __construct(?CategoryRegistry $registry = null)
+    {
+        $this->registry = $registry ?? app(CategoryRegistry::class);
+    }
 
     public function resolve(RawRow $row): string
     {

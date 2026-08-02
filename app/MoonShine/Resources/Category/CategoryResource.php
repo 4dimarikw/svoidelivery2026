@@ -28,9 +28,12 @@ class CategoryResource extends ModelResource
 
     protected string $column = 'name';
 
-    protected bool $createInModal = true;
+    // Форма с 4 вкладками (флаги импорта, репитер правил резолва, pivot
+    // свойств) слишком тесная для модалки — create/edit открываются полной
+    // страницей. Detail остаётся в модалке, там нечего показывать сложнее.
+    protected bool $createInModal = false;
 
-    protected bool $editInModal = true;
+    protected bool $editInModal = false;
 
     protected bool $detailInModal = true;
 
@@ -54,7 +57,7 @@ class CategoryResource extends ModelResource
 
     protected function modifyQueryBuilder(Builder $builder): Builder
     {
-        return $builder->withCount('products');
+        return $builder->withCount(['products', 'matchRules']);
     }
 
     protected function deletionGuards(): array

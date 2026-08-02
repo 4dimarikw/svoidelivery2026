@@ -26,6 +26,12 @@ class CategoryFactory extends Factory
             'code' => Str::slug($name, '_'),
             'name' => ucfirst($name),
             'is_active' => true,
+            'expects_container' => false,
+            'expects_volume' => false,
+            'price_exempt' => false,
+            'name_from_article' => false,
+            'default_brand' => null,
+            'container_code' => null,
         ];
     }
 }
