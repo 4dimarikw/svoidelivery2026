@@ -17,26 +17,37 @@ use Domain\Catalog\Models\Container;
 use Domain\Catalog\Models\Manufacturer;
 use Domain\Catalog\Models\Product;
 use Domain\Catalog\Models\Volume;
-use Illuminate\Http\UploadedFile;
 use Illuminate\Validation\Rule;
+use Infrastructure\Jobs\RefreshProductMediaJob;
+use MoonShine\Contracts\Core\DependencyInjection\CrudRequestContract;
 use MoonShine\Contracts\Core\TypeCasts\DataWrapperContract;
 use MoonShine\Contracts\UI\ComponentContract;
 use MoonShine\Contracts\UI\FieldContract;
+use MoonShine\Crud\Components\Fragment;
+use MoonShine\Crud\JsonResponse;
 use MoonShine\Laravel\Fields\Relationships\BelongsTo;
 use MoonShine\Laravel\Fields\Relationships\RelationRepeater;
 use MoonShine\Laravel\Pages\Crud\FormPage;
+use MoonShine\Support\AlpineJs;
+use MoonShine\Support\Attributes\AsyncMethod;
+use MoonShine\Support\Enums\JsEvent;
+use MoonShine\Support\Enums\ToastType;
+use MoonShine\UI\Components\ActionButton;
 use MoonShine\UI\Components\Layout\Box;
 use MoonShine\UI\Components\Tabs;
 use MoonShine\UI\Components\Tabs\Tab;
-use MoonShine\UI\Components\Thumbnails;
+use MoonShine\UI\Components\When;
 use MoonShine\UI\Fields\Enum;
 use MoonShine\UI\Fields\ID;
-use MoonShine\UI\Fields\Image;
+use MoonShine\UI\Fields\Json;
 use MoonShine\UI\Fields\Number;
 use MoonShine\UI\Fields\Select;
 use MoonShine\UI\Fields\Switcher;
 use MoonShine\UI\Fields\Text;
 use MoonShine\UI\Fields\Textarea;
+use Services\Untappd\Facades\Untappd;
+use Throwable;
+use VI\MoonShineSpatieMediaLibrary\Fields\MediaLibrary;
 
 /**
  * @extends FormPage<ProductResource, Product>
@@ -45,6 +56,8 @@ final class ProductFormPage extends FormPage
 {
     /**
      * @return list<ComponentContract|FieldContract>
+     *
+     * @throws Throwable
      */
     protected function fields(): iterable
     {
@@ -120,31 +133,54 @@ final class ProductFormPage extends FormPage
                         Number::make(__('moonshine.product.fields.package_units'), 'package_units'),
                         Text::make(__('moonshine.product.fields.packaging_raw'), 'packaging_raw'),
                         Number::make(__('moonshine.product.fields.shelf_life_days'), 'shelf_life_days'),
+                        Json::make(__('moonshine.product.fields.flags'), 'metadata')
+                            ->fields(productVariationMetaData()->getMoonshineFields())
+                            ->object(),
                     ])->icon('adjustments-horizontal'),
 
                     Tab::make(__('moonshine.product.tabs.image'), [
-                        Image::make(__('moonshine.product.fields.current_image'), 'thumb')
-                            ->changePreview(static fn ($value) => Thumbnails::make($value))
-                            ->disabled()
-                            // 'thumb' — вычисляемый accessor (Product::thumb()), не колонка: no-op,
-                            // иначе apply() пытается записать это имя как обычную колонку в UPDATE/INSERT.
-                            ->onApply(static fn (Product $item): Product => $item),
+                        //                        Image::make(__('moonshine.product.fields.current_image'), 'thumb')
+                        //                            ->changePreview(static fn($value) => Thumbnails::make($value))
+                        //                            ->disabled()
+                        //                            // 'thumb' — вычисляемый accessor (Product::thumb()), не колонка: no-op,
+                        //                            // иначе apply() пытается записать это имя как обычную колонку в UPDATE/INSERT.
+                        //                            ->onApply(static fn(Product $item): Product => $item),
+                        //
+                        //                        Image::make(__('moonshine.product.fields.main_image'), 'main_image')
+                        //                            ->allowedExtensions(['jpg', 'jpeg', 'png', 'webp'])
+                        //                            ->hint('Загрузка новой картинки заменяет текущую и защищает её от перезаписи фотографией с Untappd при импорте.')
+                        //                            // 'main_image' не колонка таблицы — no-op, чтобы data_set не писал мусор в модель.
+                        //                            ->onApply(static fn(Product $item): Product => $item)
+                        //                            ->onAfterApply(static function (Product $item, mixed $value): Product {
+                        //                                if ($value instanceof UploadedFile) {
+                        //                                    $item->addMedia($value->getRealPath())
+                        //                                        ->usingFileName($value->hashName())
+                        //                                        ->withCustomProperties(['source' => 'admin'])
+                        //                                        ->toMediaCollection('main');
+                        //                                }
+                        //
+                        //                                return $item;
+                        //                            }),
+                        When::make(
+                            fn () => ! blank($this->getItem()?->beerDetails->untappd_beer_id),
+                            fn () => [ActionButton::make('Обновить через Untappd')
+                                ->primary()
+                                ->method(
+                                    'updateImageFromUntappd',
+                                    params: ['itemId' => $this->getItem()?->id],
+                                    events: [AlpineJs::event(JsEvent::FRAGMENT_UPDATED, 'product-label')]
+                                )],
+                        ),
 
-                        Image::make(__('moonshine.product.fields.main_image'), 'main_image')
-                            ->allowedExtensions(['jpg', 'jpeg', 'png', 'webp'])
-                            ->hint('Загрузка новой картинки заменяет текущую и защищает её от перезаписи фотографией с Untappd при импорте.')
-                            // 'main_image' не колонка таблицы — no-op, чтобы data_set не писал мусор в модель.
-                            ->onApply(static fn (Product $item): Product => $item)
-                            ->onAfterApply(static function (Product $item, mixed $value): Product {
-                                if ($value instanceof UploadedFile) {
-                                    $item->addMedia($value->getRealPath())
-                                        ->usingFileName($value->hashName())
-                                        ->withCustomProperties(['source' => 'admin'])
-                                        ->toMediaCollection('main');
-                                }
-
-                                return $item;
-                            }),
+                        Fragment::make([
+                            MediaLibrary::make(__('moonshine.product.fields.main_image'), 'main', formatted: fn ($item) => $item->label)
+                                ->keepOriginalFileName()
+                                ->dir('upload_for_media_library')
+                                ->itemAttributes(fn (string $filename, int $index = 0) => [
+                                    'style' => 'width: 100%; max-width: 500px; height: 100%;',
+                                ])
+                                ->removable(),
+                        ])->name('product-label'),
                     ])->icon('photo'),
 
                     Tab::make(__('moonshine.product.tabs.beer'), [
@@ -196,5 +232,41 @@ final class ProductFormPage extends FormPage
             'beerDetails.*.plato' => ['nullable', 'numeric', 'min:0'],
             'beerDetails.*.ebc' => ['nullable', 'numeric', 'min:0'],
         ];
+    }
+
+    #[AsyncMethod]
+    public function updateImageFromUntappd(CrudRequestContract $request)
+    {
+        $itemId = request()->input('itemId');
+
+        $product = Product::findOrFail($itemId);
+
+        $UBeer = $product?->beerDetails->untappdBeer;
+
+        if (blank($UBeer)) {
+            return JsonResponse::make()->toast('Untappd ID не задан', ToastType::WARNING);
+        }
+
+        $beerId = $UBeer->beer_id;
+
+        $apiResponse = Untappd::get("beer/info/$beerId");
+
+        if ($apiResponse->meta->code !== 200 || blank($apiResponse->response->beer)) {
+            return JsonResponse::make()->toast("Ошибка при получении данных Untappd. bid=$beerId", ToastType::WARNING);
+        }
+
+        $UBeer->label = $apiResponse->response->beer->beer_image ?? $apiResponse->response->beer->beer_label;
+        $UBeer->rating_count = $apiResponse->response->beer->rating_count;
+        $UBeer->rating_score = $apiResponse->response->beer->rating_score;
+
+        $UBeer->save();
+
+        $UBeer->refresh();
+
+        if ($UBeer->label) {
+            RefreshProductMediaJob::dispatchSync($product, $UBeer->label);
+        }
+
+        return JsonResponse::make()->toast('Изображение обновлено', ToastType::SUCCESS);
     }
 }

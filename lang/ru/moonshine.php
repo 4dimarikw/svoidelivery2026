@@ -8,6 +8,7 @@
 return [
     'group' => [
         'catalog' => 'Каталог',
+        'users' => 'Пользователи',
     ],
 
     'product' => [
@@ -31,6 +32,7 @@ return [
             'package_units' => 'Штук в упаковке',
             'packaging_raw' => 'Упаковка (как в 1С)',
             'shelf_life_days' => 'Срок годности, дней',
+            'flags' => 'Опции',
             'main_image' => 'Загрузить изображение',
             'current_image' => 'Текущее изображение',
             'beer_details' => 'Пивные характеристики',
@@ -106,6 +108,86 @@ return [
             'milliliters' => 'Объём, мл',
             'label' => 'Название',
             'products_count' => 'Товаров',
+        ],
+    ],
+
+    'user' => [
+        'title' => 'Пользователи',
+        'fields' => [
+            'name' => 'Имя',
+            'email' => 'E-mail',
+            'email_verified_at' => 'Почта подтверждена',
+            'password' => 'Пароль',
+            'password_confirmation' => 'Повтор пароля',
+            'change_password' => 'Сменить пароль',
+            'phone' => 'Телефон',
+            'created_at' => 'Дата регистрации',
+            'addresses_count' => 'Адресов',
+            'profile' => 'Профиль',
+            'addresses' => 'Адреса',
+        ],
+        'tabs' => [
+            'main' => 'Основное',
+            'profile' => 'Профиль',
+            'addresses' => 'Адреса',
+        ],
+    ],
+
+    'profile' => [
+        'title' => 'Профили',
+        'fields' => [
+            'full_name' => 'ФИО',
+            'first_name' => 'Имя',
+            'last_name' => 'Фамилия',
+            'patronymic' => 'Отчество',
+            'phone' => 'Телефон',
+            'vk_url' => 'Ссылка VK',
+            'telegram_url' => 'Ссылка Telegram',
+            'default_order_comment' => 'Комментарий к заказу по умолчанию',
+        ],
+    ],
+
+    'address' => [
+        'title' => 'Адреса',
+        'fields' => [
+            'label' => 'Название',
+            'city' => 'Город',
+            'street' => 'Улица',
+            'house' => 'Дом',
+            'apartment' => 'Квартира',
+            'entrance' => 'Подъезд',
+            'floor' => 'Этаж',
+            'intercom' => 'Домофон',
+            'comment' => 'Комментарий',
+            'is_default' => 'Адрес по умолчанию',
+        ],
+    ],
+
+    'untappd_beer' => [
+        'title' => 'Untappd',
+        'fields' => [
+            'beer_id' => 'Untappd ID',
+            'name' => 'Название',
+            'brewery' => 'Пивоварня',
+            'style' => 'Стиль',
+            'description' => 'Описание',
+            'rating_count' => 'Оценок',
+            'rating_score' => 'Рейтинг',
+            'label' => 'Изображение',
+            'url' => 'URL',
+            'synced_at' => 'Синхронизировано',
+            'products_count' => 'Товаров',
+        ],
+        'actions' => [
+            'resync' => 'Обновить из Untappd',
+        ],
+        'query_tags' => [
+            'not_synced' => 'Не синхронизированы',
+            'no_products' => 'Без привязанных товаров',
+        ],
+        'toasts' => [
+            'resync_success' => 'Данные обновлены из Untappd',
+            'resync_failed' => 'Не удалось получить данные из Untappd',
         ],
     ],
 ];

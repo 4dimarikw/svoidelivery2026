@@ -35,7 +35,7 @@ class ProductResource extends ModelResource
 {
     protected string $model = Product::class;
 
-    protected string $column = 'name';
+    protected string $column = 'article';
 
     protected bool $detailInModal = true;
 

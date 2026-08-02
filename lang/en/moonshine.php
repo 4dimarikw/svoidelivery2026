@@ -8,6 +8,7 @@
 return [
     'group' => [
         'catalog' => 'Catalog',
+        'users' => 'Users',
     ],
 
     'product' => [
@@ -31,6 +32,7 @@ return [
             'package_units' => 'Units per package',
             'packaging_raw' => 'Packaging (as in 1C)',
             'shelf_life_days' => 'Shelf life, days',
+            'flags' => 'flags',
             'main_image' => 'Upload image',
             'current_image' => 'Current image',
             'beer_details' => 'Beer characteristics',
@@ -106,6 +108,86 @@ return [
             'milliliters' => 'Volume, ml',
             'label' => 'Name',
             'products_count' => 'Products',
+        ],
+    ],
+
+    'user' => [
+        'title' => 'Users',
+        'fields' => [
+            'name' => 'Name',
+            'email' => 'E-mail',
+            'email_verified_at' => 'Email verified',
+            'password' => 'Password',
+            'password_confirmation' => 'Repeat password',
+            'change_password' => 'Change password',
+            'phone' => 'Phone',
+            'created_at' => 'Registered',
+            'addresses_count' => 'Addresses',
+            'profile' => 'Profile',
+            'addresses' => 'Addresses',
+        ],
+        'tabs' => [
+            'main' => 'Main',
+            'profile' => 'Profile',
+            'addresses' => 'Addresses',
+        ],
+    ],
+
+    'profile' => [
+        'title' => 'Profiles',
+        'fields' => [
+            'full_name' => 'Full name',
+            'first_name' => 'First name',
+            'last_name' => 'Last name',
+            'patronymic' => 'Patronymic',
+            'phone' => 'Phone',
+            'vk_url' => 'VK link',
+            'telegram_url' => 'Telegram link',
+            'default_order_comment' => 'Default order comment',
+        ],
+    ],
+
+    'address' => [
+        'title' => 'Addresses',
+        'fields' => [
+            'label' => 'Label',
+            'city' => 'City',
+            'street' => 'Street',
+            'house' => 'House',
+            'apartment' => 'Apartment',
+            'entrance' => 'Entrance',
+            'floor' => 'Floor',
+            'intercom' => 'Intercom',
+            'comment' => 'Comment',
+            'is_default' => 'Default address',
+        ],
+    ],
+
+    'untappd_beer' => [
+        'title' => 'Untappd',
+        'fields' => [
+            'beer_id' => 'Untappd ID',
+            'name' => 'Name',
+            'brewery' => 'Brewery',
+            'style' => 'Style',
+            'description' => 'Description',
+            'rating_count' => 'Ratings',
+            'rating_score' => 'Rating',
+            'label' => 'Image',
+            'url' => 'URL',
+            'synced_at' => 'Synced',
+            'products_count' => 'Products',
+        ],
+        'actions' => [
+            'resync' => 'Refresh from Untappd',
+        ],
+        'query_tags' => [
+            'not_synced' => 'Not synced',
+            'no_products' => 'No linked products',
+        ],
+        'toasts' => [
+            'resync_success' => 'Data refreshed from Untappd',
+            'resync_failed' => 'Failed to fetch data from Untappd',
         ],
     ],
 ];

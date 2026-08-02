@@ -4,6 +4,8 @@ namespace Domain\Untappd\Models;
 
 use Database\Factories\Catalog\UntappdBeerFactory;
 use Domain\Catalog\Models\BeerProductDetail;
+use Eloquent;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -28,25 +30,25 @@ use Illuminate\Support\Carbon;
  * @property-read Collection<int, BeerProductDetail> $beerProductDetails
  * @property-read int|null $beer_product_details_count
  *
- * @method static \Database\Factories\Catalog\UntappdBeerFactory factory($count = null, $state = [])
- * @method static \Illuminate\Database\Eloquent\Builder<static>|UntappdBeer newModelQuery()
- * @method static \Illuminate\Database\Eloquent\Builder<static>|UntappdBeer newQuery()
- * @method static \Illuminate\Database\Eloquent\Builder<static>|UntappdBeer query()
- * @method static \Illuminate\Database\Eloquent\Builder<static>|UntappdBeer whereBeerId($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|UntappdBeer whereBrewery($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|UntappdBeer whereCreatedAt($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|UntappdBeer whereDescription($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|UntappdBeer whereId($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|UntappdBeer whereLabel($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|UntappdBeer whereName($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|UntappdBeer whereRatingCount($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|UntappdBeer whereRatingScore($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|UntappdBeer whereStyle($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|UntappdBeer whereSyncedAt($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|UntappdBeer whereUpdatedAt($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|UntappdBeer whereUrl($value)
+ * @method static UntappdBeerFactory factory($count = null, $state = [])
+ * @method static Builder<static>|UntappdBeer newModelQuery()
+ * @method static Builder<static>|UntappdBeer newQuery()
+ * @method static Builder<static>|UntappdBeer query()
+ * @method static Builder<static>|UntappdBeer whereBeerId($value)
+ * @method static Builder<static>|UntappdBeer whereBrewery($value)
+ * @method static Builder<static>|UntappdBeer whereCreatedAt($value)
+ * @method static Builder<static>|UntappdBeer whereDescription($value)
+ * @method static Builder<static>|UntappdBeer whereId($value)
+ * @method static Builder<static>|UntappdBeer whereLabel($value)
+ * @method static Builder<static>|UntappdBeer whereName($value)
+ * @method static Builder<static>|UntappdBeer whereRatingCount($value)
+ * @method static Builder<static>|UntappdBeer whereRatingScore($value)
+ * @method static Builder<static>|UntappdBeer whereStyle($value)
+ * @method static Builder<static>|UntappdBeer whereSyncedAt($value)
+ * @method static Builder<static>|UntappdBeer whereUpdatedAt($value)
+ * @method static Builder<static>|UntappdBeer whereUrl($value)
  *
- * @mixin \Eloquent
+ * @mixin Eloquent
  */
 class UntappdBeer extends Model
 {

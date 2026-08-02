@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Str;
+use Services\ProductFlagsManager;
 
 if (! function_exists('ui_id')) {
     /**
@@ -27,5 +28,12 @@ if (! function_exists('normalize_name')) {
     function normalize_name(string $name): string
     {
         return trim(preg_replace('/\s+/', ' ', mb_strtolower($name)));
+    }
+}
+
+if (! function_exists('productVariationMetaData')) {
+    function productVariationMetaData(): ProductFlagsManager
+    {
+        return app(ProductFlagsManager::class);
     }
 }
