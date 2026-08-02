@@ -107,6 +107,14 @@ final class CategorySlugResolver
         $keywordToSlug = [];
         foreach ($this->registry->rulesOfType('accessory_title') as ['slug' => $slug, 'rule' => $rule]) {
             foreach ($rule['keywords'] ?? [] as $keyword) {
+                // CategoryRegistry::loadCategories() already drops blank
+                // values, but the registry is constructible outside that
+                // path — a blank keyword here would collapse to an empty
+                // regex alternative that matches every title at offset 0.
+                if (blank($keyword)) {
+                    continue;
+                }
+
                 $keywordToSlug[mb_strtolower($keyword)] = $slug;
             }
         }
@@ -116,7 +124,8 @@ final class CategorySlugResolver
         }
 
         $title = mb_strtolower($row->get(config('catalog_import.columns.name_full')));
-        $pattern = '/'.implode('|', array_map('preg_quote', array_keys($keywordToSlug))).'/i';
+        $quoted = array_map(static fn (string $k): string => preg_quote($k, '/'), array_keys($keywordToSlug));
+        $pattern = '/'.implode('|', $quoted).'/i';
 
         preg_match($pattern, $title, $matches);
 

@@ -4,7 +4,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project state
 
-Laravel 12 + MoonShine 4 admin panel for **"Свои Delivery"** (alcohol delivery, Russian market). `src/Domain` and `src/Services` are still empty scaffolding. The public-facing frontend uses a token-driven Blade + Alpine component library (`<x-ui.*>`) — see "Frontend component library" below — and `laravel/fortify` now provides the auth backend, with views composed entirely from that library — see "Authentication (Fortify)" below. Treat existing structure as intentional scaffolding to build into, not legacy to work around.
+Laravel 12 + MoonShine 4 admin panel for **"Свои Delivery"** (alcohol delivery, Russian market). `src/Domain`/`src/Services`/`src/Infrastructure` now hold real code — catalog (`Domain\Catalog`, `Services\CatalogImport`), auth (`Domain\Auth`), profile (`Domain\Profile`), Untappd sync (`Domain\Untappd`, `Services\Untappd`) — see "Architecture: PSR-4 layout beyond `app/`" below. The public-facing frontend uses a token-driven Blade + Alpine component library (`<x-ui.*>`) — see "Frontend component library" below — and `laravel/fortify` provides the auth backend, with views composed entirely from that library — see "Authentication (Fortify)" below. Treat existing structure as intentional scaffolding to build into, not legacy to work around.
+
+## Conventions
+
+Write code comments (docblocks, inline `//`) in **Russian** — the codebase currently mixes Russian and English comments, but new/edited comments should be Russian going forward. Identifiers, commit messages, and this file stay in English.
 
 ## Stack
 
@@ -41,7 +45,7 @@ Design tokens (colors, type scale, radii, shadows) live in `tailwind.config.js` 
 - **The login rate limiter has a custom `->response()`** in `FortifyServiceProvider` — without it, a throttled login returns a bare Symfony 429 instead of the translated `auth.throttle` string. If you touch that limiter, keep the response callback.
 - **Registration has two separate consent checkboxes** (`age_confirmed`, `terms_accepted`) validated in `app/Actions/Fortify/CreateNewUser.php` — deliberately not one combined checkbox (bundled age+ToS consent is legally dicey in some jurisdictions). Both are `['accepted']`-validated only; neither is ever persisted (`User::create()` and `$fillable` both ignore them) and there's no corresponding `users` column.
 - **`lang/{ru,en}/account.php` is new and app-owned** — login/register/reset page copy. Keep it separate from `auth.php`/`passwords.php`/`validation.php` (managed by `laravel-lang/common`, overwritten by `composer post-update-cmd` → `artisan lang:update`) and from `ui.php` (`<x-ui.*>` component-internal strings only, not page copy).
-- **MoonShine and Fortify are fully separate auth systems.** MoonShine's `moonshine` guard/provider (→ `moonshine_users` table, `admin/*` routes) is injected at runtime by its own service provider; Fortify uses the stock `web` guard → `App\Models\User`. A `users` login grants no admin access and vice versa.
+- **MoonShine and Fortify are fully separate auth systems.** MoonShine's `moonshine` guard/provider (→ `moonshine_users` table, `admin/*` routes) is injected at runtime by its own service provider; Fortify uses the stock `web` guard → `Domain\Auth\Models\User` (moved out of `app/Models`, which is now empty — see "Architecture" below). A `users` login grants no admin access and vice versa.
 
 ## Public pages & site chrome
 
@@ -66,24 +70,28 @@ Ajax success has no `session('status')` to read (Fortify only sets that for non-
 
 ## Domain layer (`Domain\`)
 
-First real use of the `Domain\` → `src/Domain/` PSR-4 namespace (previously empty scaffolding). `Domain\Profile\Models\{Profile,Address}` — Eloquent models, not framework-agnostic business logic, living outside `app/Models` because that's where this project chose to put "logic strongly tied to a bounded concept but not `User` itself." `Profile` is 1:1 with `User` (`user_profiles` table, `user_id` unique+cascade), created automatically by `App\Listeners\CreateUserProfile` on the `Illuminate\Auth\Events\Registered` event (relies on Laravel's default listener auto-discovery scanning `app/Listeners` — no explicit `Event::listen()` anywhere, verify with `php artisan event:list` if it ever seems not to fire). Every profile field is nullable — `$user->profile` can also be legitimately `null` (pre-listener users, factories that bypass `Registered`), so callers must be null-safe (`$user->profile?->first_name`, `updateOrCreate([], $data)` rather than `update($data)`).
+`Domain\` → `src/Domain/` groups Eloquent models by bounded concept, not framework-agnostic business logic:
 
-`Address` is 1:many, `Address::booted()`'s `saving` hook enforces "at most one default address per user" by unsetting `is_default` on the user's other addresses — not a DB constraint, deliberately (a partial unique index is disproportionate complexity for this).
+- `Domain\Auth\Models\User` — the Fortify/`web`-guard user model, moved out of `app/Models` (now empty) into its own bounded concept.
+- `Domain\Profile\Models\{Profile,Address}` — living outside `app/Models` because that's where this project chose to put "logic strongly tied to a bounded concept but not `User` itself." `Profile` is 1:1 with `User` (`user_profiles` table, `user_id` unique+cascade), created automatically by `App\Listeners\CreateUserProfile` on the `Illuminate\Auth\Events\Registered` event (relies on Laravel's default listener auto-discovery scanning `app/Listeners` — no explicit `Event::listen()` anywhere, verify with `php artisan event:list` if it ever seems not to fire). Every profile field is nullable — `$user->profile` can also be legitimately `null` (pre-listener users, factories that bypass `Registered`), so callers must be null-safe (`$user->profile?->first_name`, `updateOrCreate([], $data)` rather than `update($data)`). `Address` is 1:many, `Address::booted()`'s `saving` hook enforces "at most one default address per user" by unsetting `is_default` on the user's other addresses — not a DB constraint, deliberately (a partial unique index is disproportionate complexity for this).
+- `Domain\Catalog\Models\{Product,Category,CategoryMatchRule,Manufacturer,BeerStyle,BeerProductDetail,Container,Volume,Property}` — the product catalog, flat schema (price/stock/volume/container live directly on `products`, no separate variants table). `Category`/`CategoryMatchRule` are the admin-editable registry consumed by the catalog import pipeline — see `src/Services/CatalogImport/README.md` for the full pipeline architecture and how to extend it; don't duplicate that detail here.
+- `Domain\Untappd\Models\UntappdBeer` — synced beer metadata from the Untappd API (`Services\Untappd`).
 
 ## Architecture: PSR-4 layout beyond `app/`
 
-Composer autoloads three extra namespaces out of `src/` (see `composer.json`):
+Composer autoloads four extra namespaces out of `src/` (see `composer.json`):
 
-- `Domain\` → `src/Domain/` — domain/business logic; `Domain\Profile\Models\{Profile,Address}` (see "Domain layer" above)
-- `Services\` → `src/Services/` — service classes (empty so far)
-- `Support\` → `src/Support/` — helpers; `src/Support/helpers.php` is autoloaded globally via composer `files`
+- `Domain\` → `src/Domain/` — domain models (see "Domain layer" above)
+- `Services\` → `src/Services/` — service classes: `Services\CatalogImport` (1С CSV import pipeline, see its own README), `Services\Untappd` (Untappd API client/DTOs/repositories)
+- `Infrastructure\` → `src/Infrastructure/` — cross-cutting infra: `Infrastructure\Settings\*` (`spatie/laravel-settings` classes, e.g. `CatalogImportSettings`, `GeneralSettings`), `Infrastructure\Ftp\Catalog1cFtpClient`, `Infrastructure\Jobs`, `Infrastructure\Rules` (custom validation rules)
+- `Support\` → `src/Support/` — helpers (`src/Support/helpers.php` autoloaded globally via composer `files`) and `Support\Logging\Events` (typed events logged for observability, e.g. `CatalogImportCompleted`/`Failed`)
 
-Standard Laravel dirs (`app/Http`, `app/Models`, `app/Providers`) hold framework glue only. `app/MoonShine/` holds MoonShine-specific classes:
+Standard Laravel dirs (`app/Http`, `app/Providers`) hold framework glue only; `app/Models` is empty (`User` lives in `Domain\Auth\Models` — see "Domain layer" above). `app/MoonShine/` holds MoonShine-specific classes:
 - `app/MoonShine/Resources/<Name>/<Name>Resource.php` + `Pages/<Name>FormPage.php` + `Pages/<Name>IndexPage.php` — one folder per admin resource
-- `app/MoonShine/Pages/` — standalone MoonShine pages (e.g. `Dashboard.php`)
+- `app/MoonShine/Pages/` — standalone MoonShine pages (e.g. `Dashboard.php`, `CatalogImportSettingsPage.php`)
 - `app/MoonShine/Layouts/MoonShineLayout.php` — admin panel layout
 
-New MoonShine resources must be registered in `App\Providers\MoonShineServiceProvider::boot()`'s `->resources([...])` call — they are not auto-discovered.
+MoonShine resources/pages are auto-discovered (`MoonShineServiceProvider::boot()` calls `$core->autoload()` over the `App\MoonShine\*` namespace) — no manual `->resources([...])` registration needed; just add the class in the right folder.
 
 ## Commands
 
@@ -108,6 +116,10 @@ vendor/bin/pint --dirty   # only changed files
 # Frontend
 npm run dev      # vite dev
 npm run build    # vite build
+
+# Catalog import (1С CSV → products) — see src/Services/CatalogImport/README.md
+php artisan catalog:import              # download from FTP + import
+php artisan catalog:validate-registry   # check category registry invariants (also run as a pre-flight by catalog:import)
 ```
 
 ## Skills available in this repo

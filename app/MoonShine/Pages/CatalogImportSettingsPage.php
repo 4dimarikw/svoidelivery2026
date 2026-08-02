@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\MoonShine\Pages;
 
 use Domain\Catalog\Models\Category;
-use Illuminate\Support\Facades\Cache;
 use Infrastructure\Settings\CatalogImportSettings;
 use MoonShine\Contracts\UI\ComponentContract;
 use MoonShine\Crud\JsonResponse;
@@ -98,7 +97,7 @@ class CatalogImportSettingsPage extends Page
 
         $settings->save();
 
-        Cache::forget(CategoryRegistry::CACHE_KEY);
+        CategoryRegistry::flush();
 
         return JsonResponse::make()->toast(__('moonshine.catalog_import_settings.saved'));
     }

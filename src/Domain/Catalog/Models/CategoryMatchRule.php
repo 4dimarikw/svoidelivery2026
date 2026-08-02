@@ -9,7 +9,6 @@ use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Support\Facades\Cache;
 use Services\CatalogImport\CategoryRegistry;
 
 /**
@@ -59,7 +58,7 @@ class CategoryMatchRule extends Model
 
     protected static function booted(): void
     {
-        static::saved(fn () => Cache::forget(CategoryRegistry::CACHE_KEY));
-        static::deleted(fn () => Cache::forget(CategoryRegistry::CACHE_KEY));
+        static::saved(fn () => CategoryRegistry::flush());
+        static::deleted(fn () => CategoryRegistry::flush());
     }
 }

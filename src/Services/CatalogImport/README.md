@@ -21,9 +21,11 @@ php artisan db:seed --class=CategorySeeder
 php artisan db:seed --class=ContainerSeeder
 ```
 
-`CategorySeeder` строит категории из `config('catalog_import.categories')` —
-того же реестра, которым пользуется парсер, так что slug в БД никогда не
-расходится с тем, что резолвит `CategorySlugResolver`.
+`CategorySeeder` гарантирует наличие исходного набора категорий
+(`firstOrCreate` по slug, никогда не перезаписывает существующие) — не
+источник правды для резолва. Реестр, которым пользуется парсер, живёт в БД
+(`categories` + `category_match_rules`) и читается через `CategoryRegistry` —
+см. §4 «Изменить определение категории или добавить новую» ниже.
 
 ### Команды
 

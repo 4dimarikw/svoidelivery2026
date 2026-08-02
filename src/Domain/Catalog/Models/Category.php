@@ -10,7 +10,6 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\Cache;
 use Services\CatalogImport\CategoryRegistry;
 use Spatie\Sluggable\HasSlug;
 use Spatie\Sluggable\SlugOptions;
@@ -108,8 +107,8 @@ class Category extends Model
      */
     protected static function booted(): void
     {
-        static::saved(fn () => Cache::forget(CategoryRegistry::CACHE_KEY));
-        static::deleted(fn () => Cache::forget(CategoryRegistry::CACHE_KEY));
+        static::saved(fn () => CategoryRegistry::flush());
+        static::deleted(fn () => CategoryRegistry::flush());
     }
 
     /**

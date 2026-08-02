@@ -28,6 +28,19 @@ final class CategoryRegistry
 {
     public const CACHE_KEY = 'catalog.category_registry';
 
+    /**
+     * Single invalidation entry point — clears both the cache entry AND the
+     * resolved container instance. CategoryRegistry is bound as a singleton
+     * (see AppServiceProvider) so catalog:import doesn't re-run the cache
+     * lookup on every CSV row; a bare Cache::forget() alone would leave that
+     * singleton holding a stale readonly copy for the rest of the process.
+     */
+    public static function flush(): void
+    {
+        Cache::forget(self::CACHE_KEY);
+        app()->forgetInstance(self::class);
+    }
+
     /** @var array<string, array<string, mixed>> */
     private readonly array $categories;
 
@@ -93,6 +106,17 @@ final class CategoryRegistry
             $slug = $rule->category->slug;
 
             if (! isset($categories[$slug])) {
+                continue;
+            }
+
+            // A blank value on a non-alcohol rule would otherwise compile
+            // into a match-everything branch downstream (accessory_title →
+            // empty keyword → empty regex alternative matches any title;
+            // contains → empty needle → str_contains(..., '') is always
+            // true). catalog:validate-registry flags this in the normal
+            // import path, but CategoryRegistry is constructible outside
+            // it, so guard here too.
+            if ($rule->type !== CategoryMatchType::Alcohol && blank($rule->value)) {
                 continue;
             }
 

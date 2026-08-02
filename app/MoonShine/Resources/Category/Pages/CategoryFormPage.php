@@ -93,7 +93,8 @@ final class CategoryFormPage extends FormPage
                                 Text::make(__('moonshine.category_match_rule.fields.value'), 'value')
                                     ->nullable(),
 
-                                Number::make(__('moonshine.category_match_rule.fields.priority'), 'priority'),
+                                Number::make(__('moonshine.category_match_rule.fields.priority'), 'priority')
+                                    ->default(0),
 
                                 Switcher::make(__('moonshine.category_match_rule.fields.is_active'), 'is_active'),
                             ]),
@@ -142,7 +143,7 @@ final class CategoryFormPage extends FormPage
             'matchRules.*.type' => ['required', Rule::enum(CategoryMatchType::class)],
             'matchRules.*.match_when' => ['nullable', Rule::enum(CategoryMatchWhen::class)],
             'matchRules.*.value' => ['nullable', 'string', 'max:255'],
-            'matchRules.*.priority' => ['nullable', 'integer', 'min:0', 'max:65535'],
+            'matchRules.*.priority' => ['required', 'integer', 'min:0', 'max:65535'],
             'matchRules.*.is_active' => ['nullable', 'boolean'],
         ];
     }

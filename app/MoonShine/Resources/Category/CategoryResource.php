@@ -9,10 +9,12 @@ use App\MoonShine\Resources\Category\Pages\CategoryIndexPage;
 use App\MoonShine\Support\GuardsRelatedDeletion;
 use Domain\Catalog\Models\Category;
 use Illuminate\Contracts\Database\Eloquent\Builder;
+use MoonShine\Contracts\Core\TypeCasts\DataWrapperContract;
 use MoonShine\Laravel\Resources\ModelResource;
 use MoonShine\MenuManager\Attributes\Group;
 use MoonShine\MenuManager\Attributes\Order;
 use MoonShine\Support\Attributes\Icon;
+use Services\CatalogImport\CategoryRegistry;
 
 /**
  * @extends ModelResource<Category, CategoryIndexPage, CategoryFormPage, null>
@@ -65,5 +67,34 @@ class CategoryResource extends ModelResource
         return [
             'products' => 'Нельзя удалить категорию: она используется в товарах.',
         ];
+    }
+
+    // RelationRepeater ('matchRules', see CategoryFormPage) saves its rows
+    // via raw query-builder update()/delete() (RelationRepeater::saveRelation()),
+    // which does NOT fire Eloquent model events — so CategoryMatchRule::booted()
+    // never runs for edits/deletes of existing rules made through this form.
+    // That's currently masked because saving the parent Category always fires
+    // Category::saved in the same request, but that's event-order coincidence,
+    // not a guarantee. Flush explicitly here so cache invalidation doesn't
+    // depend on it.
+    protected function afterCreated(DataWrapperContract $item): DataWrapperContract
+    {
+        CategoryRegistry::flush();
+
+        return $item;
+    }
+
+    protected function afterUpdated(DataWrapperContract $item): DataWrapperContract
+    {
+        CategoryRegistry::flush();
+
+        return $item;
+    }
+
+    protected function afterDeleted(DataWrapperContract $item): DataWrapperContract
+    {
+        CategoryRegistry::flush();
+
+        return $item;
     }
 }
