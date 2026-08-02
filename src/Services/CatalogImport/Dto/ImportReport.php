@@ -24,6 +24,9 @@ class ImportReport
 
     public int $imagesAttached = 0;
 
+    /** Длительность импорта, мс. Заполняется CsvParserService, в т.ч. в dry-run. */
+    public int $durationMs = 0;
+
     /** Истинный счётчик всех предупреждений, не ограниченный warningLimit. */
     public int $warningsTotal = 0;
 

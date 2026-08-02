@@ -51,7 +51,9 @@ readonly class CsvParserService
                     $this->importRows($path, $encoding, $delimiter, $stages, $postCommitStages, $lookups, $report, $options, $warningLimit, $transactionMode);
                 }
 
-                $durationMs = (int) round((hrtime(true) - $startedAt) / 1_000_000);
+                // Пишется в отчёт до dry-run-проверки: событие при dry-run не диспатчится,
+                // но CatalogImportCommand логирует длительность в любом режиме.
+                $report->durationMs = (int) round((hrtime(true) - $startedAt) / 1_000_000);
 
                 if (! $options->dryRun) {
                     // NB: after the ProductVariation collapse (flat products.* schema), this
@@ -70,7 +72,7 @@ readonly class CsvParserService
                         barcodesCreated: $report->barcodesCreated,
                         warningsCount: $report->warningsTotal,
                         warnings: $report->warnings,
-                        durationMs: $durationMs,
+                        durationMs: $report->durationMs,
                     ));
                 }
 

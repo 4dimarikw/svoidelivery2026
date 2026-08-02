@@ -8,6 +8,7 @@ use Infrastructure\Ftp\Catalog1cFtpClient;
 use Services\CatalogImport\CsvParserService;
 use Services\CatalogImport\Dto\ImportOptions;
 use Services\CatalogImport\Dto\ImportReport;
+use Services\CatalogImport\ImportReportLogger;
 use Throwable;
 
 class CatalogImportCommand extends Command
@@ -20,7 +21,10 @@ class CatalogImportCommand extends Command
 
     protected $description = 'Импорт товаров в каталог из CSV-выгрузки 1С';
 
-    public function handle(CsvParserService $service, Catalog1cFtpClient $ftp): int
+    /** Откуда взят CSV — только для шапки файла отчёта. Заполняется resolveImportPath(). */
+    private string $sourceLabel = 'неизвестен';
+
+    public function handle(CsvParserService $service, Catalog1cFtpClient $ftp, ImportReportLogger $logger): int
     {
         $path = $this->resolveImportPath($ftp);
 
@@ -34,7 +38,7 @@ class CatalogImportCommand extends Command
             return self::FAILURE;
         }
 
-        $isDryRun = $this->option('dry-run');
+        $isDryRun = (bool) $this->option('dry-run');
         $categoryFilter = $this->parseCategoryFilter();
 
         if ($categoryFilter === null) {
@@ -51,10 +55,13 @@ class CatalogImportCommand extends Command
 
         $this->info("Импорт: {$path}");
 
+        $params = $this->buildParams($path, $isDryRun, $categoryFilter);
+
         try {
             $report = $service->import($path, new ImportOptions(dryRun: $isDryRun, categoryFilter: $categoryFilter));
         } catch (Throwable $e) {
             $this->error("Импорт не выполнен: {$e->getMessage()}");
+            $this->writeReportLog(fn () => $logger->writeFailure($params, $e, $isDryRun));
 
             return self::FAILURE;
         }
@@ -64,25 +71,56 @@ class CatalogImportCommand extends Command
         }
 
         $this->printReport($report);
+        $this->writeReportLog(fn () => $logger->writeSuccess($params, $report, $isDryRun));
 
         return self::SUCCESS;
     }
 
+    /**
+     * Шапка файла отчёта: с какими входными данными запускался импорт.
+     *
+     * @param  list<string>  $categoryFilter
+     * @return array<string, string>
+     */
+    private function buildParams(string $path, bool $isDryRun, array $categoryFilter): array
+    {
+        $transactionMode = (string) config('catalog_import.transaction_mode', 'row');
+        $chunkSize = (int) config('catalog_import.chunk_size', 500);
+
+        return [
+            // storage_path() отдаёт разделитель ОС, а download_dir — прямые слэши.
+            'Файл' => str_replace(['/', '\\'], DIRECTORY_SEPARATOR, $path),
+            'Источник' => $this->sourceLabel,
+            'Режим' => $isDryRun ? 'тестовый (--dry-run)' : 'обычный',
+            'Категории' => $categoryFilter === [] ? 'все' : implode(', ', $categoryFilter),
+            'Транзакции' => $transactionMode === 'chunk'
+                ? "chunk (chunk_size {$chunkSize})"
+                : $transactionMode,
+        ];
+    }
+
+    /**
+     * Недоступный storage/logs не должен превращать успешный импорт в FAILURE —
+     * ошибка записи отчёта только предупреждает.
+     *
+     * @param  callable(): string  $write
+     */
+    private function writeReportLog(callable $write): void
+    {
+        try {
+            $this->info('Отчёт: '.$write());
+        } catch (Throwable $e) {
+            $this->warn("Не удалось записать файл отчёта: {$e->getMessage()}");
+        }
+    }
+
     private function printReport(ImportReport $report): void
     {
-        $rows = [
-            ['Строк обработано', $report->processed],
-            ['Строк пропущено', $report->skipped],
-            ['Битых строк CSV', $report->malformedRows],
-            ['Производителей создано', $report->manufacturersCreated],
-            ['Стилей пива создано', $report->stylesCreated],
-            ['Товаров создано', $report->productsCreated],
-            ['Товаров обновлено', $report->productsUpdated],
-            ['Товаров без изменений', $report->productsUnchanged],
-            ['Штрихкодов создано', $report->barcodesCreated],
-            ['Изображений загружено', $report->imagesAttached],
-            ['Предупреждений', $report->warningsTotal],
-        ];
+        $rows = [];
+
+        foreach (ImportReportLogger::metrics($report) as $label => $value) {
+            $rows[] = [$label, $value];
+        }
 
         $this->table(['Метрика', 'Количество'], $rows);
 
@@ -93,7 +131,7 @@ class CatalogImportCommand extends Command
                 $this->line("  строка {$w['line']} [{$w['stage']}] {$w['message']}: {$w['value']}");
             }
             if ($report->warningsTotal > 50) {
-                $this->line('  ... и ещё '.($report->warningsTotal - 50));
+                $this->line('  ... и ещё '.($report->warningsTotal - 50).' (полный список — в файле отчёта)');
             }
         }
     }
@@ -146,11 +184,15 @@ class CatalogImportCommand extends Command
      * 2. Флаг `--no-download` — использовать последний скачанный файл из storage.
      * 3. По умолчанию — загрузить с FTP.
      *
+     * Побочный эффект: заполняет $this->sourceLabel для шапки файла отчёта.
+     *
      * @return string|null Локальный путь, или null если загрузка не удалась.
      */
     private function resolveImportPath(Catalog1cFtpClient $ftp): ?string
     {
         if ($this->argument('path') !== null) {
+            $this->sourceLabel = 'локальный файл (аргумент path)';
+
             return $this->argument('path');
         }
 
@@ -163,6 +205,7 @@ class CatalogImportCommand extends Command
         }
 
         if ($this->option('no-download')) {
+            $this->sourceLabel = 'последний скачанный файл (--no-download)';
             $path = config('catalog_import.download_dir').$file;
 
             return storage_path($path);
@@ -170,6 +213,7 @@ class CatalogImportCommand extends Command
 
         $host = config('services.catalog_1c_ftp.host');
         $port = config('services.catalog_1c_ftp.port');
+        $this->sourceLabel = "FTP {$host}:{$port}/{$file}";
         $this->info("Загрузка с FTP: {$host}:{$port}/{$file}");
 
         try {
