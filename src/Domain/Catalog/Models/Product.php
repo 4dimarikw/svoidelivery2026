@@ -3,18 +3,22 @@
 namespace Domain\Catalog\Models;
 
 use Database\Factories\Catalog\ProductFactory;
+use Eloquent;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use Spatie\MediaLibrary\MediaCollections\File;
+use Spatie\MediaLibrary\MediaCollections\Models\Collections\MediaCollection;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
 use Spatie\Sluggable\HasSlug;
 use Spatie\Sluggable\SlugOptions;
@@ -41,22 +45,22 @@ use Spatie\Sluggable\SlugOptions;
  * @property string|null $brand
  * @property string|null $sales_rating
  * @property bool $is_active
- * @property \Illuminate\Support\Carbon|null $synced_at
- * @property \Illuminate\Support\Carbon|null $created_at
- * @property \Illuminate\Support\Carbon|null $updated_at
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \Domain\Catalog\Models\ProductBarcode> $barcodes
+ * @property Carbon|null $synced_at
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
+ * @property-read Collection<int, ProductBarcode> $barcodes
  * @property-read int|null $barcodes_count
- * @property-read \Domain\Catalog\Models\BeerProductDetail|null $beerDetails
- * @property-read \Domain\Catalog\Models\Category $category
- * @property-read \Domain\Catalog\Models\Container|null $container
+ * @property-read BeerProductDetail|null $beerDetails
+ * @property-read Category $category
+ * @property-read Container|null $container
  * @property-read mixed $label
- * @property-read \Domain\Catalog\Models\Manufacturer|null $manufacturer
- * @property-read \Spatie\MediaLibrary\MediaCollections\Models\Collections\MediaCollection<int, Media> $media
+ * @property-read Manufacturer|null $manufacturer
+ * @property-read MediaCollection<int, Media> $media
  * @property-read int|null $media_count
  * @property-read mixed $thumb
- * @property-read \Domain\Catalog\Models\Volume|null $volume
+ * @property-read Volume|null $volume
  * @method static Builder<static>|Product active()
- * @method static \Database\Factories\Catalog\ProductFactory factory($count = null, $state = [])
+ * @method static ProductFactory factory($count = null, $state = [])
  * @method static Builder<static>|Product inCategory(int $categoryId)
  * @method static Builder<static>|Product inPriceRange(?string $min, ?string $max)
  * @method static Builder<static>|Product newModelQuery()
@@ -86,7 +90,7 @@ use Spatie\Sluggable\SlugOptions;
  * @method static Builder<static>|Product whereSyncedAt($value)
  * @method static Builder<static>|Product whereUpdatedAt($value)
  * @method static Builder<static>|Product whereVolumeId($value)
- * @mixin \Eloquent
+ * @mixin Eloquent
  */
 class Product extends Model implements HasMedia
 {
@@ -140,7 +144,7 @@ class Product extends Model implements HasMedia
     public function getSlugOptions(): SlugOptions
     {
         return SlugOptions::create()
-            ->generateSlugsFrom(fn (Product $product) => $product->article ?: $product->name)
+            ->generateSlugsFrom(fn(Product $product) => $product->article ?: $product->name)
             ->saveSlugsTo('slug')
             ->usingSeparator('-')
             ->selfHealing();
@@ -227,6 +231,19 @@ class Product extends Model implements HasMedia
         return $this->hasOne(BeerProductDetail::class);
     }
 
+    protected function isNew(): Attribute
+    {
+        return Attribute::get(
+            fn(): bool => $this->created_at !== null
+                && $this->created_at->gt(now()->subDays(7))
+        );
+    }
+
+    public function scopeNew($query)
+    {
+        return $query->where('created_at', '>', now()->subDays(7));
+    }
+
     public function scopeActive(Builder $query): Builder
     {
         return $query->where('is_active', true)->where('in_stock', true);
@@ -240,7 +257,7 @@ class Product extends Model implements HasMedia
     public function scopeInPriceRange(Builder $query, ?string $min, ?string $max): Builder
     {
         return $query
-            ->when($min !== null, fn (Builder $q) => $q->where('price', '>=', $min))
-            ->when($max !== null, fn (Builder $q) => $q->where('price', '<=', $max));
+            ->when($min !== null, fn(Builder $q) => $q->where('price', '>=', $min))
+            ->when($max !== null, fn(Builder $q) => $q->where('price', '<=', $max));
     }
 }
