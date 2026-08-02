@@ -17,10 +17,10 @@ use Services\CatalogImport\Dto\ImportContext;
  * Литры умножаются на 1000 и округляются до целых миллилитров.
  * Volume создаётся через firstOrCreate по milliliters (unique) — объём является открытым множеством.
  * Примеры:
- *   "кор. 12х0,45л ж/б"      → 450 мл,   метка "0.45"
- *   "пэт кег 20л"             → 20000 мл, метка "20"
+ *   "кор. 12х0,45л ж/б" → 450 мл,   метка "0.45"
+ *   "пэт кег 20л" → 20000 мл, метка "20"
  *   "кор. 06х0,75л ст. бут."  → 750 мл,   метка "0.75"
- *   "кег кег 30л/кк"          → 30000 мл, метка "30"
+ *   "кег кег 30л/кк" → 30000 мл, метка "30"
  */
 final class ResolveVolumeStage implements ImportStage
 {
@@ -29,12 +29,13 @@ final class ResolveVolumeStage implements ImportStage
     public function __invoke(ImportContext $ctx, Closure $next): ImportContext
     {
         $package = $ctx->row->get(config('catalog_import.columns.package'));
+        $product_code = $ctx->row->get(config('catalog_import.columns.product_code'));
 
         [$volumeMl, $label] = $this->parse($package);
 
         if ($volumeMl === null) {
             if ($this->categoryExpects($ctx)) {
-                $ctx->addWarning(self::class, 'cannot parse volume', $package);
+                $ctx->addWarning(self::class, 'cannot parse volume', 'package_value='.$package.', product_code='.$product_code);
             }
         } else {
             $ctx->volume = Volume::firstOrCreate(
