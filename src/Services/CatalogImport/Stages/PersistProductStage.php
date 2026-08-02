@@ -4,6 +4,7 @@ namespace Services\CatalogImport\Stages;
 
 use Closure;
 use Domain\Catalog\Models\Product;
+use Infrastructure\Settings\GeneralSettings;
 use Services\CatalogImport\Contracts\ImportStage;
 use Services\CatalogImport\Dto\ImportContext;
 
@@ -21,6 +22,8 @@ use Services\CatalogImport\Dto\ImportContext;
  */
 final class PersistProductStage implements ImportStage
 {
+    public function __construct(private readonly GeneralSettings $settings) {}
+
     public function __invoke(ImportContext $ctx, Closure $next): ImportContext
     {
         if ($ctx->brand === null || $ctx->category === null) {
@@ -62,7 +65,7 @@ final class PersistProductStage implements ImportStage
                 'shelf_life_days' => $attrs['shelf_life_days'] ?? null,
                 'brand' => $attrs['name'] ?? null,
                 'sales_rating' => $attrs['sales_rating'] ?? null,
-                'is_active' => true,
+                'status' => $this->settings->product_status,
                 'synced_at' => now(),
             ],
         );

@@ -8,6 +8,7 @@ use App\MoonShine\Resources\Container\ContainerResource;
 use App\MoonShine\Resources\Manufacturer\ManufacturerResource;
 use App\MoonShine\Resources\Product\ProductResource;
 use App\MoonShine\Resources\Volume\VolumeResource;
+use Domain\Catalog\Enums\ProductStatus;
 use Domain\Catalog\Models\Container;
 use Domain\Catalog\Models\Manufacturer;
 use Domain\Catalog\Models\Volume;
@@ -15,6 +16,7 @@ use MoonShine\Contracts\UI\FieldContract;
 use MoonShine\Laravel\Fields\Relationships\BelongsTo;
 use MoonShine\Laravel\Pages\Crud\DetailPage;
 use MoonShine\UI\Fields\Date;
+use MoonShine\UI\Fields\Enum;
 use MoonShine\UI\Fields\ID;
 use MoonShine\UI\Fields\Number;
 use MoonShine\UI\Fields\Switcher;
@@ -63,7 +65,7 @@ final class ProductDetailPage extends DetailPage
             Number::make('Цена', 'price'),
             Number::make('Остаток', 'stock_quantity'),
             Switcher::make('В наличии', 'in_stock'),
-            Switcher::make('Активен', 'is_active'),
+            Enum::make('Статус', 'status')->attach(ProductStatus::class),
             Date::make('Синхронизирован', 'synced_at')->format('d.m.Y H:i'),
         ];
     }

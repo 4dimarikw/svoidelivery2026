@@ -3,6 +3,7 @@
 namespace Domain\Catalog\Models;
 
 use Database\Factories\Catalog\ProductFactory;
+use Domain\Catalog\Enums\ProductStatus;
 use Eloquent;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
@@ -22,6 +23,7 @@ use Spatie\MediaLibrary\MediaCollections\Models\Collections\MediaCollection;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
 use Spatie\Sluggable\HasSlug;
 use Spatie\Sluggable\SlugOptions;
+use Support\Casts\HtmlEntityDecoder;
 
 /**
  * @property int $id
@@ -44,7 +46,7 @@ use Spatie\Sluggable\SlugOptions;
  * @property int|null $shelf_life_days
  * @property string|null $brand
  * @property string|null $sales_rating
- * @property bool $is_active
+ * @property ProductStatus $status
  * @property Carbon|null $synced_at
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
@@ -59,6 +61,7 @@ use Spatie\Sluggable\SlugOptions;
  * @property-read int|null $media_count
  * @property-read mixed $thumb
  * @property-read Volume|null $volume
+ *
  * @method static Builder<static>|Product active()
  * @method static ProductFactory factory($count = null, $state = [])
  * @method static Builder<static>|Product inCategory(int $categoryId)
@@ -75,7 +78,7 @@ use Spatie\Sluggable\SlugOptions;
  * @method static Builder<static>|Product whereExternalCode($value)
  * @method static Builder<static>|Product whereId($value)
  * @method static Builder<static>|Product whereInStock($value)
- * @method static Builder<static>|Product whereIsActive($value)
+ * @method static Builder<static>|Product whereStatus($value)
  * @method static Builder<static>|Product whereManufacturerId($value)
  * @method static Builder<static>|Product whereName($value)
  * @method static Builder<static>|Product wherePackageUnits($value)
@@ -90,6 +93,7 @@ use Spatie\Sluggable\SlugOptions;
  * @method static Builder<static>|Product whereSyncedAt($value)
  * @method static Builder<static>|Product whereUpdatedAt($value)
  * @method static Builder<static>|Product whereVolumeId($value)
+ *
  * @mixin Eloquent
  */
 class Product extends Model implements HasMedia
@@ -117,7 +121,7 @@ class Product extends Model implements HasMedia
         'shelf_life_days',
         'brand',
         'sales_rating',
-        'is_active',
+        'status',
         'synced_at',
     ];
 
@@ -126,8 +130,11 @@ class Product extends Model implements HasMedia
         return [
             'price' => 'decimal:2',
             'in_stock' => 'boolean',
-            'is_active' => 'boolean',
+            'status' => ProductStatus::class,
             'synced_at' => 'datetime',
+            'article' => HtmlEntityDecoder::class,
+            'description' => HtmlEntityDecoder::class,
+            'name' => HtmlEntityDecoder::class,
         ];
     }
 
@@ -246,7 +253,7 @@ class Product extends Model implements HasMedia
 
     public function scopeActive(Builder $query): Builder
     {
-        return $query->where('is_active', true)->where('in_stock', true);
+        return $query->where('status', ProductStatus::PUBLISHED)->where('in_stock', true);
     }
 
     public function scopeInCategory(Builder $query, int $categoryId): Builder

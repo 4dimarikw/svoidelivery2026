@@ -8,13 +8,14 @@ use App\MoonShine\Resources\Container\ContainerResource;
 use App\MoonShine\Resources\Manufacturer\ManufacturerResource;
 use App\MoonShine\Resources\Product\ProductResource;
 use App\MoonShine\Resources\Volume\VolumeResource;
+use Domain\Catalog\Enums\ProductStatus;
 use Domain\Catalog\Models\Container;
 use Domain\Catalog\Models\Manufacturer;
 use Domain\Catalog\Models\Volume;
 use MoonShine\Contracts\UI\FieldContract;
 use MoonShine\Laravel\Fields\Relationships\BelongsTo;
 use MoonShine\Laravel\Pages\Crud\IndexPage;
-use MoonShine\UI\Fields\Checkbox;
+use MoonShine\UI\Fields\Enum;
 use MoonShine\UI\Fields\ID;
 use MoonShine\UI\Fields\Number;
 use MoonShine\UI\Fields\Switcher;
@@ -60,7 +61,7 @@ final class ProductIndexPage extends IndexPage
             Number::make('Цена', 'price')->sortable(),
             Number::make('Остаток', 'stock_quantity')->sortable(),
             Switcher::make('В наличии', 'in_stock'),
-            Switcher::make('Активен', 'is_active'),
+            Enum::make('Статус', 'status')->attach(ProductStatus::class),
         ];
     }
 
@@ -77,8 +78,8 @@ final class ProductIndexPage extends IndexPage
                 resource: ManufacturerResource::class,
             )->nullable(),
 
-            Checkbox::make('В наличии', 'in_stock'),
-            Checkbox::make('Активен', 'is_active'),
+            Switcher::make('В наличии', 'in_stock'),
+            Enum::make('Статус', 'status')->attach(ProductStatus::class)->nullable(),
         ];
     }
 }

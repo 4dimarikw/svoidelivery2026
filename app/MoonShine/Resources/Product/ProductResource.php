@@ -17,8 +17,9 @@ use MoonShine\Support\ListOf;
 /**
  * Read-only: every fillable field on Product is overwritten on every
  * catalog:import run (PersistProductStage::__invoke() does a full
- * updateOrCreate() keyed on external_code, including forcing is_active =>
- * true) — a form here would silently discard admin edits on the next sync.
+ * updateOrCreate() keyed on external_code, including forcing status to
+ * GeneralSettings::$product_status) — a form here would silently discard
+ * admin edits on the next sync.
  * Exists mainly so BelongsTo::make(..., resource: ProductResource::class)
  * has a target to resolve against (from ProductBarcode and elsewhere);
  * Action::VIEW stays enabled so those links render and are clickable.

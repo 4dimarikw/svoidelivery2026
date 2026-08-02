@@ -20,8 +20,8 @@ return new class extends SettingsMigration {
             ['name' => 'ebc', 'label' => 'EBC'],
         ]);
 
-        $this->migrator->add('catalog.new_days', 7);
+        $this->migrator->add('general.new_days', 7);
 
-        $this->migrator->add('catalog.cache', false);
+        $this->migrator->add('general.cache', false);
     }
 };

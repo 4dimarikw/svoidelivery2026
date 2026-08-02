@@ -1,7 +1,6 @@
 <?php
 
-namespace App\Settings;
-
+namespace Infrastructure\Settings;
 
 use Spatie\LaravelSettings\Settings;
 
@@ -20,7 +19,6 @@ class VKSyncSettings extends Settings
     public ?string $post_status = 'draft';
 
     public ?array $post_types = ['post'];
-
 
     public static function group(): string
     {

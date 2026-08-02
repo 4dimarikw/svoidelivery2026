@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Settings;
+namespace Infrastructure\Settings;
 
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
@@ -27,7 +27,7 @@ class VKSyncSettingsRequest extends FormRequest
         return [
             'domain' => 'required|string',
             'count' => 'required|numeric',
-            'cron' => ['required', 'string', new CronExpressionRule()],
+            'cron' => ['required', 'string', new CronExpressionRule],
         ];
     }
 }

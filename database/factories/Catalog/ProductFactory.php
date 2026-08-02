@@ -2,6 +2,7 @@
 
 namespace Database\Factories\Catalog;
 
+use Domain\Catalog\Enums\ProductStatus;
 use Domain\Catalog\Models\Category;
 use Domain\Catalog\Models\Product;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -39,7 +40,7 @@ class ProductFactory extends Factory
             'shelf_life_days' => fake()->optional()->numberBetween(30, 730),
             'brand' => fake()->optional()->company(),
             'sales_rating' => null,
-            'is_active' => true,
+            'status' => ProductStatus::PUBLISHED,
             'synced_at' => now(),
         ];
     }
