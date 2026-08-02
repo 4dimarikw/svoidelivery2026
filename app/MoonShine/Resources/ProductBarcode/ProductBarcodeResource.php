@@ -16,7 +16,7 @@ use MoonShine\Support\Attributes\Icon;
  * @extends ModelResource<ProductBarcode, ProductBarcodeIndexPage, ProductBarcodeFormPage, null>
  */
 #[Icon('qr-code')]
-#[Group('Каталог', 'squares-2x2')]
+#[Group('moonshine.group.catalog', 'squares-2x2', translatable: true)]
 #[Order(5)]
 class ProductBarcodeResource extends ModelResource
 {
@@ -34,7 +34,7 @@ class ProductBarcodeResource extends ModelResource
 
     public function getTitle(): string
     {
-        return 'Штрихкоды';
+        return __('moonshine.product_barcode.title');
     }
 
     protected function pages(): array

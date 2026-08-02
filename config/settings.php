@@ -2,7 +2,6 @@
 
 use Infrastructure\Settings\GeneralSettings;
 use Infrastructure\Settings\VKSyncSettings;
-use Spatie\LaravelData\Data;
 use Spatie\LaravelSettings\SettingsCasts\DataCast;
 use Spatie\LaravelSettings\SettingsCasts\DateTimeInterfaceCast;
 use Spatie\LaravelSettings\SettingsCasts\DateTimeZoneCast;

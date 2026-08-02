@@ -25,10 +25,10 @@ final class ManufacturerIndexPage extends IndexPage
     {
         return [
             ID::make()->sortable(),
-            Text::make('Название', 'name')->sortable(),
-            Text::make('Slug', 'slug'),
-            Switcher::make('Активен', 'is_active'),
-            Number::make('Товаров', 'products_count')->badge(Color::GRAY),
+            Text::make(__('moonshine.manufacturer.fields.name'), 'name')->sortable(),
+            Text::make(__('moonshine.manufacturer.fields.slug'), 'slug'),
+            Switcher::make(__('moonshine.manufacturer.fields.is_active'), 'is_active'),
+            Number::make(__('moonshine.manufacturer.fields.products_count'), 'products_count')->badge(Color::GRAY),
         ];
     }
 }

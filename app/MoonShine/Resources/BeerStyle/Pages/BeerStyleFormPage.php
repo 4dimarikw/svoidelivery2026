@@ -35,7 +35,7 @@ final class BeerStyleFormPage extends FormPage
                 ID::make(),
 
                 BelongsTo::make(
-                    'Родительский стиль',
+                    __('moonshine.beer_style.fields.parent'),
                     'parent',
                     formatted: static fn (BeerStyle $model) => $model->name,
                     resource: BeerStyleResource::class,
@@ -46,14 +46,14 @@ final class BeerStyleFormPage extends FormPage
                         static fn (Builder $q) => $q->whereKeyNot($currentId),
                     )),
 
-                Text::make('Название', 'name')
+                Text::make(__('moonshine.beer_style.fields.name'), 'name')
                     ->required()
                     ->hint('Переименование безопасно для сайта, но следующий импорт всё ещё ищет стиль по исходному имени — переименованный стиль будет создан заново, а не найден.'),
 
-                Text::make('Slug', 'slug')
+                Text::make(__('moonshine.beer_style.fields.slug'), 'slug')
                     ->hint('Заполняется автоматически при создании, если оставить пустым. При переименовании не пересчитывается.'),
 
-                Switcher::make('Активен', 'is_active'),
+                Switcher::make(__('moonshine.beer_style.fields.is_active'), 'is_active'),
             ]),
         ];
     }

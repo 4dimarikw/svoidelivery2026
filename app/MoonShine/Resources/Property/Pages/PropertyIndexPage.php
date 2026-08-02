@@ -22,12 +22,12 @@ final class PropertyIndexPage extends IndexPage
     {
         return [
             ID::make()->sortable(),
-            Text::make('Код', 'code')->sortable(),
-            Text::make('Название', 'name')->sortable(),
-            Text::make('Тип', 'data_type'),
-            Text::make('Ед. изм.', 'unit'),
-            Text::make('Таблица', 'storage_table'),
-            Text::make('Колонка', 'storage_column'),
+            Text::make(__('moonshine.property.fields.code'), 'code')->sortable(),
+            Text::make(__('moonshine.property.fields.name'), 'name')->sortable(),
+            Text::make(__('moonshine.property.index.type'), 'data_type'),
+            Text::make(__('moonshine.property.fields.unit'), 'unit'),
+            Text::make(__('moonshine.property.index.storage_table'), 'storage_table'),
+            Text::make(__('moonshine.property.index.storage_column'), 'storage_column'),
         ];
     }
 }

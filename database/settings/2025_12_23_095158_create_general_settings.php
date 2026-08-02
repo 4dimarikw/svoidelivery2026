@@ -13,13 +13,6 @@ return new class extends SettingsMigration {
 
         $this->migrator->add('general.product_status', 'published');
 
-        $this->migrator->add('general.product_details', [
-            ['name' => 'abv', 'label' => '%'],
-            ['name' => 'ibu', 'label' => 'IBU'],
-            ['name' => 'plato', 'label' => '°P'],
-            ['name' => 'ebc', 'label' => 'EBC'],
-        ]);
-
         $this->migrator->add('general.new_days', 7);
 
         $this->migrator->add('general.cache', false);

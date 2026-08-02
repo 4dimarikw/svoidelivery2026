@@ -25,10 +25,10 @@ final class ProductBarcodeIndexPage extends IndexPage
     {
         return [
             ID::make()->sortable(),
-            Text::make('Штрихкод', 'barcode')->sortable(),
+            Text::make(__('moonshine.product_barcode.fields.barcode'), 'barcode')->sortable(),
 
             BelongsTo::make(
-                'Товар',
+                __('moonshine.product_barcode.fields.product'),
                 'product',
                 formatted: static fn (Product $model) => $model->name,
                 resource: ProductResource::class,

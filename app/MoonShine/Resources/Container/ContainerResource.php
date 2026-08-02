@@ -18,7 +18,7 @@ use MoonShine\Support\Attributes\Icon;
  * @extends ModelResource<Container, ContainerIndexPage, ContainerFormPage, null>
  */
 #[Icon('archive-box')]
-#[Group('Каталог', 'squares-2x2')]
+#[Group('moonshine.group.catalog', 'squares-2x2', translatable: true)]
 #[Order(4)]
 class ContainerResource extends ModelResource
 {
@@ -36,7 +36,7 @@ class ContainerResource extends ModelResource
 
     public function getTitle(): string
     {
-        return 'Тара';
+        return __('moonshine.container.title');
     }
 
     protected function pages(): array

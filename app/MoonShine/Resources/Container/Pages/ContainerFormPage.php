@@ -30,13 +30,13 @@ final class ContainerFormPage extends FormPage
             Box::make([
                 ID::make(),
 
-                Text::make('Код', 'code')
+                Text::make(__('moonshine.container.fields.code'), 'code')
                     ->required()
                     ->hint('Ключ поиска для импорта (catalog_import.container_map). Переименование кода приведёт к предупреждениям "container code not seeded" и container_id = null у новых товаров на следующем импорте.'),
 
-                Text::make('Название', 'name')->required(),
+                Text::make(__('moonshine.container.fields.name'), 'name')->required(),
 
-                Switcher::make('Активна', 'is_active'),
+                Switcher::make(__('moonshine.container.fields.is_active'), 'is_active'),
             ]),
         ];
     }

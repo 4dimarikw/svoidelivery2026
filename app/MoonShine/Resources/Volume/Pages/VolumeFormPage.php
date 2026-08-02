@@ -30,13 +30,13 @@ final class VolumeFormPage extends FormPage
             Box::make([
                 ID::make(),
 
-                Number::make('Объём, мл', 'milliliters')
+                Number::make(__('moonshine.volume.fields.milliliters'), 'milliliters')
                     ->min(1)
                     ->step(1)
                     ->required()
                     ->hint('Целое число миллилитров, уникально: 330, 500, 20000'),
 
-                Text::make('Название', 'label')
+                Text::make(__('moonshine.volume.fields.label'), 'label')
                     ->required()
                     ->hint('Как показывать покупателю: «0.33 л», «20 л»'),
             ]),

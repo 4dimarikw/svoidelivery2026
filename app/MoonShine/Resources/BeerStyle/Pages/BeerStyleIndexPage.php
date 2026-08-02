@@ -27,16 +27,16 @@ final class BeerStyleIndexPage extends IndexPage
     {
         return [
             ID::make()->sortable(),
-            Text::make('Название', 'name')->sortable(),
+            Text::make(__('moonshine.beer_style.fields.name'), 'name')->sortable(),
             BelongsTo::make(
-                'Родительский стиль',
+                __('moonshine.beer_style.fields.parent'),
                 'parent',
                 formatted: static fn (BeerStyle $model) => $model->name,
                 resource: BeerStyleResource::class,
             ),
-            Text::make('Slug', 'slug'),
-            Switcher::make('Активен', 'is_active'),
-            Number::make('Товаров', 'beer_product_details_count')->badge(Color::GRAY),
+            Text::make(__('moonshine.beer_style.fields.slug'), 'slug'),
+            Switcher::make(__('moonshine.beer_style.fields.is_active'), 'is_active'),
+            Number::make(__('moonshine.beer_style.fields.products_count'), 'beer_product_details_count')->badge(Color::GRAY),
         ];
     }
 }

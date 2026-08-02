@@ -33,7 +33,7 @@ final class ProductBarcodeFormPage extends FormPage
                 ID::make(),
 
                 BelongsTo::make(
-                    'Товар',
+                    __('moonshine.product_barcode.fields.product'),
                     'product',
                     formatted: static fn (Product $model) => $model->name,
                     resource: ProductResource::class,
@@ -41,7 +41,7 @@ final class ProductBarcodeFormPage extends FormPage
                     ->required()
                     ->asyncSearch('name'),
 
-                Text::make('Штрихкод', 'barcode')
+                Text::make(__('moonshine.product_barcode.fields.barcode'), 'barcode')
                     ->required()
                     ->hint('Уникален глобально, не привязан к товару в БД. Импорт (PersistBarcodeStage) не переназначает существующий штрихкод другому товару.'),
             ]),

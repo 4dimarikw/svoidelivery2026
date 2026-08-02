@@ -22,7 +22,7 @@ use MoonShine\Support\Attributes\Icon;
  * @extends ModelResource<Property, PropertyIndexPage, PropertyFormPage, null>
  */
 #[Icon('adjustments-horizontal')]
-#[Group('Каталог', 'squares-2x2')]
+#[Group('moonshine.group.catalog', 'squares-2x2', translatable: true)]
 #[Order(6)]
 class PropertyResource extends ModelResource
 {
@@ -38,7 +38,7 @@ class PropertyResource extends ModelResource
 
     public function getTitle(): string
     {
-        return 'Свойства';
+        return __('moonshine.property.title');
     }
 
     protected function pages(): array

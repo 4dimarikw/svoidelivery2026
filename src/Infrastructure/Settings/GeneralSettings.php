@@ -19,11 +19,12 @@ class GeneralSettings extends Settings
 
     public string $product_status = ProductStatus::DRAFT->value;
 
-    public array $product_details = [
-        ['name' => 'abv', 'label' => '%'],
-        ['name' => 'ibu', 'label' => 'IBU'],
-        ['name' => 'plato', 'label' => '°P'],
-        ['name' => 'ebc', 'label' => 'EBC'],
+    //without_untappd, first_in_list, manual_stock_status
+    public array $product_flags = [
+        'wu' => false,
+        'fil' => false,
+        'mss' => false,
+        'promo' => false,
     ];
 
     public int $new_days = 7;

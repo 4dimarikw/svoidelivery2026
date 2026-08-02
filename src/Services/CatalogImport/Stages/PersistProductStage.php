@@ -9,16 +9,22 @@ use Services\CatalogImport\Contracts\ImportStage;
 use Services\CatalogImport\Dto\ImportContext;
 
 /**
- * Сохранение Product: создаёт или обновляет плоскую запись в таблице products
+ * Сохранение Product: создаёт новую плоскую запись в таблице products
  * (эта схема не разделяет товар/вариацию — price/stock/volume/container живут
- * на самом товаре).
+ * на самом товаре) либо частично обновляет уже существующую.
  *
  * Логика:
  * Требует $ctx->brand и $ctx->category (иначе skip); пустой external_code
  * (КодТовара) тоже skip — это ключ уникальности повторного импорта.
- * Ключ уникальности: [external_code] — updateOrCreate не дублирует товар.
+ * Ключ уникальности: [external_code].
+ * Товар теперь редактируется из админки (ProductResource), поэтому повторный
+ * импорт больше не переписывает карточку целиком — иначе правки admin'а
+ * терялись бы на следующем catalog:import. Для уже существующего товара
+ * обновляются только оперативные поля ($syncData: price/stock_quantity/
+ * in_stock/synced_at); name/description/category/status и т.д. трогает
+ * только create-ветка (первый импорт) или сама админка.
  * `source_uuid` берётся из id_объекта (RawRow-UUID из 1С, уже провалидирован
- * NormalizeRowStage как непустой).
+ * NormalizeRowStage как непустой) и задаётся только при создании.
  */
 final class PersistProductStage implements ImportStage
 {
@@ -43,11 +49,23 @@ final class PersistProductStage implements ImportStage
         }
 
         $stock = (int) ($attrs['stock'] ?? 0);
-        [$packageUnits, $packagingRaw] = $this->parsePackaging($attrs['pack_info'] ?? null);
 
-        $ctx->product = Product::updateOrCreate(
-            ['external_code' => $externalCode],
-            [
+        $syncData = [
+            'price' => $attrs['price'] ?? 0,
+            'stock_quantity' => $stock,
+            'in_stock' => $stock > 0,
+            'synced_at' => now(),
+        ];
+
+        $product = Product::query()->firstWhere('external_code', $externalCode);
+
+        if ($product !== null) {
+            $product->update($syncData);
+        } else {
+            [$packageUnits, $packagingRaw] = $this->parsePackaging($attrs['pack_info'] ?? null);
+
+            $product = Product::create([
+                'external_code' => $externalCode,
                 'source_uuid' => $attrs['external_id'],
                 'article' => $attrs['article'] ?? null,
                 'name' => $attrs['title'] ?? $attrs['name'],
@@ -56,9 +74,6 @@ final class PersistProductStage implements ImportStage
                 'manufacturer_id' => $ctx->brand->id,
                 'volume_id' => $ctx->volume?->id,
                 'container_id' => $ctx->container?->id,
-                'price' => $attrs['price'] ?? 0,
-                'stock_quantity' => $stock,
-                'in_stock' => $stock > 0,
                 'package_units' => $packageUnits,
                 'packaging_raw' => $packagingRaw,
                 'source_category_path' => $attrs['category_path'] ?? null,
@@ -66,9 +81,11 @@ final class PersistProductStage implements ImportStage
                 'brand' => $attrs['name'] ?? null,
                 'sales_rating' => $attrs['sales_rating'] ?? null,
                 'status' => $this->settings->product_status,
-                'synced_at' => now(),
-            ],
-        );
+                ...$syncData,
+            ]);
+        }
+
+        $ctx->product = $product;
 
         return $next($ctx);
     }

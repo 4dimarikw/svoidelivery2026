@@ -5,8 +5,11 @@ declare(strict_types=1);
 namespace App\MoonShine\Resources\Product;
 
 use App\MoonShine\Resources\Product\Pages\ProductDetailPage;
+use App\MoonShine\Resources\Product\Pages\ProductFormPage;
 use App\MoonShine\Resources\Product\Pages\ProductIndexPage;
 use Domain\Catalog\Models\Product;
+use Illuminate\Support\Str;
+use MoonShine\Contracts\Core\TypeCasts\DataWrapperContract;
 use MoonShine\Laravel\Resources\ModelResource;
 use MoonShine\MenuManager\Attributes\Group;
 use MoonShine\MenuManager\Attributes\Order;
@@ -15,19 +18,18 @@ use MoonShine\Support\Enums\Action;
 use MoonShine\Support\ListOf;
 
 /**
- * Read-only: every fillable field on Product is overwritten on every
- * catalog:import run (PersistProductStage::__invoke() does a full
- * updateOrCreate() keyed on external_code, including forcing status to
- * GeneralSettings::$product_status) — a form here would silently discard
- * admin edits on the next sync.
- * Exists mainly so BelongsTo::make(..., resource: ProductResource::class)
- * has a target to resolve against (from ProductBarcode and elsewhere);
- * Action::VIEW stays enabled so those links render and are clickable.
+ * Товар редактируется из админки, но не полностью: catalog:import
+ * (PersistProductStage::__invoke()) при повторном запуске обновляет только
+ * price/stock_quantity/in_stock/synced_at у уже существующего товара — эти
+ * поля всегда возвращаются к состоянию 1С на следующем синке, остальные
+ * (name/description/классификация/status/media/пивные детали/штрихкоды)
+ * принадлежат админке. Delete/MassDelete отключены: товар из 1С нельзя
+ * удалить руками, для вывода из продажи есть status = archived.
  *
- * @extends ModelResource<Product, ProductIndexPage, ProductDetailPage, null>
+ * @extends ModelResource<Product, ProductIndexPage, ProductFormPage, ProductDetailPage>
  */
 #[Icon('shopping-bag')]
-#[Group('Каталог', 'squares-2x2')]
+#[Group('moonshine.group.catalog', 'squares-2x2', translatable: true)]
 #[Order(0)]
 class ProductResource extends ModelResource
 {
@@ -41,18 +43,19 @@ class ProductResource extends ModelResource
 
     public function getTitle(): string
     {
-        return 'Товары';
+        return __('moonshine.product.title');
     }
 
     protected function activeActions(): ListOf
     {
-        return parent::activeActions()->only(Action::VIEW);
+        return parent::activeActions()->except(Action::DELETE, Action::MASS_DELETE);
     }
 
     protected function pages(): array
     {
         return [
             ProductIndexPage::class,
+            ProductFormPage::class,
             ProductDetailPage::class,
         ];
     }
@@ -60,5 +63,16 @@ class ProductResource extends ModelResource
     protected function search(): array
     {
         return ['id', 'name', 'article', 'external_code'];
+    }
+
+    protected function beforeCreating(DataWrapperContract $item): DataWrapperContract
+    {
+        $model = $item->getOriginal();
+
+        if (blank($model->source_uuid)) {
+            $model->source_uuid = (string) Str::uuid();
+        }
+
+        return $item;
     }
 }

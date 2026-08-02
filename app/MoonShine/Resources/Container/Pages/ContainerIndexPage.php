@@ -25,10 +25,10 @@ final class ContainerIndexPage extends IndexPage
     {
         return [
             ID::make()->sortable(),
-            Text::make('Код', 'code')->sortable(),
-            Text::make('Название', 'name')->sortable(),
-            Switcher::make('Активна', 'is_active'),
-            Number::make('Товаров', 'products_count')->badge(Color::GRAY),
+            Text::make(__('moonshine.container.fields.code'), 'code')->sortable(),
+            Text::make(__('moonshine.container.fields.name'), 'name')->sortable(),
+            Switcher::make(__('moonshine.container.fields.is_active'), 'is_active'),
+            Number::make(__('moonshine.container.fields.products_count'), 'products_count')->badge(Color::GRAY),
         ];
     }
 }

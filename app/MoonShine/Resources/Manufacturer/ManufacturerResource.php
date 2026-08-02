@@ -18,7 +18,7 @@ use MoonShine\Support\Attributes\Icon;
  * @extends ModelResource<Manufacturer, ManufacturerIndexPage, ManufacturerFormPage, null>
  */
 #[Icon('building-storefront')]
-#[Group('Каталог', 'squares-2x2')]
+#[Group('moonshine.group.catalog', 'squares-2x2', translatable: true)]
 #[Order(1)]
 class ManufacturerResource extends ModelResource
 {
@@ -36,7 +36,7 @@ class ManufacturerResource extends ModelResource
 
     public function getTitle(): string
     {
-        return 'Производители';
+        return __('moonshine.manufacturer.title');
     }
 
     protected function pages(): array

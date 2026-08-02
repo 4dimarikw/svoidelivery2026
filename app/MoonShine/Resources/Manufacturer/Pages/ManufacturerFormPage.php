@@ -30,14 +30,14 @@ final class ManufacturerFormPage extends FormPage
             Box::make([
                 ID::make(),
 
-                Text::make('Название', 'name')
+                Text::make(__('moonshine.manufacturer.fields.name'), 'name')
                     ->required()
                     ->hint('Переименование безопасно для сайта, но следующий импорт всё ещё ищет производителя по исходному имени — переименованный бренд будет создан заново, а не найден.'),
 
-                Text::make('Slug', 'slug')
+                Text::make(__('moonshine.manufacturer.fields.slug'), 'slug')
                     ->hint('Заполняется автоматически при создании, если оставить пустым. При переименовании не пересчитывается.'),
 
-                Switcher::make('Активен', 'is_active'),
+                Switcher::make(__('moonshine.manufacturer.fields.is_active'), 'is_active'),
             ]),
         ];
     }

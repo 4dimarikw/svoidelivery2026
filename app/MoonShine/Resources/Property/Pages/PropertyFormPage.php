@@ -30,21 +30,21 @@ final class PropertyFormPage extends FormPage
             Box::make([
                 ID::make(),
 
-                Text::make('Код', 'code')->required(),
-                Text::make('Название', 'name')->required(),
+                Text::make(__('moonshine.property.fields.code'), 'code')->required(),
+                Text::make(__('moonshine.property.fields.name'), 'name')->required(),
 
-                Select::make('Тип данных', 'data_type')
+                Select::make(__('moonshine.property.form.data_type'), 'data_type')
                     ->options(['string' => 'string', 'integer' => 'integer', 'decimal' => 'decimal', 'boolean' => 'boolean', 'reference' => 'reference'])
                     ->required()
                     ->hint('Соглашение по UI, БД хранит varchar(32) без ограничения набора значений.'),
 
-                Text::make('Ед. изм.', 'unit')->nullable(),
+                Text::make(__('moonshine.property.fields.unit'), 'unit')->nullable(),
 
-                Text::make('Таблица хранения', 'storage_table')
+                Text::make(__('moonshine.property.form.storage_table'), 'storage_table')
                     ->required()
                     ->hint('Куда реально пишутся значения (products, beer_product_details) — метаданные, не FK.'),
 
-                Text::make('Колонка хранения', 'storage_column')->required(),
+                Text::make(__('moonshine.property.form.storage_column'), 'storage_column')->required(),
             ]),
         ];
     }

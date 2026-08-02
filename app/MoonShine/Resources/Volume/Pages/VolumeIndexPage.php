@@ -24,9 +24,9 @@ final class VolumeIndexPage extends IndexPage
     {
         return [
             ID::make()->sortable(),
-            Number::make('Объём, мл', 'milliliters')->sortable(),
-            Text::make('Название', 'label')->sortable(),
-            Number::make('Товаров', 'products_count')->badge(Color::GRAY),
+            Number::make(__('moonshine.volume.fields.milliliters'), 'milliliters')->sortable(),
+            Text::make(__('moonshine.volume.fields.label'), 'label')->sortable(),
+            Number::make(__('moonshine.volume.fields.products_count'), 'products_count')->badge(Color::GRAY),
         ];
     }
 }

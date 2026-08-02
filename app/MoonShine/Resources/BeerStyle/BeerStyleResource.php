@@ -18,7 +18,7 @@ use MoonShine\Support\Attributes\Icon;
  * @extends ModelResource<BeerStyle, BeerStyleIndexPage, BeerStyleFormPage, null>
  */
 #[Icon('sparkles')]
-#[Group('Каталог', 'squares-2x2')]
+#[Group('moonshine.group.catalog', 'squares-2x2', translatable: true)]
 #[Order(2)]
 class BeerStyleResource extends ModelResource
 {
@@ -36,7 +36,7 @@ class BeerStyleResource extends ModelResource
 
     public function getTitle(): string
     {
-        return 'Стили пива';
+        return __('moonshine.beer_style.title');
     }
 
     protected function pages(): array

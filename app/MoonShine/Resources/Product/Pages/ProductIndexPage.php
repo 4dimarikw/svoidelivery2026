@@ -35,37 +35,37 @@ final class ProductIndexPage extends IndexPage
     {
         return [
             ID::make()->sortable(),
-            Image::make('Изображение', 'label')
-                ->changePreview(fn($value) => Thumbnails::make($value)),
-            Text::make('Артикул', 'article')->sortable(),
-            Text::make('Название', 'name')->sortable(),
-            Text::make('Категория', 'category.name'),
+            Image::make(__('moonshine.product.fields.image'), 'label')
+                ->changePreview(fn ($value) => Thumbnails::make($value)),
+            Text::make(__('moonshine.product.fields.article'), 'article')->sortable(),
+            Text::make(__('moonshine.product.fields.name'), 'name')->sortable(),
+            Text::make(__('moonshine.product.fields.category'), 'category.name'),
 
             BelongsTo::make(
-                'Производитель',
+                __('moonshine.product.fields.manufacturer'),
                 'manufacturer',
-                formatted: static fn(Manufacturer $model) => $model->name,
+                formatted: static fn (Manufacturer $model) => $model->name,
                 resource: ManufacturerResource::class,
             ),
 
             BelongsTo::make(
-                'Объём',
+                __('moonshine.product.fields.volume'),
                 'volume',
-                formatted: static fn(Volume $model) => $model->label,
+                formatted: static fn (Volume $model) => $model->label,
                 resource: VolumeResource::class,
             ),
 
             BelongsTo::make(
-                'Тара',
+                __('moonshine.product.fields.container'),
                 'container',
-                formatted: static fn(Container $model) => $model->name,
+                formatted: static fn (Container $model) => $model->name,
                 resource: ContainerResource::class,
             ),
 
-            Number::make('Цена', 'price')->sortable(),
-            Number::make('Остаток', 'stock_quantity')->sortable(),
-            Switcher::make('В наличии', 'in_stock'),
-            Enum::make('Статус', 'status')->attach(ProductStatus::class),
+            Number::make(__('moonshine.product.fields.price'), 'price')->sortable(),
+            Number::make(__('moonshine.product.fields.stock_quantity'), 'stock_quantity')->sortable(),
+            Switcher::make(__('moonshine.product.fields.in_stock'), 'in_stock'),
+            Enum::make(__('moonshine.product.fields.status'), 'status')->attach(ProductStatus::class),
         ];
     }
 
@@ -76,14 +76,14 @@ final class ProductIndexPage extends IndexPage
     {
         return [
             BelongsTo::make(
-                'Производитель',
+                __('moonshine.product.fields.manufacturer'),
                 'manufacturer',
-                formatted: static fn(Manufacturer $model) => $model->name,
+                formatted: static fn (Manufacturer $model) => $model->name,
                 resource: ManufacturerResource::class,
             )->nullable(),
 
-            Switcher::make('В наличии', 'in_stock'),
-            Enum::make('Статус', 'status')->attach(ProductStatus::class)->nullable(),
+            Switcher::make(__('moonshine.product.fields.in_stock'), 'in_stock'),
+            Enum::make(__('moonshine.product.fields.status'), 'status')->attach(ProductStatus::class)->nullable(),
         ];
     }
 }

@@ -19,7 +19,7 @@ use MoonShine\Support\Enums\SortDirection;
  * @extends ModelResource<Volume, VolumeIndexPage, VolumeFormPage, null>
  */
 #[Icon('beaker')]
-#[Group('Каталог', 'squares-2x2')]
+#[Group('moonshine.group.catalog', 'squares-2x2', translatable: true)]
 #[Order(3)]
 class VolumeResource extends ModelResource
 {
@@ -41,7 +41,7 @@ class VolumeResource extends ModelResource
 
     public function getTitle(): string
     {
-        return 'Объёмы';
+        return __('moonshine.volume.title');
     }
 
     protected function pages(): array
