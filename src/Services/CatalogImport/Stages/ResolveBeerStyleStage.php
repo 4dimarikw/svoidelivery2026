@@ -19,12 +19,14 @@ use Support\Logging\Events\UntappdBeerSyncFailed;
  * Алгоритм:
  * 1. Парсит `UntappdRef` → $ctx->attributes['untappd_ref'] (int|null).
  * 2. Если UntappdRef задан:
- *    a. Cache-first: ищем в untappd_beers по beer_id. Если найдено — берём стиль без HTTP.
- *    b. Cache miss → `Untappd::get("beer/info/$beerId", ['db' => 1])`:
- *       - Успех → upsert untappd_beers, диспатч UntappdBeerSynced; стиль = $beer->beer_style;
- *         $ctx->attributes['untappd_description'] — beer_description из ответа API (не
- *         персистится в untappd_beers, доступен только на свежем запросе, не на cache-hit).
- *       - Ошибка → warning в $ctx, диспатч UntappdBeerSyncFailed; переходим к fallback.
+ *    a. Cache-first: ищем в untappd_beers по beer_id. Если найдено и есть description —
+ *       берём стиль без HTTP.
+ *    b. Cache miss ИЛИ найденная запись без description (например, синкана до появления
+ *       колонки) → `Untappd::get("beer/info/$beerId", ['db' => 1])`:
+ *       - Успех → upsert untappd_beers (включая description), диспатч UntappdBeerSynced;
+ *         стиль = $beer->beer_style.
+ *       - Ошибка → warning в $ctx, диспатч UntappdBeerSyncFailed; используем ранее
+ *         найденную cache-запись (если была) и переходим к fallback.
  * 3. Fallback: если стиль пуст → берём `СтильПива` из CSV.
  * 4. Если итоговый стиль непуст → BeerStyle::firstOrCreate по normalized_name
  *    (NOT NULL unique, моделью не генерируется); name/slug заполняются явно.
@@ -47,8 +49,10 @@ final class ResolveBeerStyleStage implements ImportStage
         if ($untappdRef !== null) {
             $beer = UntappdBeer::query()->where('beer_id', $untappdRef)->first();
 
-            if ($beer === null && ! $ctx->dryRun) {
-                $beer = $this->fetchAndStore($untappdRef, $ctx);
+            // Cache-miss, или cache-запись без description (синкана до появления колонки) —
+            // дозапрашиваем; при ошибке API держимся ранее найденной cache-записи.
+            if (($beer === null || $beer->description === null) && ! $ctx->dryRun) {
+                $beer = $this->fetchAndStore($untappdRef, $ctx) ?? $beer;
             }
 
             if ($beer !== null) {
@@ -95,15 +99,13 @@ final class ResolveBeerStyleStage implements ImportStage
                 'name' => $beerDto->beer_name,
                 'brewery' => $beerDto->brewery,
                 'style' => $beerDto->beer_style,
+                'description' => $beerDto->beer_description !== '' ? $beerDto->beer_description : null,
                 'rating_count' => $beerDto->rating_count,
                 'rating_score' => $beerDto->rating_score,
                 'label' => $beerDto->beer_image,
                 'url' => '/b/'.$beerDto->beer_slug.'/'.$beerDto->bid,
             ],
         );
-
-        // Not persisted on untappd_beers — only available here, at the API call itself.
-        $ctx->attributes['untappd_description'] = $beerDto->beer_description !== '' ? $beerDto->beer_description : null;
 
         event(new UntappdBeerSynced(
             beerId: $model->beer_id,

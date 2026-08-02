@@ -184,12 +184,12 @@ app/Console/Commands/CatalogImportCommand.php    Artisan-команда
 | `СтильПива` | `beer_styles.name`/`normalized_name` | `ResolveBeerStyleStage` |
 | `Марка` | `products.brand` | `ResolveProductIdentityStage` |
 | `Наименование` (резерв `Товар`) | `products.name` + авто-`slug` (из `article`) | `ResolveProductIdentityStage` |
-| `Описание` | `products.description` | `ResolveDescriptionStage` |
+| `Описание` | `products.description` (fallback, если нет Untappd-описания) | `ResolveDescriptionStage` |
 | `ABV` | `beer_product_details.abv` | `ResolveAbvStage` |
 | `IBU` | `beer_product_details.ibu` | `ResolveIbuStage` |
 | `Plato` | `beer_product_details.plato` | `ResolvePlatoStage` |
 | `EBC` | `beer_product_details.ebc` | `ResolveEbcStage` |
-| `UntappdRef` | синхронизация `untappd_beers` → `beer_product_details.untappd_beer_id` | `ResolveBeerStyleStage` |
+| `UntappdRef` | синхронизация `untappd_beers` (вкл. `description`, в приоритете над CSV `Описание`) → `beer_product_details.untappd_beer_id` | `ResolveBeerStyleStage` |
 | `СрокГодности` | `products.shelf_life_days` | `ResolveShelfLifeStage` |
 | `РейтингПродаж` | `products.sales_rating` (сырая строка) | `ResolveFlagsStage` |
 | `КодТовара` | `products.external_code` (ключ идемпотентности) | `ResolveExternalIdsStage` |

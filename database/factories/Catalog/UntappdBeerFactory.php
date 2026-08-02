@@ -24,6 +24,7 @@ class UntappdBeerFactory extends Factory
             'name' => fake()->words(3, true),
             'brewery' => fake()->company(),
             'style' => fake()->word(),
+            'description' => fake()->paragraph(),
             'rating_count' => fake()->numberBetween(0, 5000),
             'rating_score' => fake()->randomFloat(2, 1, 5),
             'label' => null,
