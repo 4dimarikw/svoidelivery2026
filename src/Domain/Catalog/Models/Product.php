@@ -199,7 +199,7 @@ class Product extends Model implements HasMedia
 
     private function resolveMediaUrl(string $conversion): string
     {
-        $url = $this->getFirstMedia('label')?->getUrl($conversion);
+        $url = $this->getFirstMedia('main')?->getUrl($conversion);
 
         if (!$url || Str::contains($url, 'badge-beer-default-thumb')) {
             return config('project.default_beer_label');

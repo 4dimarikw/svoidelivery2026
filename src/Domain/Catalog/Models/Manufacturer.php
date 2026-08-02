@@ -10,6 +10,29 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Spatie\Sluggable\HasSlug;
 use Spatie\Sluggable\SlugOptions;
 
+/**
+ * @property int $id
+ * @property string $name
+ * @property string $normalized_name
+ * @property string $slug
+ * @property bool $is_active
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \Domain\Catalog\Models\Product> $products
+ * @property-read int|null $products_count
+ * @method static \Database\Factories\Catalog\ManufacturerFactory factory($count = null, $state = [])
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Manufacturer newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Manufacturer newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Manufacturer query()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Manufacturer whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Manufacturer whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Manufacturer whereIsActive($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Manufacturer whereName($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Manufacturer whereNormalizedName($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Manufacturer whereSlug($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Manufacturer whereUpdatedAt($value)
+ * @mixin \Eloquent
+ */
 class Manufacturer extends Model
 {
     use HasFactory;

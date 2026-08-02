@@ -15,8 +15,10 @@ use Domain\Catalog\Models\Volume;
 use MoonShine\Contracts\UI\FieldContract;
 use MoonShine\Laravel\Fields\Relationships\BelongsTo;
 use MoonShine\Laravel\Pages\Crud\IndexPage;
+use MoonShine\UI\Components\Thumbnails;
 use MoonShine\UI\Fields\Enum;
 use MoonShine\UI\Fields\ID;
+use MoonShine\UI\Fields\Image;
 use MoonShine\UI\Fields\Number;
 use MoonShine\UI\Fields\Switcher;
 use MoonShine\UI\Fields\Text;
@@ -33,6 +35,8 @@ final class ProductIndexPage extends IndexPage
     {
         return [
             ID::make()->sortable(),
+            Image::make('Изображение', 'label')
+                ->changePreview(fn($value) => Thumbnails::make($value)),
             Text::make('Артикул', 'article')->sortable(),
             Text::make('Название', 'name')->sortable(),
             Text::make('Категория', 'category.name'),
@@ -40,21 +44,21 @@ final class ProductIndexPage extends IndexPage
             BelongsTo::make(
                 'Производитель',
                 'manufacturer',
-                formatted: static fn (Manufacturer $model) => $model->name,
+                formatted: static fn(Manufacturer $model) => $model->name,
                 resource: ManufacturerResource::class,
             ),
 
             BelongsTo::make(
                 'Объём',
                 'volume',
-                formatted: static fn (Volume $model) => $model->label,
+                formatted: static fn(Volume $model) => $model->label,
                 resource: VolumeResource::class,
             ),
 
             BelongsTo::make(
                 'Тара',
                 'container',
-                formatted: static fn (Container $model) => $model->name,
+                formatted: static fn(Container $model) => $model->name,
                 resource: ContainerResource::class,
             ),
 
@@ -74,7 +78,7 @@ final class ProductIndexPage extends IndexPage
             BelongsTo::make(
                 'Производитель',
                 'manufacturer',
-                formatted: static fn (Manufacturer $model) => $model->name,
+                formatted: static fn(Manufacturer $model) => $model->name,
                 resource: ManufacturerResource::class,
             )->nullable(),
 
