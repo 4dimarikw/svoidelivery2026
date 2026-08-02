@@ -63,6 +63,18 @@ return [
         ],
     ],
 
+    'category' => [
+        'title' => 'Категории',
+        'fields' => [
+            'code' => 'Код',
+            'name' => 'Название',
+            'slug' => 'Slug',
+            'is_active' => 'Активна',
+            'sort_order' => 'Порядок сортировки',
+            'products_count' => 'Товаров',
+        ],
+    ],
+
     'property' => [
         'title' => 'Свойства',
         'fields' => [

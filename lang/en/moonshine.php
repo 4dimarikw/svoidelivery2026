@@ -63,6 +63,18 @@ return [
         ],
     ],
 
+    'category' => [
+        'title' => 'Categories',
+        'fields' => [
+            'code' => 'Code',
+            'name' => 'Name',
+            'slug' => 'Slug',
+            'is_active' => 'Active',
+            'sort_order' => 'Sort order',
+            'products_count' => 'Products',
+        ],
+    ],
+
     'property' => [
         'title' => 'Properties',
         'fields' => [

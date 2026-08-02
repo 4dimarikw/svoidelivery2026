@@ -4,11 +4,13 @@ declare(strict_types=1);
 
 namespace App\MoonShine\Resources\Product\Pages;
 
+use App\MoonShine\Resources\Category\CategoryResource;
 use App\MoonShine\Resources\Container\ContainerResource;
 use App\MoonShine\Resources\Manufacturer\ManufacturerResource;
 use App\MoonShine\Resources\Product\ProductResource;
 use App\MoonShine\Resources\Volume\VolumeResource;
 use Domain\Catalog\Enums\ProductStatus;
+use Domain\Catalog\Models\Category;
 use Domain\Catalog\Models\Container;
 use Domain\Catalog\Models\Manufacturer;
 use Domain\Catalog\Models\Volume;
@@ -42,29 +44,36 @@ final class ProductIndexPage extends IndexPage
         return [
             ID::make()->sortable(),
             Image::make(__('moonshine.product.fields.image'), 'label')
-                ->changePreview(fn ($value) => Thumbnails::make($value)),
+                ->changePreview(fn($value) => Thumbnails::make($value)),
             Text::make(__('moonshine.product.fields.article'), 'article')->sortable(),
             Text::make(__('moonshine.product.fields.name'), 'name')->sortable(),
             Text::make(__('moonshine.product.fields.category'), 'category.name'),
 
             BelongsTo::make(
+                __('moonshine.product.fields.category'),
+                'category',
+                formatted: static fn(Category $model) => $model->name,
+                resource: CategoryResource::class,
+            ),
+
+            BelongsTo::make(
                 __('moonshine.product.fields.manufacturer'),
                 'manufacturer',
-                formatted: static fn (Manufacturer $model) => $model->name,
+                formatted: static fn(Manufacturer $model) => $model->name,
                 resource: ManufacturerResource::class,
             ),
 
             BelongsTo::make(
                 __('moonshine.product.fields.volume'),
                 'volume',
-                formatted: static fn (Volume $model) => $model->label,
+                formatted: static fn(Volume $model) => $model->label,
                 resource: VolumeResource::class,
             ),
 
             BelongsTo::make(
                 __('moonshine.product.fields.container'),
                 'container',
-                formatted: static fn (Container $model) => $model->name,
+                formatted: static fn(Container $model) => $model->name,
                 resource: ContainerResource::class,
             ),
 
@@ -82,9 +91,16 @@ final class ProductIndexPage extends IndexPage
     {
         return [
             BelongsTo::make(
+                __('moonshine.product.fields.category'),
+                'category',
+                formatted: static fn(Category $model) => $model->name,
+                resource: CategoryResource::class,
+            )->nullable(),
+
+            BelongsTo::make(
                 __('moonshine.product.fields.manufacturer'),
                 'manufacturer',
-                formatted: static fn (Manufacturer $model) => $model->name,
+                formatted: static fn(Manufacturer $model) => $model->name,
                 resource: ManufacturerResource::class,
             )->nullable(),
 
@@ -101,33 +117,33 @@ final class ProductIndexPage extends IndexPage
         return [
             QueryTag::make(
                 'Черновики',
-                fn (Builder $query) => $query->where('status', ProductStatus::DRAFT)
+                fn(Builder $query) => $query->where('status', ProductStatus::DRAFT)
             ),
             QueryTag::make(
                 'В наличии',
-                fn (Builder $query) => $query->where('stock_quantity', '!=', 0)
+                fn(Builder $query) => $query->where('stock_quantity', '!=', 0)
             ),
             QueryTag::make(
                 'Нет в наличии',
-                fn (Builder $query) => $query->where('stock_quantity', 0)
+                fn(Builder $query) => $query->where('stock_quantity', 0)
             ),
             QueryTag::make(
                 'Новинки',
-                fn (Builder $query) => $query->where('created_at', '<=', Carbon::now()->subDays(app(GeneralSettings::class)->new_days))
+                fn(Builder $query) => $query->where('created_at', '<=', Carbon::now()->subDays(app(GeneralSettings::class)->new_days))
             ),
             QueryTag::make(
                 'Не новинки',
-                fn (Builder $query) => $query->where('created_at', '>=', Carbon::now()->subDays(app(GeneralSettings::class)->new_days))
+                fn(Builder $query) => $query->where('created_at', '>=', Carbon::now()->subDays(app(GeneralSettings::class)->new_days))
             ),
             QueryTag::make(
                 'Без UntappdID',
-                fn (Builder $query) => $query->whereDoesntHave('product.untappdBeer')
+                fn(Builder $query) => $query->whereDoesntHave('product.untappdBeer')
             ),
         ];
     }
 
     /**
-     * @param  TableBuilder  $component
+     * @param TableBuilder $component
      * @return TableBuilder
      */
     protected function modifyListComponent(ComponentContract $component): ComponentContract

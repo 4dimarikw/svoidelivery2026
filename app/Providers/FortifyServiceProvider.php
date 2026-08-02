@@ -53,6 +53,11 @@ class FortifyServiceProvider extends ServiceProvider
         // without this the route 500s.
         Fortify::confirmPasswordView(fn () => view('auth.confirm-password'));
 
+        // Same story as confirmPasswordView above: with emailVerification
+        // enabled, GET /email/verify is registered unconditionally and
+        // Fortify has no default VerifyEmailViewResponse binding.
+        Fortify::verifyEmailView(fn () => view('auth.verify-email'));
+
         RateLimiter::for('login', function (Request $request) {
             $throttleKey = Str::transliterate(Str::lower($request->input(Fortify::username())).'|'.$request->ip());
 

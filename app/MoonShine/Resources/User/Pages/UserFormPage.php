@@ -46,7 +46,7 @@ final class UserFormPage extends FormPage
             Date::make(__('moonshine.user.fields.email_verified_at'), 'email_verified_at')
                 ->withTime()
                 ->nullable()
-                ->hint('Подтверждение почты в проекте отключено (MAIL_MAILER=log) — это ручная отметка, а не результат письма-подтверждения.'),
+                ->disabled(),
 
             Collapse::make(__('moonshine.user.fields.change_password'), [
                 Password::make(__('moonshine.user.fields.password'), 'password')
@@ -83,13 +83,12 @@ final class UserFormPage extends FormPage
                 Tab::make(__('moonshine.user.tabs.profile'), [
                     $this->getResource()->getItem() ? $this->getProfileField() : 'У пользователя отсутствует профиль',
                 ])->icon('user-circle'),
-                Tab::make('Comment', [
-                    $this->getResource()->getItem() ? $this->getAddressesField() : 'To add comments, save the article',
+                Tab::make(__('moonshine.user.tabs.addresses'), [
+                    $this->getResource()->getItem() ? $this->getAddressesField() : 'У пользователя отсутствуют адреса',
                 ])->icon('map-pin'),
             ]),
         ];
     }
-
 
     protected function rules(DataWrapperContract $item): array
     {

@@ -31,13 +31,7 @@ class UserResource extends ModelResource
 
     protected string $column = 'name';
 
-    protected bool $createInModal = true;
-
-    protected bool $editInModal = true;
-
-    protected bool $detailInModal = true;
-
-    protected array $with = ['profile'];
+    protected array $with = ['profile', 'addresses'];
 
     public function getTitle(): string
     {

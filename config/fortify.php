@@ -143,7 +143,6 @@ return [
     | these features or you can even remove all of these if you need to.
     |
     | Deliberately NOT enabled — see CLAUDE.md for the reasoning behind each:
-    | - emailVerification: MAIL_MAILER=log, no real mail configured yet.
     | - twoFactorAuthentication: no product need yet; its migration was
     |   deleted after `fortify:install` — re-publish via
     |   `vendor:publish --tag=fortify-migrations` when enabling.
@@ -158,6 +157,7 @@ return [
         Features::resetPasswords(),
         Features::updateProfileInformation(),
         Features::updatePasswords(),
+        Features::emailVerification(),
     ],
 
 ];

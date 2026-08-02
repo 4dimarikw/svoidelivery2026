@@ -66,6 +66,13 @@ return [
         'submit' => 'Confirm',
     ],
 
+    'verify' => [
+        'title' => 'Verify your email',
+        'subtitle' => 'We sent a verification link to your email address',
+        'sent' => 'A new verification link has been sent.',
+        'resend' => 'Resend verification email',
+    ],
+
     'nav' => [
         'profile' => 'Profile',
     ],

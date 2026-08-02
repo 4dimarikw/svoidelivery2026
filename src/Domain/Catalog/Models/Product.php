@@ -133,15 +133,10 @@ class Product extends Model implements HasMedia
         return ProductFactory::new();
     }
 
-    /**
-     * `article` (the CSV's `Артикул`) is the slug source rather than `name` —
-     * product names run to hundreds of characters. Self-healing so a
-     * re-import that renames the product doesn't break existing links.
-     */
     public function getSlugOptions(): SlugOptions
     {
         return SlugOptions::create()
-            ->generateSlugsFrom(fn (Product $product) => $product->article ?: $product->name)
+            ->generateSlugsFrom(fn (Product $product) => $product->name ?: $product->article)
             ->saveSlugsTo('slug')
             ->usingSeparator('-')
             ->selfHealing();
