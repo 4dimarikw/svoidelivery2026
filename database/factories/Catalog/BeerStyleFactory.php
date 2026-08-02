@@ -4,7 +4,6 @@ namespace Database\Factories\Catalog;
 
 use Domain\Catalog\Models\BeerStyle;
 use Illuminate\Database\Eloquent\Factories\Factory;
-use Illuminate\Support\Str;
 
 /**
  * @extends Factory<BeerStyle>
@@ -25,8 +24,6 @@ class BeerStyleFactory extends Factory
         return [
             'parent_id' => null,
             'name' => ucfirst($name),
-            'normalized_name' => Str::lower($name),
-            'slug' => Str::slug($name),
             'is_active' => true,
         ];
     }

@@ -15,3 +15,17 @@ if (! function_exists('ui_id')) {
         return 'f-'.Str::of($name)->slug('-');
     }
 }
+
+if (! function_exists('normalize_name')) {
+    /**
+     * Canonical matching key for catalog dictionary rows (Manufacturer,
+     * BeerStyle): lowercased, whitespace-collapsed, trimmed. This is what
+     * `normalized_name` stores, and what the import's firstOrCreate() keys on
+     * — so admin screens must produce byte-identical output or a re-import
+     * will fail to match and insert a duplicate row.
+     */
+    function normalize_name(string $name): string
+    {
+        return trim(preg_replace('/\s+/', ' ', mb_strtolower($name)));
+    }
+}

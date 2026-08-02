@@ -25,7 +25,6 @@ class CategoryFactory extends Factory
         return [
             'code' => Str::slug($name, '_'),
             'name' => ucfirst($name),
-            'slug' => Str::slug($name),
             'is_active' => true,
             'sort_order' => 0,
         ];

@@ -7,7 +7,6 @@ use Domain\Catalog\Models\BeerStyle;
 use Domain\Untappd\Models\UntappdBeer;
 use Services\CatalogImport\Contracts\ImportStage;
 use Services\CatalogImport\Dto\ImportContext;
-use Services\CatalogImport\UniqueSlugResolver;
 use Services\Untappd\DTOs\BeerResponseDTO;
 use Services\Untappd\Facades\Untappd;
 use Support\Logging\Events\UntappdBeerSynced;
@@ -29,13 +28,13 @@ use Support\Logging\Events\UntappdBeerSyncFailed;
  *         найденную cache-запись (если была) и переходим к fallback.
  * 3. Fallback: если стиль пуст → берём `СтильПива` из CSV.
  * 4. Если итоговый стиль непуст → BeerStyle::firstOrCreate по normalized_name
- *    (NOT NULL unique, моделью не генерируется); name/slug заполняются явно.
+ *    (NOT NULL unique, моделью не генерируется); name заполняется явно, slug
+ *    генерируется BeerStyle::getSlugOptions() (Spatie\Sluggable\HasSlug)
+ *    через её собственный creating-listener.
  * 5. Всегда вызывает $next($ctx).
  */
 final class ResolveBeerStyleStage implements ImportStage
 {
-    public function __construct(private readonly UniqueSlugResolver $slugs = new UniqueSlugResolver) {}
-
     public function __invoke(ImportContext $ctx, Closure $next): ImportContext
     {
         // Step 1: parse UntappdRef
@@ -69,11 +68,11 @@ final class ResolveBeerStyleStage implements ImportStage
 
         // Step 4: resolve BeerStyle model
         if (! blank($styleName)) {
-            $normalized = $this->normalize($styleName);
+            $normalized = normalize_name($styleName);
 
             $ctx->beerStyle = BeerStyle::firstOrCreate(
                 ['normalized_name' => $normalized],
-                ['name' => $styleName, 'slug' => $this->slugs->resolve(BeerStyle::class, $styleName)],
+                ['name' => $styleName],
             );
         }
 
@@ -116,10 +115,5 @@ final class ResolveBeerStyleStage implements ImportStage
         ));
 
         return $model;
-    }
-
-    private function normalize(string $name): string
-    {
-        return trim(preg_replace('/\s+/', ' ', mb_strtolower($name)));
     }
 }

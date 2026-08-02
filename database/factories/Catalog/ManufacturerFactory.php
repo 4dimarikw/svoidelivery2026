@@ -4,7 +4,6 @@ namespace Database\Factories\Catalog;
 
 use Domain\Catalog\Models\Manufacturer;
 use Illuminate\Database\Eloquent\Factories\Factory;
-use Illuminate\Support\Str;
 
 /**
  * @extends Factory<Manufacturer>
@@ -24,8 +23,6 @@ class ManufacturerFactory extends Factory
 
         return [
             'name' => $name,
-            'normalized_name' => Str::lower($name),
-            'slug' => Str::slug($name),
             'is_active' => true,
         ];
     }
