@@ -2,32 +2,31 @@
 
 declare(strict_types=1);
 
-namespace App\MoonShine\Resources\Volume;
+namespace App\MoonShine\Resources\Manufacturer;
 
-use App\MoonShine\Resources\Volume\Pages\VolumeFormPage;
-use App\MoonShine\Resources\Volume\Pages\VolumeIndexPage;
+use App\MoonShine\Resources\Manufacturer\Pages\ManufacturerFormPage;
+use App\MoonShine\Resources\Manufacturer\Pages\ManufacturerIndexPage;
 use App\MoonShine\Support\GuardsRelatedDeletion;
-use Domain\Catalog\Models\Volume;
+use Domain\Catalog\Models\Manufacturer;
 use Illuminate\Contracts\Database\Eloquent\Builder;
 use MoonShine\Laravel\Resources\ModelResource;
 use MoonShine\MenuManager\Attributes\Group;
 use MoonShine\MenuManager\Attributes\Order;
 use MoonShine\Support\Attributes\Icon;
-use MoonShine\Support\Enums\SortDirection;
 
 /**
- * @extends ModelResource<Volume, VolumeIndexPage, VolumeFormPage, null>
+ * @extends ModelResource<Manufacturer, ManufacturerIndexPage, ManufacturerFormPage, null>
  */
-#[Icon('beaker')]
+#[Icon('building-storefront')]
 #[Group('Каталог', 'squares-2x2')]
-#[Order(3)]
-class VolumeResource extends ModelResource
+#[Order(1)]
+class ManufacturerResource extends ModelResource
 {
     use GuardsRelatedDeletion;
 
-    protected string $model = Volume::class;
+    protected string $model = Manufacturer::class;
 
-    protected string $column = 'label';
+    protected string $column = 'name';
 
     protected bool $createInModal = true;
 
@@ -35,26 +34,22 @@ class VolumeResource extends ModelResource
 
     protected bool $detailInModal = true;
 
-    protected string $sortColumn = 'milliliters';
-
-    protected SortDirection $sortDirection = SortDirection::ASC;
-
     public function getTitle(): string
     {
-        return 'Объёмы';
+        return 'Производители';
     }
 
     protected function pages(): array
     {
         return [
-            VolumeIndexPage::class,
-            VolumeFormPage::class,
+            ManufacturerIndexPage::class,
+            ManufacturerFormPage::class,
         ];
     }
 
     protected function search(): array
     {
-        return ['id', 'label', 'milliliters'];
+        return ['id', 'name', 'slug'];
     }
 
     protected function modifyQueryBuilder(Builder $builder): Builder
@@ -65,7 +60,7 @@ class VolumeResource extends ModelResource
     protected function deletionGuards(): array
     {
         return [
-            'products' => 'Нельзя удалить объём: он используется в товарах.',
+            'products' => 'Нельзя удалить производителя: он используется в товарах.',
         ];
     }
 }
