@@ -25,6 +25,8 @@ class AddressResource extends ModelResource
 {
     protected string $model = Address::class;
 
+    protected bool $withPolicy = true;
+
     protected string $column = 'city';
 
     protected bool $createInModal = true;

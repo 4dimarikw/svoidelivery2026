@@ -27,6 +27,8 @@ class VolumeResource extends ModelResource
 
     protected string $model = Volume::class;
 
+    protected bool $withPolicy = true;
+
     protected string $column = 'label';
 
     protected bool $createInModal = true;

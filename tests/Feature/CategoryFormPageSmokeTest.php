@@ -2,8 +2,10 @@
 
 namespace Tests\Feature;
 
+use Domain\Catalog\Models\Category;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use MoonShine\Laravel\Models\MoonshineUser;
+use MoonShine\Laravel\Models\MoonshineUserRole;
 use Tests\TestCase;
 
 /**
@@ -25,9 +27,12 @@ class CategoryFormPageSmokeTest extends TestCase
             'email' => 'smoke@test.local',
             'password' => bcrypt('password'),
             'name' => 'Smoke Test',
+            // Роль суперюзера — тест проверяет рендер формы, а не авторизацию
+            // (без неё CategoryPolicy/withPolicy режет доступ 403 при отсутствии роли).
+            'moonshine_user_role_id' => MoonshineUserRole::DEFAULT_ROLE_ID,
         ]);
 
-        $categoryId = \Domain\Catalog\Models\Category::query()->where('slug', 'beer')->value('id');
+        $categoryId = Category::query()->where('slug', 'beer')->value('id');
 
         $response = $this->actingAs($admin, 'moonshine')
             ->get("/admin/resource/category-resource/category-form-page/{$categoryId}");

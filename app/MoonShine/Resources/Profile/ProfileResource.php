@@ -26,6 +26,8 @@ class ProfileResource extends ModelResource
 {
     protected string $model = Profile::class;
 
+    protected bool $withPolicy = true;
+
     protected string $column = 'phone';
 
     protected function pages(): array

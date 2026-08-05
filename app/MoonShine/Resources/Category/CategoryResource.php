@@ -28,6 +28,8 @@ class CategoryResource extends ModelResource
 
     protected string $model = Category::class;
 
+    protected bool $withPolicy = true;
+
     protected string $column = 'name';
 
     // Форма с 4 вкладками (флаги импорта, репитер правил резолва, pivot

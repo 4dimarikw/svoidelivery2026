@@ -26,6 +26,8 @@ class ContainerResource extends ModelResource
 
     protected string $model = Container::class;
 
+    protected bool $withPolicy = true;
+
     protected string $column = 'name';
 
     protected bool $createInModal = true;

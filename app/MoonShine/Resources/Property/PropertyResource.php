@@ -29,6 +29,8 @@ class PropertyResource extends ModelResource
 {
     protected string $model = Property::class;
 
+    protected bool $withPolicy = true;
+
     protected string $column = 'name';
 
     protected bool $createInModal = true;

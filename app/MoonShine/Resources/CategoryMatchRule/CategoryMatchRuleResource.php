@@ -26,6 +26,8 @@ class CategoryMatchRuleResource extends ModelResource
 {
     protected string $model = CategoryMatchRule::class;
 
+    protected bool $withPolicy = true;
+
     protected string $column = 'value';
 
     protected function pages(): array

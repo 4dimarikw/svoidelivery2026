@@ -27,6 +27,8 @@ class BeerProductDetailResource extends ModelResource
 {
     protected string $model = BeerProductDetail::class;
 
+    protected bool $withPolicy = true;
+
     protected string $column = 'abv';
 
     protected function pages(): array

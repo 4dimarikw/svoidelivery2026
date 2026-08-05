@@ -29,6 +29,8 @@ class UserResource extends ModelResource
 {
     protected string $model = User::class;
 
+    protected bool $withPolicy = true;
+
     protected string $column = 'name';
 
     protected array $with = ['profile', 'addresses'];

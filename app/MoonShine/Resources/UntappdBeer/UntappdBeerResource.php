@@ -29,6 +29,8 @@ class UntappdBeerResource extends ModelResource
 {
     protected string $model = UntappdBeer::class;
 
+    protected bool $withPolicy = true;
+
     protected string $column = 'name';
 
     protected bool $detailInModal = true;

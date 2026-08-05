@@ -26,6 +26,8 @@ class BeerStyleResource extends ModelResource
 
     protected string $model = BeerStyle::class;
 
+    protected bool $withPolicy = true;
+
     protected string $column = 'name';
 
     protected bool $createInModal = true;

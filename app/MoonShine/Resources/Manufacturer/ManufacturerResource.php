@@ -26,6 +26,8 @@ class ManufacturerResource extends ModelResource
 
     protected string $model = Manufacturer::class;
 
+    protected bool $withPolicy = true;
+
     protected string $column = 'name';
 
     protected bool $createInModal = true;
