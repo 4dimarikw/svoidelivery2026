@@ -251,6 +251,11 @@
         transform: translateY(-70%) rotate(45deg);
         pointer-events: none;
     }
+    /* <x-ui.select-filter> — тот же уголок, отражённый в открытом состоянии
+       (225° = 45° + 180°), чтобы шеврон смотрел вверх, пока панель раскрыта. */
+    .select-wrap.is-open::after {
+        transform: translateY(-30%) rotate(225deg);
+    }
     .select-control {
         -webkit-appearance: none;
         -moz-appearance: none;

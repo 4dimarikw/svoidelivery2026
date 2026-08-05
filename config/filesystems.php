@@ -56,6 +56,12 @@ return [
             'report' => false,
         ],
 
+        'media_prod' => [
+            'driver' => 'local',
+            'root' => public_path('media'),
+            'url' => env('APP_URL').'/media',
+        ],
+
         's3' => [
             'driver' => 's3',
             'key' => env('AWS_ACCESS_KEY_ID'),
@@ -69,6 +75,17 @@ return [
             'report' => false,
         ],
 
+        'ftp' => [
+            'driver' => 'ftp',
+            'host' => env('DB_1C_FTP_SERVER'),
+            'port' => (int) env('DB_1C_FTP_PORT'),
+            'username' => env('DB_1C_FTP_LOGIN'),
+            'password' => env('DB_1C_FTP_PASSWORD'),
+            'passive' => true,
+            'ignorePassiveAddress' => true,
+            'ssl' => false,
+            'timeout' => 30,
+        ],
     ],
 
     /*

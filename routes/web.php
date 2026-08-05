@@ -2,11 +2,11 @@
 
 use App\Http\Controllers\Account\AddressController;
 use App\Http\Controllers\Account\ProfileController;
-use App\Http\Controllers\PageController;
+use App\Http\Controllers\CatalogController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', [PageController::class, 'home'])->name('home');
+Route::get('/', [CatalogController::class, 'index'])->name('home');
 
 Route::middleware(['auth', 'verified'])->prefix('account')->name('account.')->group(function () {
     Route::get('profile', [ProfileController::class, 'edit'])->name('profile.edit');

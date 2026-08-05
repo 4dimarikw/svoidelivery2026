@@ -50,6 +50,10 @@ class Catalog1cFtpClient
 
             ftp_pasv($conn, true);
 
+            // PASV за NAT может вернуть приватный IP сервера — держим data-канал
+            // на адресе управляющего соединения, а не на адресе из ответа PASV.
+            ftp_set_option($conn, FTP_USEPASVADDRESS, false);
+
             if (! ftp_get($conn, $localPath, $remoteFile, FTP_BINARY)) {
                 throw new RuntimeException("FTP download failed: '{$remoteFile}' from {$host}:{$port}");
             }

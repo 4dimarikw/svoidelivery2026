@@ -1,6 +1,6 @@
-{{-- No nav links yet (no catalog/account pages exist) — just brand + auth
-     state. Stacks vertically on mobile, one row from `sm:` up. Spacing uses
-     `space-y-*`/`space-x-*` (margin-based), never flex `gap` — see
+{{-- No separate nav links — the catalog lives on `home`, and the logo already
+     links there. Stacks vertically on mobile, one row from `sm:` up. Spacing
+     uses `space-y-*`/`space-x-*` (margin-based), never flex `gap` — see
      CLAUDE.md's legacy-browser section (Safari < 14.1 has no flex-gap). --}}
 <header class="border-b border-hairline bg-cream-50">
     <div class="mx-auto flex max-w-page flex-col space-y-4 px-6 py-4 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">

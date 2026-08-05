@@ -247,4 +247,44 @@ class Product extends Model implements HasMedia
             ->when($min !== null, fn (Builder $q) => $q->where('price', '>=', $min))
             ->when($max !== null, fn (Builder $q) => $q->where('price', '<=', $max));
     }
+
+    /**
+     * Опубликованные товары для витрины. Отдельно от scopeActive() — там
+     * status и in_stock склеены в одно условие, а для каталога "в наличии"
+     * должен быть самостоятельным фильтром, а не частью базовой выборки.
+     */
+    public function scopePublished(Builder $query): Builder
+    {
+        return $query->where('status', ProductStatus::PUBLISHED);
+    }
+
+    public function scopeInCategories(Builder $query, array $categoryIds): Builder
+    {
+        return $query->when($categoryIds !== [], fn (Builder $q) => $q->whereIn('category_id', $categoryIds));
+    }
+
+    public function scopeOfManufacturers(Builder $query, array $manufacturerIds): Builder
+    {
+        return $query->when($manufacturerIds !== [], fn (Builder $q) => $q->whereIn('manufacturer_id', $manufacturerIds));
+    }
+
+    public function scopeOfVolumes(Builder $query, array $volumeIds): Builder
+    {
+        return $query->when($volumeIds !== [], fn (Builder $q) => $q->whereIn('volume_id', $volumeIds));
+    }
+
+    public function scopeOfContainers(Builder $query, array $containerIds): Builder
+    {
+        return $query->when($containerIds !== [], fn (Builder $q) => $q->whereIn('container_id', $containerIds));
+    }
+
+    public function scopeSearch(Builder $query, ?string $term): Builder
+    {
+        return $query->when($term !== null && $term !== '', fn (Builder $q) => $q->where('name', 'like', '%'.$term.'%'));
+    }
+
+    public function scopeOnlyInStock(Builder $query, bool $onlyInStock): Builder
+    {
+        return $query->when($onlyInStock, fn (Builder $q) => $q->where('in_stock', true));
+    }
 }
