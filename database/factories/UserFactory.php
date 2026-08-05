@@ -12,6 +12,12 @@ use Illuminate\Support\Str;
  */
 class UserFactory extends Factory
 {
+    // Явно, а не по умолчанию: Factory::modelName() угадывает класс модели по
+    // имени фабрики через App\Models\{Basename} → App\{Basename}; когда
+    // App\Models\User не существует (User переехал в Domain\Auth\Models —
+    // см. CLAUDE.md), угадывание молча уходит в несуществующий App\User.
+    protected $model = User::class;
+
     /**
      * The current password being used by the factory.
      */

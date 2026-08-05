@@ -2,7 +2,9 @@
 
 namespace Domain\Profile\Models;
 
+use Database\Factories\Profile\AddressFactory;
 use Domain\Auth\Models\User;
+use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -12,6 +14,12 @@ class Address extends Model
     use HasFactory;
 
     protected $fillable = [
+        // Mass-assignable so factories/tests can create() with an explicit
+        // owner. No controller ever request-validates this key (see
+        // AddressController::validated()) — the request-driven paths always
+        // go through $user->addresses()->create(), which sets the FK itself
+        // regardless of $fillable — so this doesn't open a mass-assignment hole.
+        'user_id',
         'label',
         'city',
         'street',
@@ -29,6 +37,11 @@ class Address extends Model
         return [
             'is_default' => 'boolean',
         ];
+    }
+
+    protected static function newFactory(): Factory
+    {
+        return AddressFactory::new();
     }
 
     public function user(): BelongsTo

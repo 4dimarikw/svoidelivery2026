@@ -6,6 +6,7 @@ use Database\Factories\UserFactory;
 use Domain\Profile\Models\Address;
 use Domain\Profile\Models\Profile;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
@@ -49,6 +50,18 @@ class User extends Authenticatable implements MustVerifyEmail
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+
+    /**
+     * Без этого переопределения Laravel угадывает класс фабрики по
+     * умолчанию как `Database\Factories\Domain\Auth\Models\UserFactory` (не
+     * существует) — конвенция резолвит только модели под `App\`/`App\Models\`,
+     * а `User` при переезде в `Domain\Auth\Models` (см. CLAUDE.md) выпал из
+     * неё. `User::factory()` был полностью сломан до этого фикса.
+     */
+    protected static function newFactory(): Factory
+    {
+        return UserFactory::new();
     }
 
     public function profile(): HasOne
