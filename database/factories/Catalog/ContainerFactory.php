@@ -28,6 +28,11 @@ class ContainerFactory extends Factory
                 'glass_bottle' => 'Стеклянная бутылка',
                 'pet_keg' => 'ПЭТ-кег',
             },
+            'label' => match ($code) {
+                'can' => 'Жестяная банка',
+                'glass_bottle' => 'Стеклянная бутылка',
+                'pet_keg' => 'ПЭТ кег',
+            },
             'is_active' => true,
         ];
     }

@@ -36,6 +36,9 @@ final class ContainerFormPage extends FormPage
 
                 Text::make(__('moonshine.container.fields.name'), 'name')->required(),
 
+                Text::make(__('moonshine.container.fields.label'), 'label')
+                    ->hint('Короткое название для витрины: «ПЭТ», «ж/б». Если не заполнено, покупатель увидит «Название».'),
+
                 Switcher::make(__('moonshine.container.fields.is_active'), 'is_active'),
             ]),
         ];
@@ -49,6 +52,7 @@ final class ContainerFormPage extends FormPage
                 Rule::unique('containers', 'code')->ignore($item->getKey()),
             ],
             'name' => ['required', 'string', 'max:255'],
+            'label' => ['nullable', 'string', 'max:64'],
         ];
     }
 }

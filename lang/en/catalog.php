@@ -25,6 +25,14 @@ return [
         'close' => 'Close filters',
     ],
 
+    'spec' => [
+        'ibu' => 'IBU',
+        'plato' => '°P',
+        'ebc' => 'EBC',
+    ],
+
+    'no_image' => 'Product image unavailable',
+
     'found' => 'Found: :count',
     'empty' => 'No products match the selected filters.',
     'new' => 'New',

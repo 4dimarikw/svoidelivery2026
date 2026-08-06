@@ -3,9 +3,9 @@
 namespace Domain\Catalog\Models;
 
 use Database\Factories\Catalog\ProductFactory;
+use Domain\Catalog\Builders\ProductBuilder;
 use Domain\Catalog\Enums\ProductStatus;
 use Eloquent;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -57,34 +57,31 @@ use Support\Casts\HtmlEntityDecoder;
  * @property-read mixed $thumb
  * @property-read Volume|null $volume
  *
- * @method static Builder<static>|Product active()
  * @method static ProductFactory factory($count = null, $state = [])
- * @method static Builder<static>|Product inCategory(int $categoryId)
- * @method static Builder<static>|Product inPriceRange(?string $min, ?string $max)
- * @method static Builder<static>|Product newModelQuery()
- * @method static Builder<static>|Product newQuery()
- * @method static Builder<static>|Product query()
- * @method static Builder<static>|Product whereArticle($value)
- * @method static Builder<static>|Product whereBrand($value)
- * @method static Builder<static>|Product whereCategoryId($value)
- * @method static Builder<static>|Product whereContainerId($value)
- * @method static Builder<static>|Product whereCreatedAt($value)
- * @method static Builder<static>|Product whereDescription($value)
- * @method static Builder<static>|Product whereExternalCode($value)
- * @method static Builder<static>|Product whereId($value)
- * @method static Builder<static>|Product whereInStock($value)
- * @method static Builder<static>|Product whereStatus($value)
- * @method static Builder<static>|Product whereManufacturerId($value)
- * @method static Builder<static>|Product whereName($value)
- * @method static Builder<static>|Product wherePackageUnits($value)
- * @method static Builder<static>|Product wherePackagingRaw($value)
- * @method static Builder<static>|Product wherePrice($value)
- * @method static Builder<static>|Product whereShelfLifeDays($value)
- * @method static Builder<static>|Product whereSlug($value)
- * @method static Builder<static>|Product whereSourceCategoryPath($value)
- * @method static Builder<static>|Product whereStockQuantity($value)
- * @method static Builder<static>|Product whereUpdatedAt($value)
- * @method static Builder<static>|Product whereVolumeId($value)
+ * @method static ProductBuilder newModelQuery()
+ * @method static ProductBuilder newQuery()
+ * @method static ProductBuilder query()
+ * @method static ProductBuilder whereArticle($value)
+ * @method static ProductBuilder whereBrand($value)
+ * @method static ProductBuilder whereCategoryId($value)
+ * @method static ProductBuilder whereContainerId($value)
+ * @method static ProductBuilder whereCreatedAt($value)
+ * @method static ProductBuilder whereDescription($value)
+ * @method static ProductBuilder whereExternalCode($value)
+ * @method static ProductBuilder whereId($value)
+ * @method static ProductBuilder whereInStock($value)
+ * @method static ProductBuilder whereStatus($value)
+ * @method static ProductBuilder whereManufacturerId($value)
+ * @method static ProductBuilder whereName($value)
+ * @method static ProductBuilder wherePackageUnits($value)
+ * @method static ProductBuilder wherePackagingRaw($value)
+ * @method static ProductBuilder wherePrice($value)
+ * @method static ProductBuilder whereShelfLifeDays($value)
+ * @method static ProductBuilder whereSlug($value)
+ * @method static ProductBuilder whereSourceCategoryPath($value)
+ * @method static ProductBuilder whereStockQuantity($value)
+ * @method static ProductBuilder whereUpdatedAt($value)
+ * @method static ProductBuilder whereVolumeId($value)
  *
  * @mixin Eloquent
  */
@@ -131,6 +128,14 @@ class Product extends Model implements HasMedia
     protected static function newFactory(): Factory
     {
         return ProductFactory::new();
+    }
+
+    /**
+     * Query-скоупы вынесены в ProductBuilder — см. этот класс, не Product.
+     */
+    public function newEloquentBuilder($query): ProductBuilder
+    {
+        return new ProductBuilder($query);
     }
 
     public function getSlugOptions(): SlugOptions
@@ -193,6 +198,20 @@ class Product extends Model implements HasMedia
         return $url;
     }
 
+    /**
+     * У товара есть собственная картинка. Untappd для части сортов
+     * подставляет свой дефолтный бейдж (badge-beer-default-thumb) — он
+     * такая же заглушка, как наша, поэтому тоже считается отсутствием
+     * изображения. Используется каталогом, чтобы решить: показать <img>
+     * или <x-ui.product-placeholder> (см. product-card.blade.php).
+     */
+    public function hasOwnImage(): bool
+    {
+        $url = $this->getFirstMedia('main')?->getUrl('thumb');
+
+        return $url !== null && ! Str::contains($url, 'badge-beer-default-thumb');
+    }
+
     public function category(): BelongsTo
     {
         return $this->belongsTo(Category::class);
@@ -224,67 +243,5 @@ class Product extends Model implements HasMedia
             fn (): bool => $this->created_at !== null
                 && $this->created_at->gt(now()->subDays(app(GeneralSettings::class)->new_days))
         );
-    }
-
-    public function scopeNew($query)
-    {
-        return $query->where('created_at', '>', now()->subDays(7));
-    }
-
-    public function scopeActive(Builder $query): Builder
-    {
-        return $query->where('status', ProductStatus::PUBLISHED)->where('in_stock', true);
-    }
-
-    public function scopeInCategory(Builder $query, int $categoryId): Builder
-    {
-        return $query->where('category_id', $categoryId);
-    }
-
-    public function scopeInPriceRange(Builder $query, ?string $min, ?string $max): Builder
-    {
-        return $query
-            ->when($min !== null, fn (Builder $q) => $q->where('price', '>=', $min))
-            ->when($max !== null, fn (Builder $q) => $q->where('price', '<=', $max));
-    }
-
-    /**
-     * Опубликованные товары для витрины. Отдельно от scopeActive() — там
-     * status и in_stock склеены в одно условие, а для каталога "в наличии"
-     * должен быть самостоятельным фильтром, а не частью базовой выборки.
-     */
-    public function scopePublished(Builder $query): Builder
-    {
-        return $query->where('status', ProductStatus::PUBLISHED);
-    }
-
-    public function scopeInCategories(Builder $query, array $categoryIds): Builder
-    {
-        return $query->when($categoryIds !== [], fn (Builder $q) => $q->whereIn('category_id', $categoryIds));
-    }
-
-    public function scopeOfManufacturers(Builder $query, array $manufacturerIds): Builder
-    {
-        return $query->when($manufacturerIds !== [], fn (Builder $q) => $q->whereIn('manufacturer_id', $manufacturerIds));
-    }
-
-    public function scopeOfVolumes(Builder $query, array $volumeIds): Builder
-    {
-        return $query->when($volumeIds !== [], fn (Builder $q) => $q->whereIn('volume_id', $volumeIds));
-    }
-
-    public function scopeOfContainers(Builder $query, array $containerIds): Builder
-    {
-        return $query->when($containerIds !== [], fn (Builder $q) => $q->whereIn('container_id', $containerIds));
-    }
-
-    public function scopeSearch(Builder $query, ?string $term): Builder
-    {
-        return $query->when($term !== null && $term !== '', fn (Builder $q) => $q->where('name', 'like', '%'.$term.'%'));
-    }
-
-    public function scopeOnlyInStock(Builder $query, bool $onlyInStock): Builder
-    {
-        return $query->when($onlyInStock, fn (Builder $q) => $q->where('in_stock', true));
     }
 }

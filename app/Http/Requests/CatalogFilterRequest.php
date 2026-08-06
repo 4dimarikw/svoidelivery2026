@@ -4,11 +4,20 @@ declare(strict_types=1);
 
 namespace App\Http\Requests;
 
+use Domain\Catalog\Filters\FilterManager;
 use Illuminate\Foundation\Http\FormRequest;
 
 /**
  * Валидация фильтров каталога на главной странице (route `home`).
  * Все поля необязательны — пустой запрос показывает весь опубликованный каталог.
+ *
+ * Чистый валидатор — ни значения фильтров, ни сами правила здесь больше не
+ * прописаны руками: и то, и другое приходит из Domain\Catalog\Filters\FilterManager
+ * (каждый фильтр — единственный источник правды про своё поле: имя, правило
+ * валидации, применение к запросу, собственный Blade-виджет — всё в одном
+ * классе). Типизированный параметр в CatalogController::index() держим ради
+ * побочного эффекта: Laravel валидирует запрос при резолве параметра метода,
+ * ДО выполнения тела контроллера (422/редирект на невалидный ID и т.п.).
  */
 class CatalogFilterRequest extends FormRequest
 {
@@ -19,77 +28,6 @@ class CatalogFilterRequest extends FormRequest
 
     public function rules(): array
     {
-        return [
-            'q' => ['nullable', 'string', 'max:255'],
-
-            'categories' => ['nullable', 'array'],
-            'categories.*' => ['integer', 'exists:categories,id'],
-
-            'manufacturers' => ['nullable', 'array'],
-            'manufacturers.*' => ['integer', 'exists:manufacturers,id'],
-
-            'volumes' => ['nullable', 'array'],
-            'volumes.*' => ['integer', 'exists:volumes,id'],
-
-            'containers' => ['nullable', 'array'],
-            'containers.*' => ['integer', 'exists:containers,id'],
-
-            'price_min' => ['nullable', 'numeric', 'min:0'],
-            'price_max' => ['nullable', 'numeric', 'min:0', 'gte:price_min'],
-
-            'in_stock' => ['nullable', 'boolean'],
-        ];
-    }
-
-    /**
-     * @return list<int>
-     */
-    public function categories(): array
-    {
-        return $this->validated('categories', []);
-    }
-
-    /**
-     * @return list<int>
-     */
-    public function manufacturers(): array
-    {
-        return $this->validated('manufacturers', []);
-    }
-
-    /**
-     * @return list<int>
-     */
-    public function volumes(): array
-    {
-        return $this->validated('volumes', []);
-    }
-
-    /**
-     * @return list<int>
-     */
-    public function containers(): array
-    {
-        return $this->validated('containers', []);
-    }
-
-    public function priceMin(): ?string
-    {
-        return $this->validated('price_min');
-    }
-
-    public function priceMax(): ?string
-    {
-        return $this->validated('price_max');
-    }
-
-    public function searchTerm(): ?string
-    {
-        return $this->validated('q');
-    }
-
-    public function inStock(): bool
-    {
-        return $this->boolean('in_stock');
+        return app(FilterManager::class)->rules();
     }
 }

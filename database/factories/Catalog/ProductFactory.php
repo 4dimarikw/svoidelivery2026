@@ -37,7 +37,13 @@ class ProductFactory extends Factory
             'packaging_raw' => null,
             'source_category_path' => null,
             'shelf_life_days' => fake()->optional()->numberBetween(30, 730),
-            'brand' => fake()->optional()->company(),
+            // В реальных данных brand заполнен у всех товаров (1С всегда
+            // присылает "Марку") — optional() здесь раньше делал тесты,
+            // которые assertSee($product->name) без явного brand, случайно
+            // флаковыми: карточка показывает brand вместо name (см.
+            // product-card.blade.php), а optional() иногда подставлял
+            // случайную компанию, пряча name с экрана.
+            'brand' => fake()->company(),
             'status' => ProductStatus::PUBLISHED,
         ];
     }

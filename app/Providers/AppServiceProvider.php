@@ -2,6 +2,18 @@
 
 namespace App\Providers;
 
+use Domain\Catalog\Filters\AbvRangeFilter;
+use Domain\Catalog\Filters\BeerStyleFilter;
+use Domain\Catalog\Filters\CategoryFilter;
+use Domain\Catalog\Filters\ContainerFilter;
+use Domain\Catalog\Filters\FilterManager;
+use Domain\Catalog\Filters\IbuRangeFilter;
+use Domain\Catalog\Filters\InStockFilter;
+use Domain\Catalog\Filters\ManufacturerFilter;
+use Domain\Catalog\Filters\PriceRangeFilter;
+use Domain\Catalog\Filters\SearchFilter;
+use Domain\Catalog\Filters\SortFilter;
+use Domain\Catalog\Filters\VolumeFilter;
 use Illuminate\Support\ServiceProvider;
 use Services\CatalogImport\CategoryRegistry;
 use Services\Untappd\Providers\UntappdProvider;
@@ -23,6 +35,8 @@ class AppServiceProvider extends ServiceProvider
         // Singleton + explicit CategoryRegistry::flush() (see that class)
         // keeps it to one lookup per process/until invalidated.
         $this->app->singleton(CategoryRegistry::class);
+
+        $this->app->singleton(FilterManager::class);
     }
 
     /**
@@ -30,6 +44,20 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        // Порядок = визуальный порядок в pages/catalog/_filters.blade.php.
+        app(FilterManager::class)->registerFilters([
+            new SortFilter,
+            new SearchFilter,
+            new InStockFilter,
+            new CategoryFilter,
+            new BeerStyleFilter,
+            new ManufacturerFilter,
+            new VolumeFilter,
+            new ContainerFilter,
+            new PriceRangeFilter,
+            new AbvRangeFilter,
+            new IbuRangeFilter,
+
+        ]);
     }
 }

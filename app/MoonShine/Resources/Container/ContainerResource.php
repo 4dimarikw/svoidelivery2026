@@ -51,7 +51,7 @@ class ContainerResource extends ModelResource
 
     protected function search(): array
     {
-        return ['id', 'code', 'name'];
+        return ['id', 'code', 'name', 'label'];
     }
 
     protected function modifyQueryBuilder(Builder $builder): Builder

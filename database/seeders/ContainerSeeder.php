@@ -13,14 +13,14 @@ class ContainerSeeder extends Seeder
      * warns "container code not seeded" for any code missing here.
      */
     private const CONTAINERS = [
-        'pet_keg' => 'ПЭТ-кег',
-        'pet' => 'ПЭТ-бутылка',
-        'can' => 'Алюминиевая банка',
-        'glass_bottle' => 'Стеклянная бутылка',
-        'tin_can' => 'Консервная банка',
-        'piece' => 'Штучный товар',
-        'pack' => 'Пачка',
-        'gas_cylinder' => 'Газовый баллон',
+        'pet_keg' => ['name' => 'ПЭТ-кег', 'label' => 'пэт кег'],
+        'pet' => ['name' => 'ПЭТ-бутылка', 'label' => 'пэт'],
+        'can' => ['name' => 'Алюминиевая банка', 'label' => 'ж/б'],
+        'glass_bottle' => ['name' => 'Стеклянная бутылка', 'label' => 'ст. бут.'],
+        'tin_can' => ['name' => 'Консервная банка', 'label' => 'конс./б'],
+        'piece' => ['name' => 'Штучный товар', 'label' => ''],
+        'pack' => ['name' => 'Пачка', 'label' => 'Пачка'],
+        'gas_cylinder' => ['name' => 'Газовый баллон', 'label' => 'газ. баллон'],
     ];
 
     /**
@@ -28,10 +28,10 @@ class ContainerSeeder extends Seeder
      */
     public function run(): void
     {
-        foreach (self::CONTAINERS as $code => $name) {
+        foreach (self::CONTAINERS as $code => $row) {
             Container::query()->updateOrCreate(
                 ['code' => $code],
-                ['name' => $name],
+                $row,
             );
         }
     }

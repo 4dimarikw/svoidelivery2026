@@ -139,6 +139,7 @@ return [
         'fields' => [
             'code' => 'Код',
             'name' => 'Название',
+            'label' => 'Короткое название',
             'is_active' => 'Активна',
             'products_count' => 'Товаров',
         ],

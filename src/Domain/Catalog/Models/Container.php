@@ -15,6 +15,7 @@ class Container extends Model
     protected $fillable = [
         'code',
         'name',
+        'label',
         'is_active',
     ];
 

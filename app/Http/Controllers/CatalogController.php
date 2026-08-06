@@ -5,31 +5,32 @@ declare(strict_types=1);
 namespace App\Http\Controllers;
 
 use App\Http\Requests\CatalogFilterRequest;
-use Domain\Catalog\Models\Category;
-use Domain\Catalog\Models\Container;
-use Domain\Catalog\Models\Manufacturer;
+use Domain\Catalog\Filters\FilterManager;
 use Domain\Catalog\Models\Product;
-use Domain\Catalog\Models\Volume;
 use Illuminate\Http\Response;
 use Illuminate\View\View;
 
 class CatalogController extends Controller
 {
-    public function index(CatalogFilterRequest $request): View|Response
+    // CatalogFilterRequest остаётся типизированным параметром чисто ради
+    // валидации — Laravel валидирует его при резолве параметра метода, ДО
+    // выполнения тела контроллера, так что невалидный categories[]=999999
+    // всё ещё 422/редиректит, даже несмотря на то что $filters->apply()
+    // ниже читает request() напрямую, а не провалидированные данные.
+    public function index(CatalogFilterRequest $request, FilterManager $filters): View|Response
     {
-        $products = Product::query()
-            ->published()
-            // 'media' — иначе $product->thumb (Product::resolveMediaUrl()) даёт
-            // по запросу getFirstMedia() на каждую карточку.
-            ->with(['manufacturer', 'volume', 'container', 'media'])
-            ->inCategories($request->categories())
-            ->ofManufacturers($request->manufacturers())
-            ->ofVolumes($request->volumes())
-            ->ofContainers($request->containers())
-            ->inPriceRange($request->priceMin(), $request->priceMax())
-            ->onlyInStock($request->inStock())
-            ->search($request->searchTerm())
-            ->orderByDesc('id')
+        $products = $filters->apply(
+            Product::query()
+                ->published()
+                // 'media' — иначе $product->thumb (Product::resolveMediaUrl()) даёт
+                // по запросу getFirstMedia() на каждую карточку. 'beerDetails.*' —
+                // карточка показывает стиль/abv/ibu/plato/ebc/рейтинг Untappd для
+                // пива; beerDetails есть не у всех товаров (аксессуары), но
+                // eager-load всё равно нужен, иначе N+1 по каждой карточке.
+                ->with(['manufacturer', 'volume', 'container', 'media', 'beerDetails.beerStyle', 'beerDetails.untappdBeer'])
+            // Порядок сортировки задаёт SortFilter внутри пайплайна выше
+            // (ProductBuilder::sorted()) — здесь больше нет хардкода.
+        )
             ->paginate(24)
             ->withQueryString();
 
@@ -44,10 +45,7 @@ class CatalogController extends Controller
 
         return view('pages.home', [
             'products' => $products,
-            'categories' => Category::query()->where('is_active', true)->orderBy('name')->get(),
-            'manufacturers' => Manufacturer::query()->where('is_active', true)->orderBy('name')->get(),
-            'volumes' => Volume::query()->orderBy('milliliters')->get(),
-            'containers' => Container::query()->where('is_active', true)->orderBy('name')->get(),
+            'filters' => $filters->items(),
         ]);
     }
 }
