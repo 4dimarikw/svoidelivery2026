@@ -110,4 +110,14 @@ return [
         'updated' => 'Address saved.',
         'deleted' => 'Address deleted.',
     ],
+
+    'favorites' => [
+        'title' => 'Favorites',
+        'empty' => 'No favorites yet.',
+        'clear' => 'Clear all',
+        'clear_confirm' => 'Remove all products from favorites?',
+        'added' => 'Product added to favorites.',
+        'removed' => 'Product removed from favorites.',
+        'cleared' => 'Favorites cleared.',
+    ],
 ];

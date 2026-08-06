@@ -176,13 +176,16 @@ return [
             'phone' => 'Телефон',
             'created_at' => 'Дата регистрации',
             'addresses_count' => 'Адресов',
+            'favorites_count' => 'В избранном',
             'profile' => 'Профиль',
             'addresses' => 'Адреса',
+            'favorites' => 'Избранное',
         ],
         'tabs' => [
             'main' => 'Основное',
             'profile' => 'Профиль',
             'addresses' => 'Адреса',
+            'favorites' => 'Избранное',
         ],
     ],
 
@@ -213,6 +216,15 @@ return [
             'intercom' => 'Домофон',
             'comment' => 'Комментарий',
             'is_default' => 'Адрес по умолчанию',
+        ],
+    ],
+
+    'favorite' => [
+        'title' => 'Избранное',
+        'fields' => [
+            'user' => 'Пользователь',
+            'product' => 'Товар',
+            'created_at' => 'Добавлено',
         ],
     ],
 

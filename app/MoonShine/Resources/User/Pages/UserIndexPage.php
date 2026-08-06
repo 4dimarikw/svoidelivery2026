@@ -36,6 +36,7 @@ final class UserIndexPage extends IndexPage
             Date::make(__('moonshine.user.fields.email_verified_at'), 'email_verified_at')->format('d.m.Y'),
             Date::make(__('moonshine.user.fields.created_at'), 'created_at')->format('d.m.Y')->sortable(),
             Number::make(__('moonshine.user.fields.addresses_count'), 'addresses_count')->badge(Color::GRAY),
+            Number::make(__('moonshine.user.fields.favorites_count'), 'favorites_count')->badge(Color::GRAY),
         ];
     }
 

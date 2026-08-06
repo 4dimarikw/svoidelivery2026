@@ -176,13 +176,16 @@ return [
             'phone' => 'Phone',
             'created_at' => 'Registered',
             'addresses_count' => 'Addresses',
+            'favorites_count' => 'Favorites',
             'profile' => 'Profile',
             'addresses' => 'Addresses',
+            'favorites' => 'Favorites',
         ],
         'tabs' => [
             'main' => 'Main',
             'profile' => 'Profile',
             'addresses' => 'Addresses',
+            'favorites' => 'Favorites',
         ],
     ],
 
@@ -213,6 +216,15 @@ return [
             'intercom' => 'Intercom',
             'comment' => 'Comment',
             'is_default' => 'Default address',
+        ],
+    ],
+
+    'favorite' => [
+        'title' => 'Favorites',
+        'fields' => [
+            'user' => 'User',
+            'product' => 'Product',
+            'created_at' => 'Added',
         ],
     ],
 

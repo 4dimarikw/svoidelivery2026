@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\MoonShine\Resources\User\Pages;
 
 use App\MoonShine\Resources\Address\AddressResource;
+use App\MoonShine\Resources\Favorite\FavoriteResource;
 use App\MoonShine\Resources\Profile\ProfileResource;
 use App\MoonShine\Resources\User\UserResource;
 use Domain\Auth\Models\User;
@@ -75,6 +76,14 @@ final class UserFormPage extends FormPage
             ->creatable();
     }
 
+    private function getFavoritesField(): HasMany
+    {
+        return HasMany::make(__('moonshine.user.fields.favorites'), 'favorites', resource: FavoriteResource::class)
+            ->fillData($this->getResource()->getItem())
+            ->async()
+            ->creatable();
+    }
+
     protected function mainLayer(): array
     {
         return [
@@ -86,6 +95,9 @@ final class UserFormPage extends FormPage
                 Tab::make(__('moonshine.user.tabs.addresses'), [
                     $this->getResource()->getItem() ? $this->getAddressesField() : 'У пользователя отсутствуют адреса',
                 ])->icon('map-pin'),
+                Tab::make(__('moonshine.user.tabs.favorites'), [
+                    $this->getResource()->getItem() ? $this->getFavoritesField() : 'У пользователя отсутствует избранное',
+                ])->icon('heart'),
             ]),
         ];
     }

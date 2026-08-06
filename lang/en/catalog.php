@@ -37,6 +37,12 @@ return [
     'empty' => 'No products match the selected filters.',
     'new' => 'New',
     'out_of_stock' => 'Out of stock',
+    // "Buy"/"Notify me" are still decorative — the card has no cart yet
+    // (see the comment in product-card.blade.php). Favorites is wired up.
+    'buy' => 'Buy',
+    'notify' => 'Notify me',
+    'add_to_favorites' => 'Add to favorites',
+    'remove_from_favorites' => 'Remove from favorites',
     'load_more' => 'Load more',
     'load_error' => 'Failed to load products.',
     'retry' => 'Retry',

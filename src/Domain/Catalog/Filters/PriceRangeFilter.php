@@ -45,4 +45,14 @@ final class PriceRangeFilter extends AbstractFilter
             'price_max' => ['nullable', 'numeric', 'min:0', 'gte:price_min'],
         ];
     }
+
+    /**
+     * Цена скрыта от гостя на карточке товара (product-card.blade.php) —
+     * значит и фильтр по ней должен быть недоступен, иначе подбор диапазона
+     * работает как оракул цены и скрытие становится декоративным.
+     */
+    public function visible(): bool
+    {
+        return auth()->check();
+    }
 }

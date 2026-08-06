@@ -9,6 +9,7 @@ return [
         'register' => 'Sign up',
         'logout' => 'Log out',
         'account' => 'My account',
+        'favorites' => 'Favorites',
     ],
 
     'footer' => [

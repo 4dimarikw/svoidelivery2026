@@ -50,6 +50,17 @@ abstract class AbstractFilter implements Stringable
      */
     abstract public function rules(): array;
 
+    /**
+     * Показывать ли фильтр и применять ли его вообще. false — виджет не
+     * рендерится (FilterManager::items()), значение из request() не
+     * применяется к запросу (apply() пропускается в пайплайне) и правило
+     * валидации не подмешивается — см. FilterManager.
+     */
+    public function visible(): bool
+    {
+        return true;
+    }
+
     public function requestValue(?string $index = null, mixed $default = null): mixed
     {
         return request($this->key().($index ? '.'.$index : ''), $default);

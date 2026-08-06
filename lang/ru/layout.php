@@ -9,6 +9,7 @@ return [
         'register' => 'Регистрация',
         'logout' => 'Выйти',
         'account' => 'Личный кабинет',
+        'favorites' => 'Избранное',
     ],
 
     'footer' => [

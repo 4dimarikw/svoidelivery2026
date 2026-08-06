@@ -60,6 +60,6 @@ class UserResource extends ModelResource
 
     protected function modifyQueryBuilder(Builder $builder): Builder
     {
-        return $builder->withCount('addresses');
+        return $builder->withCount(['addresses', 'favorites']);
     }
 }

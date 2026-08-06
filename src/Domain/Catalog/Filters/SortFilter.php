@@ -22,12 +22,39 @@ final class SortFilter extends AbstractFilter
 
     public function apply(ProductBuilder $query): ProductBuilder
     {
-        return $query->sorted(ProductSort::tryFrom((string) $this->requestValue()) ?? ProductSort::default());
+        $sort = ProductSort::tryFrom((string) $this->requestValue());
+
+        if ($sort === null || ! in_array($sort, $this->availableCases(), true)) {
+            $sort = ProductSort::default();
+        }
+
+        return $query->sorted($sort);
     }
 
     public function values(): array
     {
-        return collect(ProductSort::cases())->mapWithKeys(fn (ProductSort $sort) => [$sort->value => $sort->label()])->all();
+        return collect($this->availableCases())->mapWithKeys(fn (ProductSort $sort) => [$sort->value => $sort->label()])->all();
+    }
+
+    /**
+     * Цена скрыта от гостя (см. product-card.blade.php), значит и
+     * сортировка по ней недоступна — иначе гость восстанавливает порядок
+     * цен через `?sort=price_asc` даже без доступа к PriceRangeFilter.
+     * Сам SortFilter остаётся видимым всегда (он задаёт порядок выдачи),
+     * гейтятся только эти два кейса. rules() не трогаем — ?sort=price_asc
+     * от гостя должен тихо деградировать к дефолту, а не 422-иться на
+     * старой закладке/шаренной ссылке.
+     */
+    private function availableCases(): array
+    {
+        if (auth()->check()) {
+            return ProductSort::cases();
+        }
+
+        return array_values(array_filter(
+            ProductSort::cases(),
+            fn (ProductSort $sort) => ! in_array($sort, [ProductSort::PRICE_ASC, ProductSort::PRICE_DESC], true)
+        ));
     }
 
     public function view(): string

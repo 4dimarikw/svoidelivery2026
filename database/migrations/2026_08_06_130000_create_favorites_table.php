@@ -1,31 +1,31 @@
 <?php
 
 use Domain\Auth\Models\User;
-use Domain\Product\Models\ProductVariation;
+use Domain\Catalog\Models\Product;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration {
+return new class extends Migration
+{
     public function up(): void
     {
         Schema::create('favorites', function (Blueprint $table) {
             $table->id();
 
             $table->foreignIdFor(User::class)
-                ->nullable()
                 ->constrained()
-                ->nullOnDelete()
+                ->cascadeOnDelete()
                 ->cascadeOnUpdate();
 
-            $table->foreignIdFor(ProductVariation::class)
+            $table->foreignIdFor(Product::class)
                 ->constrained()
                 ->cascadeOnDelete()
                 ->cascadeOnUpdate();
 
             $table->timestamps();
 
-            $table->unique(['user_id', 'product_variation_id']);
+            $table->unique(['user_id', 'product_id']);
 
             $table->index(['user_id', 'created_at']);
         });
@@ -33,7 +33,7 @@ return new class extends Migration {
 
     public function down(): void
     {
-        if (!app()->isProduction()) {
+        if (! app()->isProduction()) {
             Schema::dropIfExists('favorites');
         }
     }

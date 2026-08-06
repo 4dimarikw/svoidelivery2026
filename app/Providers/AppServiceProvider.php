@@ -14,6 +14,7 @@ use Domain\Catalog\Filters\PriceRangeFilter;
 use Domain\Catalog\Filters\SearchFilter;
 use Domain\Catalog\Filters\SortFilter;
 use Domain\Catalog\Filters\VolumeFilter;
+use Domain\Favorite\Providers\FavoriteServiceProvider;
 use Illuminate\Support\ServiceProvider;
 use Services\CatalogImport\CategoryRegistry;
 use Services\Untappd\Providers\UntappdProvider;
@@ -27,6 +28,10 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->app->register(
             UntappdProvider::class
+        );
+
+        $this->app->register(
+            FavoriteServiceProvider::class
         );
 
         // Illuminate\Pipeline\Pipeline::carry() re-make()s every stage per

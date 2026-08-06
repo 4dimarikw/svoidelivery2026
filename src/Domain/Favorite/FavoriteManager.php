@@ -4,108 +4,101 @@ declare(strict_types=1);
 
 namespace Domain\Favorite;
 
+use Domain\Catalog\Models\Product;
 use Domain\Favorite\Models\Favorite;
-use Domain\Product\Models\ProductVariation;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Cache;
 
+/**
+ * Только для авторизованных — у гостя все методы возвращают пустой/false
+ * результат без единого запроса к БД. Никакого доп. кэширования поверх
+ * Eloquent: выборка id упирается в уникальный индекс (user_id, product_id)
+ * и дешевле, чем инвалидация БД-кэша, который к тому же легко рассинхронить
+ * с записями, сделанными в обход менеджера (например, из MoonShine).
+ * `$ids` — мемоизация на один HTTP-запрos, чтобы карточки каталога (24 шт.
+ * на страницу) не бомбили БД повторными SELECT.
+ */
 final class FavoriteManager
 {
-    public static function cacheKeyFor(?int $userId): string
-    {
-        return str('favorite_'.$userId)
-            ->slug('_')
-            ->value();
-    }
+    private ?Collection $ids = null;
 
-    private function cacheKey(): string
+    /**
+     * product_id избранного текущего пользователя.
+     */
+    public function productIds(): Collection
     {
-        return self::cacheKeyFor(auth()->id());
-    }
-
-    public function get()
-    {
-        return Cache::remember($this->cacheKey(), now()->addHour(), function () {
-            return Favorite::query()
-                ->when(auth()->check(), fn (Builder $query) => $query->where('user_id', auth()->id()))
-                ->with(['productVariation', 'productVariation.product'])
-                ->get() ?? false;
-        });
-    }
-
-    private function forgetCache(): void
-    {
-        Cache::forget($this->cacheKey());
-    }
-
-    public function items(): Collection
-    {
-        if (! $this->get()) {
-            return collect([]);
+        if (! auth()->check()) {
+            return collect();
         }
 
-        return $this->get();
+        return $this->ids ??= Favorite::query()
+            ->where('user_id', auth()->id())
+            ->pluck('product_id');
+    }
+
+    public function has(Product|int $product): bool
+    {
+        $productId = $product instanceof Product ? $product->getKey() : $product;
+
+        return $this->productIds()->contains($productId);
     }
 
     public function count(): int
     {
-        return $this->items()->count();
+        return $this->productIds()->count();
     }
 
-    public function add(ProductVariation $productVariation): void
+    public function add(Product $product): void
     {
-        try {
-            if ($this->items()->where('product_variation_id', $productVariation->id)->isEmpty()) {
-                $favorite = new Favorite;
-
-                $favorite->fill(['product_variation_id' => $productVariation->id, 'user_id' => auth()->id()]);
-
-                $favorite->save();
-
-                $this->forgetCache();
-            }
-        } catch (\Throwable $e) {
-            report($e);
-
-            session()->flash(
-                'project_flash',
-                ['message' => 'Ошибка на сервере. Попробуйте позже', 'status' => 'danger']
-            );
+        if (! auth()->check()) {
+            return;
         }
+
+        Favorite::query()->firstOrCreate([
+            'user_id' => auth()->id(),
+            'product_id' => $product->getKey(),
+        ]);
+
+        $this->ids = null;
     }
 
-    public function delete(Favorite $item): void
+    public function remove(Product $product): void
     {
-        try {
-            $item->delete();
-
-            $this->forgetCache();
-        } catch (\Throwable $e) {
-            report($e);
-
-            session()->flash(
-                'project_flash',
-                ['message' => 'Ошибка на сервере. Попробуйте позже', 'status' => 'danger']
-            );
+        if (! auth()->check()) {
+            return;
         }
+
+        Favorite::query()
+            ->where('user_id', auth()->id())
+            ->where('product_id', $product->getKey())
+            ->delete();
+
+        $this->ids = null;
+    }
+
+    /**
+     * @return bool Новое состояние (true — добавлено, false — удалено).
+     */
+    public function toggle(Product $product): bool
+    {
+        if ($this->has($product)) {
+            $this->remove($product);
+
+            return false;
+        }
+
+        $this->add($product);
+
+        return true;
     }
 
     public function truncate(): void
     {
-        try {
-            if ($this->get()) {
-                $this->get()?->delete();
-            }
-
-            $this->forgetCache();
-        } catch (\Throwable $e) {
-            report($e);
-
-            session()->flash(
-                'project_flash',
-                ['message' => 'Ошибка на сервере. Попробуйте позже', 'status' => 'danger']
-            );
+        if (! auth()->check()) {
+            return;
         }
+
+        Favorite::query()->where('user_id', auth()->id())->delete();
+
+        $this->ids = null;
     }
 }

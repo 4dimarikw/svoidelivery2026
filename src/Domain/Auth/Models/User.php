@@ -3,6 +3,7 @@
 namespace Domain\Auth\Models;
 
 use Database\Factories\UserFactory;
+use Domain\Favorite\Models\Favorite;
 use Domain\Profile\Models\Address;
 use Domain\Profile\Models\Profile;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
@@ -72,5 +73,10 @@ class User extends Authenticatable implements MustVerifyEmail
     public function addresses(): HasMany
     {
         return $this->hasMany(Address::class);
+    }
+
+    public function favorites(): HasMany
+    {
+        return $this->hasMany(Favorite::class);
     }
 }

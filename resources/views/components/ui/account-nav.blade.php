@@ -3,10 +3,11 @@
      native-control reset, so it doesn't earn a place in app.css's
      @layer components (see CLAUDE.md's "where CSS lives" rule).
 
-     No icons (the mockup has none) and no links to unbuilt features
-     (orders/payments/favorites/promo codes) — same "don't stub dead links"
-     rule already applied to <x-layouts.header>. --}}
-@props(['active' => null]) {{-- 'profile' | 'addresses' --}}
+     No icons (the mockup has none) — same "don't stub dead links" rule
+     already applied to <x-layouts.header>; orders/payments/promo codes
+     still have no page and stay unlinked, favorites now does (see
+     Domain\Favorite, CLAUDE.md). --}}
+@props(['active' => null]) {{-- 'profile' | 'addresses' | 'favorites' --}}
 
 @php
     $itemClass = fn (bool $isActive) => $isActive
@@ -26,6 +27,18 @@
     >
         {{ __('account.address.index_title') }}
         <span class="font-mono text-micro">{{ auth()->user()->addresses()->count() }}</span>
+    </a>
+
+    {{-- x-text перекрывает серверное число сразу после гидратации Alpine —
+         счётчик держит $store.favorites (resources/js/favorites.js), общий
+         с кнопками избранного на карточках товара, поэтому переключение на
+         любой странице отражается тут без перезагрузки. --}}
+    <a
+        href="{{ route('account.favorites.index') }}"
+        class="flex items-center justify-between rounded-sm px-3.5 py-2.5 text-body-m {{ $itemClass($active === 'favorites') }}"
+    >
+        {{ __('account.favorites.title') }}
+        <span class="font-mono text-micro" x-text="$store.favorites.count">{{ auth()->user()->favorites()->count() }}</span>
     </a>
 
     <div class="my-1.5 h-px bg-hairline"></div>

@@ -2,6 +2,8 @@
 
 namespace Tests\Feature;
 
+use Domain\Auth\Models\User;
+use Domain\Catalog\Enums\ProductSort;
 use Domain\Catalog\Enums\ProductStatus;
 use Domain\Catalog\Models\BeerProductDetail;
 use Domain\Catalog\Models\BeerStyle;
@@ -10,6 +12,7 @@ use Domain\Catalog\Models\Container;
 use Domain\Catalog\Models\Manufacturer;
 use Domain\Catalog\Models\Product;
 use Domain\Catalog\Models\Volume;
+use Domain\Favorite\Models\Favorite;
 use Domain\Untappd\Models\UntappdBeer;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
@@ -99,14 +102,47 @@ class CatalogControllerTest extends TestCase
 
     public function test_price_range_filter_narrows_results(): void
     {
+        // price_min/price_max — гостю недоступны (PriceRangeFilter::visible()),
+        // фильтр по цене задействован только авторизованным.
+        $cheap = Product::factory()->create(['name' => 'Дешёвое', 'price' => 100]);
+        $expensive = Product::factory()->create(['name' => 'Дорогое', 'price' => 4000]);
+
+        $response = $this->actingAs(User::factory()->create())
+            ->get(route('home', ['price_min' => 500, 'price_max' => 5000]));
+
+        $response->assertOk();
+        $response->assertSee($expensive->name);
+        $response->assertDontSee($cheap->name);
+    }
+
+    public function test_guest_price_range_query_params_are_ignored(): void
+    {
+        // Гость не может подобрать цену подставив price_min/price_max в URL —
+        // PriceRangeFilter невидим, значит не применяется в пайплайне.
         $cheap = Product::factory()->create(['name' => 'Дешёвое', 'price' => 100]);
         $expensive = Product::factory()->create(['name' => 'Дорогое', 'price' => 4000]);
 
         $response = $this->get(route('home', ['price_min' => 500, 'price_max' => 5000]));
 
         $response->assertOk();
+        $response->assertSee($cheap->name);
         $response->assertSee($expensive->name);
-        $response->assertDontSee($cheap->name);
+    }
+
+    public function test_guest_does_not_see_the_price_filter_widget(): void
+    {
+        $response = $this->get(route('home'));
+
+        $response->assertOk();
+        $response->assertDontSee(__('catalog.filters.price'));
+    }
+
+    public function test_authenticated_user_sees_the_price_filter_widget(): void
+    {
+        $response = $this->actingAs(User::factory()->create())->get(route('home'));
+
+        $response->assertOk();
+        $response->assertSee(__('catalog.filters.price'));
     }
 
     public function test_in_stock_filter_hides_out_of_stock_products(): void
@@ -195,7 +231,7 @@ class CatalogControllerTest extends TestCase
             'ebc' => 20,
         ]);
 
-        $response = $this->get(route('home'));
+        $response = $this->actingAs(User::factory()->create())->get(route('home'));
 
         $response->assertOk();
         $response->assertSee('Балтика');
@@ -206,6 +242,7 @@ class CatalogControllerTest extends TestCase
         $response->assertSee('12,5 °P', false);
         $response->assertSee('20 EBC');
         $response->assertSee('3,85');
+        $response->assertSee('Купить');
     }
 
     public function test_product_card_omits_beer_row_for_non_beer_product(): void
@@ -240,6 +277,92 @@ class CatalogControllerTest extends TestCase
         $response->assertSee('5,8%', false);
         $response->assertDontSee('°P', false);
         $response->assertDontSee('EBC');
+    }
+
+    public function test_product_card_shows_report_button_when_out_of_stock(): void
+    {
+        Product::factory()->create(['brand' => 'Закончилось', 'in_stock' => false]);
+
+        $response = $this->actingAs(User::factory()->create())->get(route('home'));
+
+        $response->assertOk();
+        $response->assertSee('Сообщить');
+        $response->assertDontSee('>Купить<', false);
+    }
+
+    public function test_guest_does_not_see_the_favorite_button(): void
+    {
+        // Избранное — только для авторизованных (Domain\Favorite, CLAUDE.md):
+        // гость не видит кнопку вовсе, а не "недоступную"/декоративную версию.
+        Product::factory()->create();
+
+        $response = $this->get(route('home'));
+
+        $response->assertOk();
+        $response->assertDontSee('account/favorites', false);
+        $response->assertDontSee(__('catalog.add_to_favorites'));
+    }
+
+    public function test_authenticated_user_sees_the_favorite_button(): void
+    {
+        $user = User::factory()->create();
+        Product::factory()->create();
+
+        $response = $this->actingAs($user)->get(route('home'));
+
+        $response->assertOk();
+        $response->assertSee('account/favorites', false);
+    }
+
+    public function test_favorited_product_renders_a_filled_heart(): void
+    {
+        // Сердце закрашивается (fill="currentColor") для товара, уже
+        // добавленного в избранное — и серверным сидом (:fill), и
+        // Alpine-биндингом (::fill) на случай клика без перезагрузки.
+        $user = User::factory()->create();
+        $product = Product::factory()->create();
+        Favorite::factory()->create(['user_id' => $user->id, 'product_id' => $product->id]);
+
+        $response = $this->actingAs($user)->get(route('home'));
+
+        $response->assertOk();
+        $response->assertSee('fill="currentColor"', false);
+        $response->assertSee(':fill="favorited ? \'currentColor\' : \'none\'"', false);
+    }
+
+    public function test_non_favorited_product_renders_an_empty_heart(): void
+    {
+        $user = User::factory()->create();
+        Product::factory()->create();
+
+        $response = $this->actingAs($user)->get(route('home'));
+
+        $response->assertOk();
+        $response->assertDontSee('fill="currentColor"', false);
+    }
+
+    public function test_guest_does_not_see_price_or_action_buttons(): void
+    {
+        // Цена и кнопки действий — только для @auth (см. product-card.blade.php).
+        Product::factory()->create(['price' => 1234]);
+
+        $response = $this->get(route('home'));
+
+        $response->assertOk();
+        $response->assertDontSee('₽ 1 234');
+        $response->assertDontSee(__('catalog.buy'));
+        $response->assertDontSee(__('catalog.notify'));
+    }
+
+    public function test_authenticated_user_sees_price_and_buy_button(): void
+    {
+        Product::factory()->create(['brand' => 'Есть В Наличии', 'price' => 1234, 'in_stock' => true]);
+
+        $response = $this->actingAs(User::factory()->create())->get(route('home'));
+
+        $response->assertOk();
+        $response->assertSee('₽ 1 234');
+        $response->assertSee(__('catalog.buy'));
     }
 
     public function test_product_card_title_uses_brand(): void
@@ -416,10 +539,12 @@ class CatalogControllerTest extends TestCase
 
     public function test_sort_by_price_orders_ascending(): void
     {
+        // sort=price_asc — гостю недоступен (SortFilter::availableCases()).
         Product::factory()->create(['brand' => 'Дорогое', 'price' => 4000]);
         Product::factory()->create(['brand' => 'Дешёвое', 'price' => 100]);
 
-        $response = $this->get(route('home', ['sort' => 'price_asc']));
+        $response = $this->actingAs(User::factory()->create())
+            ->get(route('home', ['sort' => 'price_asc']));
 
         $response->assertOk();
         $response->assertSeeInOrder(['Дешёвое', 'Дорогое']);
@@ -430,10 +555,33 @@ class CatalogControllerTest extends TestCase
         Product::factory()->create(['brand' => 'Дорогое', 'price' => 4000]);
         Product::factory()->create(['brand' => 'Дешёвое', 'price' => 100]);
 
-        $response = $this->get(route('home', ['sort' => 'price_desc']));
+        $response = $this->actingAs(User::factory()->create())
+            ->get(route('home', ['sort' => 'price_desc']));
 
         $response->assertOk();
         $response->assertSeeInOrder(['Дорогое', 'Дешёвое']);
+    }
+
+    public function test_guest_sort_by_price_query_param_falls_back_to_default(): void
+    {
+        // Гость не может восстановить порядок цен через ?sort=price_asc —
+        // SortFilter::apply() отклоняет недоступный кейс и уходит на дефолт.
+        $older = Product::factory()->create(['brand' => 'Первый Импорт', 'price' => 4000]);
+        $newer = Product::factory()->create(['brand' => 'Второй Импорт', 'price' => 100]);
+
+        $response = $this->get(route('home', ['sort' => 'price_asc']));
+
+        $response->assertOk();
+        $response->assertSeeInOrder([$newer->brand, $older->brand]);
+    }
+
+    public function test_guest_does_not_see_price_sort_options(): void
+    {
+        $response = $this->get(route('home'));
+
+        $response->assertOk();
+        $response->assertDontSee(ProductSort::PRICE_ASC->label());
+        $response->assertDontSee(ProductSort::PRICE_DESC->label());
     }
 
     public function test_sort_by_brand_orders_alphabetically(): void
@@ -587,7 +735,7 @@ class CatalogControllerTest extends TestCase
     {
         Product::factory()->count(30)->create();
 
-        $response = $this->get(
+        $response = $this->actingAs(User::factory()->create())->get(
             route('home', ['sort' => 'price_asc']),
             ['X-Catalog-Partial' => '1']
         );

@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Account\AddressController;
+use App\Http\Controllers\Account\FavoriteController;
 use App\Http\Controllers\Account\ProfileController;
 use App\Http\Controllers\CatalogController;
 use Illuminate\Http\Request;
@@ -13,6 +14,10 @@ Route::middleware(['auth', 'verified'])->prefix('account')->name('account.')->gr
     Route::put('profile', [ProfileController::class, 'update'])->name('profile.update');
 
     Route::resource('addresses', AddressController::class)->except(['show']);
+
+    Route::get('favorites', [FavoriteController::class, 'index'])->name('favorites.index');
+    Route::post('favorites/{product}', [FavoriteController::class, 'toggle'])->name('favorites.toggle');
+    Route::delete('favorites', [FavoriteController::class, 'destroy'])->name('favorites.destroy');
 });
 
 // Local-only preview of the <x-ui.*> component library — proves the value
