@@ -19,7 +19,7 @@
      $store.favorites.count сидируется внутри user-menu.blade.php. --}}
 <header class="border-b border-hairline bg-cream-50">
     <div
-        class="mx-auto flex max-w-page flex-col space-y-4 px-6 py-4 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
+        class="mx-auto flex max-w-page flex-col  px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
         <a href="{{ route('home') }}" class="inline-flex items-center">
             <img src="{{ asset('img/logo.png') }}" alt="{{ config('app.name') }}" class="h-10 w-10 object-contain">
             <span class="ml-3 font-display text-heading-s uppercase text-ink-900">{{ config('app.name') }}</span>
