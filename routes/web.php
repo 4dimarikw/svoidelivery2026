@@ -5,10 +5,12 @@ use App\Http\Controllers\Account\FavoriteController;
 use App\Http\Controllers\Account\ProfileController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\CatalogController;
+use App\Http\Controllers\PageController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', [CatalogController::class, 'index'])->name('home');
+Route::get('about', [PageController::class, 'about'])->name('about');
 
 Route::middleware(['auth', 'verified'])->prefix('account')->name('account.')->group(function () {
     Route::get('profile', [ProfileController::class, 'edit'])->name('profile.edit');

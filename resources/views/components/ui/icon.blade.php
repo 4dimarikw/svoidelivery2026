@@ -109,5 +109,17 @@
         @case('chevron-down')
             <path d="m6 9 6 6 6-6" />
             @break
+
+        @case('grid')
+            <rect x="3" y="3" width="7" height="7" />
+            <rect x="14" y="3" width="7" height="7" />
+            <rect x="3" y="14" width="7" height="7" />
+            <rect x="14" y="14" width="7" height="7" />
+            @break
+
+        @case('user')
+            <circle cx="12" cy="8" r="4" />
+            <path d="M4 21c0-4 3.6-6.5 8-6.5s8 2.5 8 6.5" />
+            @break
     @endswitch
 </svg>

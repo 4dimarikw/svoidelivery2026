@@ -11,6 +11,11 @@ return [
         'account' => 'My account',
         'favorites' => 'Favorites',
         'cart' => 'Cart',
+        // Added for <x-ui.mobile-nav> — mobile bottom navigation.
+        'catalog' => 'Catalog',
+        'profile' => 'Profile',
+        'about' => 'About',
+        'primary' => 'Primary navigation',
     ],
 
     'footer' => [

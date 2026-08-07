@@ -50,10 +50,10 @@ Design tokens (colors, type scale, radii, shadows) live in `tailwind.config.js` 
 
 ## Public pages & site chrome
 
-Content pages (as opposed to auth screens) live in `resources/views/pages/*.blade.php` and are served by `App\Http\Controllers\PageController` — one method per page (`home()` → `pages/home.blade.php`, route name `home`). Add new static pages the same way rather than inlining closures in `routes/web.php`.
+Content pages (as opposed to auth screens) live in `resources/views/pages/*.blade.php`. `home` (the catalog) is served by `CatalogController::index()`, not `PageController` — that controller exists only for genuinely static pages (`about()` → `pages/about.blade.php`, route name `about`). Add new static pages as a `PageController` method the same way rather than inlining closures in `routes/web.php`.
 
-- Wrap page content in `<x-layouts.site>`, not `<x-layouts.app>` directly — it adds `<x-layouts.header>`/`<x-layouts.footer>` and a sticky-footer flex column (`<main class="flex-1">`) around your slot.
-- `<x-layouts.header>` is auth-state-aware (`@guest`/`@auth` against the `web` guard): shows Войти/Регистрация or the user's name + a logout form. It has no nav links yet — no catalog/account pages exist to link to; add them once those routes exist rather than stubbing dead links.
+- Wrap page content in `<x-layouts.site>`, not `<x-layouts.app>` directly — it adds `<x-layouts.header>`/`<x-layouts.footer>`/`<x-ui.mobile-nav>` and a sticky-footer flex column (`<main class="flex-1">`) around your slot.
+- `<x-layouts.header>` is auth-state-aware (`@guest`/`@auth` against the `web` guard): shows Войти/Регистрация or the user's name + a logout form. It still has no nav links of its own (`<x-ui.user-menu>` covers profile/addresses/favorites/logout) — mobile-width navigation instead lives in `<x-ui.mobile-nav>` (Каталог/Избранное/Корзина/Профиль/О нас, `md:hidden`, mounted by `<x-layouts.site>`), which is auth-aware the same way and does not stub links to routes that don't exist.
 - Both header and footer switch from a stacked mobile layout to a single row at the `sm:` breakpoint using `space-y-*`/`sm:space-x-*` (margin-based) — **not** flex `gap`, per the legacy-browser constraint above. These were the first files in the project to use a responsive (`sm:`) prefix at all; if utilities you add don't show up in the built CSS, check `resources/**/*.blade.php` actually contains the literal class string (Tailwind's JIT purge needs it verbatim somewhere in the content globs) before suspecting a build/cache bug.
 - `lang/{ru,en}/layout.php` is app-owned header/footer copy — same ownership rule as `account.php` (keep out of `laravel-lang`-managed files and out of `ui.php`).
 
