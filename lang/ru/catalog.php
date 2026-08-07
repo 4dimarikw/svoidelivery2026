@@ -15,8 +15,10 @@ return [
         'volume' => 'Объём',
         'container' => 'Тара',
         'price' => 'Цена, ₽',
-        'price_min' => 'от',
-        'price_max' => 'до',
+        // Общие — переиспользуются фильтрами цены/ABV/IBU, не только ценой,
+        // несмотря на имя (см. pages/catalog/filters/*-range.blade.php).
+        'range_min' => 'от',
+        'range_max' => 'до',
         'in_stock' => 'Только в наличии',
         'search' => 'Название товара',
         'apply' => 'Применить',

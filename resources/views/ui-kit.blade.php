@@ -162,8 +162,11 @@
                         <x-ui.password-field name="password" label="Пароль" required />
                         <x-ui.checkbox-field name="agree" label="Мне есть 18 лет, принимаю условия сервиса" />
                         <x-ui.form-actions>
-                            <x-ui.btn type="submit" size="lg" block x-bind:loading="submitting" x-bind:disabled="submitting">
-                                Войти
+                            <x-ui.btn type="submit" size="lg" block x-bind:disabled="submitting">
+                                <span x-show="!submitting">Войти</span>
+                                <span x-show="submitting" x-cloak class="inline-flex items-center">
+                                    <x-ui.spinner size="16" class="mr-2" />Входим…
+                                </span>
                             </x-ui.btn>
                         </x-ui.form-actions>
                     </div>

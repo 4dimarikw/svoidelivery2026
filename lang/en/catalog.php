@@ -15,8 +15,10 @@ return [
         'volume' => 'Volume',
         'container' => 'Container',
         'price' => 'Price, ₽',
-        'price_min' => 'from',
-        'price_max' => 'to',
+        // Generic — shared by price/ABV/IBU range filters, not price-only
+        // despite the "range_" name (see pages/catalog/filters/*-range.blade.php).
+        'range_min' => 'from',
+        'range_max' => 'to',
         'in_stock' => 'In stock only',
         'search' => 'Product name',
         'apply' => 'Apply',
