@@ -3,11 +3,12 @@
      uses `space-y-*`/`space-x-*` (margin-based), never flex `gap` — see
      CLAUDE.md's legacy-browser section (Safari < 14.1 has no flex-gap).
 
-     Favorites/cart links+counters only in @auth — neither has a guest mode
-     (Domain\Favorite/Domain\Cart, CLAUDE.md), so @guest stays untouched.
-     x-init seeds the shared $store.favorites.count/$store.cart.count
-     (resources/js/{favorites,cart}.js) with the server value; the
-     product-card's toggle/stepper keep them live afterwards. --}}
+     @auth показывает только иконку корзины со счётчиком (корзина — не часть
+     личного кабинета, см. account-nav.blade.php) и <x-ui.user-menu> — имя
+     пользователя с выпадающим меню (профиль/адреса/избранное/выйти).
+     Избранное здесь отдельной иконкой больше не дублируется — это пункт
+     меню. x-init сидирует $store.cart.count (resources/js/cart.js) с
+     сервера; $store.favorites.count сидируется внутри user-menu.blade.php. --}}
 <header class="border-b border-hairline bg-cream-50">
     <div class="mx-auto flex max-w-page flex-col space-y-4 px-6 py-4 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
         <a href="{{ route('home') }}" class="inline-flex items-center">
@@ -21,16 +22,6 @@
                 <x-ui.btn :href="route('register')" size="sm">{{ __('layout.nav.register') }}</x-ui.btn>
             @else
                 <a
-                    href="{{ route('account.favorites.index') }}"
-                    x-data
-                    x-init="$store.favorites.count = {{ auth()->user()->favorites()->count() }}"
-                    class="inline-flex items-center text-body-m text-ink-700 hover:text-rust"
-                    aria-label="{{ __('layout.nav.favorites') }}"
-                >
-                    <x-ui.icon name="heart" :size="18" />
-                    <span class="ml-1 font-mono text-micro" x-text="$store.favorites.count"></span>
-                </a>
-                <a
                     href="{{ route('cart.index') }}"
                     x-data
                     x-init="$store.cart.count = {{ app(\Domain\Cart\CartManager::class)->count() }}"
@@ -40,12 +31,7 @@
                     <x-ui.icon name="shopping-bag" :size="18" />
                     <span class="ml-1 font-mono text-micro" x-text="$store.cart.count"></span>
                 </a>
-                <span class="text-body-m text-ink-700">{{ auth()->user()->name }}</span>
-                <x-ui.link :href="route('account.profile.edit')">{{ __('layout.nav.account') }}</x-ui.link>
-                <form method="POST" action="{{ route('logout') }}">
-                    @csrf
-                    <x-ui.btn type="submit" variant="ghost" size="sm">{{ __('layout.nav.logout') }}</x-ui.btn>
-                </form>
+                <x-ui.user-menu />
             @endguest
         </div>
     </div>

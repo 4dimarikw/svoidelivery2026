@@ -105,5 +105,9 @@
             <path d="M3 6h18" />
             <path d="M16 10a4 4 0 0 1-8 0" />
             @break
+
+        @case('chevron-down')
+            <path d="m6 9 6 6 6-6" />
+            @break
     @endswitch
 </svg>
