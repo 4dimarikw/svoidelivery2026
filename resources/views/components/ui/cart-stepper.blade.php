@@ -27,12 +27,12 @@
         id="{{ $increaseId }}"
         method="POST"
         action="{{ route('cart.increase', $product) }}"
-        @if ($showBuyButton) x-show="quantity === 0" @else class="hidden" @endif
+        @if ($showBuyButton) x-show="quantity === 0" class="h-full" @else class="hidden" @endif
         x-on:submit.prevent="send($el)"
     >
         @csrf
         @if ($showBuyButton)
-            <x-ui.btn type="submit" variant="primary" size="md" block :disabled="! $product->in_stock">
+            <x-ui.btn type="submit" variant="primary" size="md" block class="h-full" :disabled="! $product->in_stock">
                 {{ $product->in_stock ? __('catalog.buy') : __('catalog.notify') }}
             </x-ui.btn>
         @endif

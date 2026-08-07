@@ -134,6 +134,15 @@
             <div class="mt-1.5 font-mono text-[11px] leading-4 tracking-[0.06em] text-teal-800">{{ $numbers->implode(' · ') }}</div>
         @endif
 
+        {{-- Распорка: тело карточки — flex flex-1 flex-col, поэтому auto-margin
+             здесь съедает всё свободное место и прижимает чипы + .actions к
+             низу карточки одинаково у всех карточек ряда — независимо от
+             того, сколько переменного контента (плашка стиля/спеки/ABV) выше.
+             Именно здесь, не на .actions: у гостя .actions нет вовсе (@auth
+             ниже), без этой распорки чипы гостевых карточек стояли бы на
+             разной высоте. --}}
+        <div class="mt-auto"></div>
+
         @if ($product->is_new || $rating || ! $product->in_stock)
             <div class="-ml-1.5 mt-3 flex flex-wrap [&>*]:ml-1.5 [&>*]:mt-1.5">
                 @if ($product->is_new)
@@ -148,49 +157,59 @@
             </div>
         @endif
 
-        {{-- mt-auto — тело карточки flex flex-1 flex-col (см. выше), поэтому
-             .actions прижимается к низу независимо от того, сколько
-             переменного контента (плашка стиля/спеки/ABV) выше — иначе низ
-             карточек в ряду "гуляет" по высоте.
+        {{-- Зазор чипы → линия теперь фиксированный (mt-3.5, симметрично
+             pt-3.5 под линией) — низ карточки прижимает распорка mt-auto
+             выше, не эта строка. Высота самой строки действий тоже
+             фиксирована — h-[41px] на внутреннем flex-контейнере, как
+             .card .actions .qty{height:41px} в брендбуке (design-system.html
+             §06/§10): без этого при qty=0 строку тянет ~46px кнопка «Купить»
+             (<x-ui.btn size="md">, padding 12px + line-height 20px), а при
+             qty>0 (кнопка скрыта x-show) — степпер/избранное своей высоты не
+             имеют и схлопываются по цене (~28px), из-за чего у карточки, на
+             которой уже нажали «Купить», кнопки становятся заметно меньше,
+             чем у соседних. h-[41px] — на вложенном div, не на внешнем
+             (border-t + pt-3.5 в box-border иначе съели бы часть высоты из
+             тех же 41px и кнопки всё равно схлопнулись бы).
 
-             Без items-center: flex по умолчанию stretch — избранное растягивается
-             по высоте <x-ui.btn> (та не имеет фиксированной высоты, только
-             padding/line-height), а не наоборот. Фиксированная h-[41px] из
-             брендбука сюда не подходит — там другой .btn с другим padding.
+             Без items-center на внутреннем div: flex по умолчанию stretch —
+             избранное и степпер растягиваются на все 41px сами.
 
-             mr-3 на цене, не mr-auto: у соседней кнопки flex-1 — по спецификации
-             flexbox flex-grow забирает свободное место раньше, чем auto-margin
-             успевает что-то поглотить на этапе выравнивания, так что mr-auto
-             тут резолвился бы в ~0px (цена оказывалась впритык к кнопке). --}}
+             mr-3 на цене, не mr-auto: у соседней кнопки flex-1 — по
+             спецификации flexbox flex-grow забирает свободное место раньше,
+             чем auto-margin успевает что-то поглотить на этапе выравнивания,
+             так что mr-auto тут резолвился бы в ~0px (цена оказывалась
+             впритык к кнопке). --}}
         @auth
-            <div class="mt-auto flex border-t border-hairline pt-3.5">
-                <span class="mr-3 self-center whitespace-nowrap font-display text-heading-s font-bold tracking-brand-body text-ink-900">{{ $product->price }}</span>
+            <div class="mt-3.5 border-t border-hairline pt-3.5">
+                <div class="flex h-[41px]">
+                    <span class="mr-3 self-center whitespace-nowrap font-display text-heading-s font-bold tracking-brand-body text-ink-900">{{ $product->price }}</span>
 
-                <x-ui.cart-stepper :product="$product" :quantity="$cartQuantity" class="flex-1" />
+                    <x-ui.cart-stepper :product="$product" :quantity="$cartQuantity" class="flex-1" />
 
-                <form
-                    method="POST"
-                    action="{{ route('account.favorites.toggle', $product) }}"
-                    x-data="uiFavoriteToggle(@js($isFavorited))"
-                    x-on:submit.prevent="toggle($el)"
-                    class="ml-2 shrink-0"
-                >
-                    @csrf
-                    <button
-                        type="submit"
-                        :aria-pressed="favorited"
-                        :class="favorited ? 'border-rust text-rust' : 'border-hairline text-ink-500'"
-                        class="grid h-full w-[41px] place-items-center rounded-sm border bg-cream-50 transition hover:border-rust hover:text-rust"
-                        :aria-label="favorited ? @js(__('catalog.remove_from_favorites')) : @js(__('catalog.add_to_favorites'))"
+                    <form
+                        method="POST"
+                        action="{{ route('account.favorites.toggle', $product) }}"
+                        x-data="uiFavoriteToggle(@js($isFavorited))"
+                        x-on:submit.prevent="toggle($el)"
+                        class="ml-2 shrink-0"
                     >
-                        <x-ui.icon
-                            name="heart"
-                            :size="18"
-                            :fill="$isFavorited ? 'currentColor' : 'none'"
-                            ::fill="favorited ? 'currentColor' : 'none'"
-                        />
-                    </button>
-                </form>
+                        @csrf
+                        <button
+                            type="submit"
+                            :aria-pressed="favorited"
+                            :class="favorited ? 'border-rust text-rust' : 'border-hairline text-ink-500'"
+                            class="grid h-full w-[41px] place-items-center rounded-sm border bg-cream-50 transition hover:border-rust hover:text-rust"
+                            :aria-label="favorited ? @js(__('catalog.remove_from_favorites')) : @js(__('catalog.add_to_favorites'))"
+                        >
+                            <x-ui.icon
+                                name="heart"
+                                :size="18"
+                                :fill="$isFavorited ? 'currentColor' : 'none'"
+                                ::fill="favorited ? 'currentColor' : 'none'"
+                            />
+                        </button>
+                    </form>
+                </div>
             </div>
         @endauth
     </div>
