@@ -7,18 +7,13 @@
      «объём · тара» → mono-строка ABV/IBU/°P/EBC (только пиво) → чипы →
      .actions (цена + «Купить»/«Сообщить» + избранное).
 
-     Два сознательных расхождения с брендбуком — в проекте нет ни страницы
-     товара, ни корзины, поэтому:
-     - <article>, не <a class="thumb" href="#">: незаглушаемая мёртвая
-       ссылка на несуществующую страницу, см. CLAUDE.md. Ховер-штриховка
-       картинки (.product-card-thumb в app.css) оставлена чисто декоративно.
-     - Степпер количества («уже в корзине») не рендерится вовсе — нет
-       данных о корзине, показывать выдуманное число было бы обманом.
-       Кнопка всегда «Купить», либо, если !in_stock, задизейбленная
-       «Сообщить» — единственное, что реально ветвится по данным.
+     Сознательное расхождение с брендбуком — в проекте нет страницы товара,
+     поэтому <article>, не <a class="thumb" href="#">: незаглушаемая мёртвая
+     ссылка на несуществующую страницу, см. CLAUDE.md. Ховер-штриховка
+     картинки (.product-card-thumb в app.css) оставлена чисто декоративно.
 
-     Вся .actions (цена + «Купить»/«Сообщить» + избранное) — только для
-     @auth. Цена и кнопки действий не показываются гостю вовсе, не просто
+     Вся .actions (цена + «Купить»/степпер + избранное) — только для @auth.
+     Цена и кнопки действий не показываются гостю вовсе, не просто
      задизейблены — карточка гостя обрывается на чипах. Чтобы скрытие цены
      не было декоративным, фильтр «Цена, ₽» и сортировка по цене тоже
      выключены для гостя серверно (PriceRangeFilter::visible(),
@@ -31,6 +26,17 @@
      (:class на .border-rust/.text-rust), и заливкой самого сердца —
      <x-ui.icon fill="…"> сидируется с сервера ($isFavorited) и
      перекрывается Alpine-биндингом (::fill, favorited) после клика.
+
+     «Купить» — <x-ui.cart-stepper> (Domain\Cart, CLAUDE.md; сам компонент —
+     resources/views/components/ui/cart-stepper.blade.php), воспроизводит
+     .qty из брендбука: при qty=0 видна обычная кнопка «Купить»/задизейбленное
+     «Сообщить», при qty>0 — блок −/N/+ той же высоты; минус на количестве 1
+     убирает товар и возвращает «Купить». Количество сидируется с сервера
+     через CartManager::quantityOf() — та же мемоизация на запрос, что и у
+     FavoriteManager::has() выше. Тот же компонент (без кнопки «Купить»,
+     $showBuyButton=false) переиспользуется строками корзины на /cart
+     (cart-line.blade.php) — там товар уже в корзине, «Купить»-состояния
+     не существует.
 
      Заголовок — products.brand ("Марка" из 1С), а не name: name — сырая
      склейка 1С вида `Big Village "OLD SONG" (DDH NEDIPA) алк. 8,5% /
@@ -86,6 +92,10 @@
     // мемоизирован на запрос, поэтому 24 карточки на странице бьют в БД
     // один раз, а не по разу на карточку.
     $isFavorited = auth()->check() && app(\Domain\Favorite\FavoriteManager::class)->has($product);
+
+    // Аналогично избранному — только для авторизованных, мемоизировано в
+    // CartManager на один HTTP-запрос (см. Domain\Cart\CartManager::items()).
+    $cartQuantity = auth()->check() ? app(\Domain\Cart\CartManager::class)->quantityOf($product) : 0;
 @endphp
 
 <article
@@ -154,11 +164,9 @@
              тут резолвился бы в ~0px (цена оказывалась впритык к кнопке). --}}
         @auth
             <div class="mt-auto flex border-t border-hairline pt-3.5">
-                <span class="mr-3 self-center whitespace-nowrap font-display text-heading-s font-bold tracking-brand-body text-ink-900">₽ {{ number_format((float) $product->price, 0, ',', ' ') }}</span>
+                <span class="mr-3 self-center whitespace-nowrap font-display text-heading-s font-bold tracking-brand-body text-ink-900">{{ $product->price }}</span>
 
-                <x-ui.btn variant="primary" size="md" class="flex-1" :disabled="! $product->in_stock">
-                    {{ $product->in_stock ? __('catalog.buy') : __('catalog.notify') }}
-                </x-ui.btn>
+                <x-ui.cart-stepper :product="$product" :quantity="$cartQuantity" class="flex-1" />
 
                 <form
                     method="POST"

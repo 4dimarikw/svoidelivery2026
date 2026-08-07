@@ -6,7 +6,9 @@
      No icons (the mockup has none) — same "don't stub dead links" rule
      already applied to <x-layouts.header>; orders/payments/promo codes
      still have no page and stay unlinked, favorites now does (see
-     Domain\Favorite, CLAUDE.md). --}}
+     Domain\Favorite, CLAUDE.md). Cart is NOT here — it's a standalone page
+     (/cart, pages/cart.blade.php), not part of the account area; see
+     <x-layouts.header> for its icon+counter instead. --}}
 @props(['active' => null]) {{-- 'profile' | 'addresses' | 'favorites' --}}
 
 @php

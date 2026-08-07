@@ -67,7 +67,7 @@ class CsvParserServiceTest extends TestCase
         $this->assertSame(0, $report->productsCreated);
         $this->assertSame(1, $report->productsUpdated);
         $this->assertSame(1, Product::query()->count());
-        $this->assertSame('250.00', $product->price);
+        $this->assertSame(250.0, $product->price->major());
         $this->assertSame(0, $product->stock_quantity);
         $this->assertFalse($product->in_stock);
         // name — create-only поле, повторный импорт не должен его затирать.

@@ -10,6 +10,7 @@ return [
         'logout' => 'Выйти',
         'account' => 'Личный кабинет',
         'favorites' => 'Избранное',
+        'cart' => 'Корзина',
     ],
 
     'footer' => [

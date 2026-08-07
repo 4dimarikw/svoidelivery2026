@@ -10,6 +10,7 @@ return [
         'logout' => 'Log out',
         'account' => 'My account',
         'favorites' => 'Favorites',
+        'cart' => 'Cart',
     ],
 
     'footer' => [

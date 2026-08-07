@@ -37,8 +37,9 @@ return [
     'empty' => 'No products match the selected filters.',
     'new' => 'New',
     'out_of_stock' => 'Out of stock',
-    // "Buy"/"Notify me" are still decorative — the card has no cart yet
-    // (see the comment in product-card.blade.php). Favorites is wired up.
+    // "Buy" is wired up (Domain\Cart) — turns into a quantity stepper after
+    // the first click, see product-card.blade.php. "Notify me" is still
+    // decorative — the product is out of stock.
     'buy' => 'Buy',
     'notify' => 'Notify me',
     'add_to_favorites' => 'Add to favorites',
@@ -46,4 +47,10 @@ return [
     'load_more' => 'Load more',
     'load_error' => 'Failed to load products.',
     'retry' => 'Retry',
+
+    'cart' => [
+        // Stepper −/+ button aria-labels (design-system.html, §06).
+        'increase' => 'Add one more',
+        'decrease' => 'Remove one',
+    ],
 ];

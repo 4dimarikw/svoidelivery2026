@@ -89,7 +89,7 @@ class PersistProductStageTest extends TestCase
         $this->assertNotNull($result->product);
         $this->assertTrue($result->product->wasRecentlyCreated);
         $this->assertSame('Полное название', $result->product->name);
-        $this->assertSame('150.50', $result->product->price);
+        $this->assertSame(150.5, $result->product->price->major());
         $this->assertSame(20, $result->product->stock_quantity);
         $this->assertTrue($result->product->in_stock);
     }
@@ -119,7 +119,7 @@ class PersistProductStageTest extends TestCase
 
         $this->assertFalse($result->product->wasRecentlyCreated);
         $existing->refresh();
-        $this->assertSame('999.00', $existing->price);
+        $this->assertSame(999.0, $existing->price->major());
         $this->assertSame(0, $existing->stock_quantity);
         $this->assertFalse($existing->in_stock);
         // name — create-only, повторный импорт его не трогает.

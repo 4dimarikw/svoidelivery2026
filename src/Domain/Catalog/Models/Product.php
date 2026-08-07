@@ -23,6 +23,8 @@ use Spatie\MediaLibrary\MediaCollections\Models\Media;
 use Spatie\Sluggable\HasSlug;
 use Spatie\Sluggable\SlugOptions;
 use Support\Casts\HtmlEntityDecoder;
+use Support\Casts\PriceCast;
+use Support\ValueObjects\Price;
 
 /**
  * @property int $id
@@ -35,7 +37,7 @@ use Support\Casts\HtmlEntityDecoder;
  * @property int|null $manufacturer_id
  * @property int|null $volume_id
  * @property int|null $container_id
- * @property numeric $price
+ * @property Price|null $price
  * @property int $stock_quantity
  * @property bool $in_stock
  * @property int|null $package_units
@@ -115,7 +117,7 @@ class Product extends Model implements HasMedia
     protected function casts(): array
     {
         return [
-            'price' => 'decimal:2',
+            'price' => PriceCast::class,
             'in_stock' => 'boolean',
             'status' => ProductStatus::class,
             'flags' => 'json',

@@ -1,11 +1,13 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Domain\Cart\Models;
 
+use Database\Factories\Cart\CartFactory;
 use Domain\Auth\Models\User;
-use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\MassPrunable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -13,10 +15,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class Cart extends Model
 {
     use HasFactory;
-    use MassPrunable;
 
     protected $fillable = [
-        'storage_id',
         'user_id',
     ];
 
@@ -27,11 +27,16 @@ class Cart extends Model
 
     public function user(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'user_id');
+        return $this->belongsTo(User::class);
     }
 
-    public function prunable(): Builder
+    /**
+     * Модель живёт вне `App\Models` (см. CLAUDE.md, "Domain layer") — дефолтная
+     * конвенция фабрик её не резолвит, та же ловушка, что уже задокументирована
+     * в Domain\Favorite\Models\Favorite::newFactory().
+     */
+    protected static function newFactory(): Factory
     {
-        return static::query()->where('created_at', '<=', now()->subDay());
+        return CartFactory::new();
     }
 }

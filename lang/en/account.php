@@ -120,4 +120,16 @@ return [
         'removed' => 'Product removed from favorites.',
         'cleared' => 'Favorites cleared.',
     ],
+
+    'cart' => [
+        'title' => 'Cart',
+        'empty' => 'Your cart is empty.',
+        'total' => 'Total (:count items)',
+        'clear' => 'Clear cart',
+        'clear_confirm' => 'Clear the cart?',
+        'remove' => 'Remove from cart',
+        'added' => 'Product added to cart.',
+        'removed' => 'Product removed from cart.',
+        'cleared' => 'Cart cleared.',
+    ],
 ];

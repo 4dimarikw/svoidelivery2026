@@ -14,6 +14,7 @@ use Domain\Catalog\Enums\ProductStatus;
 use Domain\Catalog\Models\BeerStyle;
 use Domain\Catalog\Models\Container;
 use Domain\Catalog\Models\Manufacturer;
+use Domain\Catalog\Models\Product;
 use Domain\Catalog\Models\Volume;
 use MoonShine\Contracts\UI\FieldContract;
 use MoonShine\Laravel\Fields\Relationships\BelongsTo;
@@ -72,7 +73,10 @@ final class ProductDetailPage extends DetailPage
                 resource: ContainerResource::class,
             ),
 
-            Number::make(__('moonshine.product.fields.price'), 'price'),
+            Number::make(__('moonshine.product.fields.price'), 'price')
+                // price закастован в Support\ValueObjects\Price — полю нужен голый
+                // скаляр в рублях, не объект (см. тот же комментарий в ProductFormPage).
+                ->changeFill(static fn (Product $product) => $product->price?->major()),
             Number::make(__('moonshine.product.fields.stock_quantity'), 'stock_quantity'),
             Switcher::make(__('moonshine.product.fields.in_stock'), 'in_stock'),
             Enum::make(__('moonshine.product.fields.status'), 'status')->attach(ProductStatus::class),

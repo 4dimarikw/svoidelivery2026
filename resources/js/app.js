@@ -5,6 +5,7 @@ import intersect from '@alpinejs/intersect';
 import './ui';
 import './catalog';
 import './favorites';
+import './cart';
 
 window.Alpine = Alpine;
 

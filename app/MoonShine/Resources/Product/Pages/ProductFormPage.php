@@ -118,6 +118,9 @@ final class ProductFormPage extends FormPage
                         Number::make(__('moonshine.product.fields.price'), 'price')
                             ->required()
                             ->step(0.01)
+                            // price закастован в Support\ValueObjects\Price (см. Product::casts()) —
+                            // полю нужен голый скаляр в рублях, не объект.
+                            ->changeFill(static fn (Product $product) => $product->price?->major())
                             ->hint('price/stock_quantity/in_stock перезаписываются каждым catalog:import из 1С — правки здесь живут только до следующего синка.'),
 
                         Number::make(__('moonshine.product.fields.stock_quantity'), 'stock_quantity')

@@ -3,10 +3,11 @@
      uses `space-y-*`/`space-x-*` (margin-based), never flex `gap` — see
      CLAUDE.md's legacy-browser section (Safari < 14.1 has no flex-gap).
 
-     Favorites link/counter only in @auth — there's no guest mode for
-     favorites (Domain\Favorite, CLAUDE.md), so @guest stays untouched.
-     x-init seeds the shared $store.favorites.count (resources/js/favorites.js)
-     with the server value; product-card's toggle keeps it live afterwards. --}}
+     Favorites/cart links+counters only in @auth — neither has a guest mode
+     (Domain\Favorite/Domain\Cart, CLAUDE.md), so @guest stays untouched.
+     x-init seeds the shared $store.favorites.count/$store.cart.count
+     (resources/js/{favorites,cart}.js) with the server value; the
+     product-card's toggle/stepper keep them live afterwards. --}}
 <header class="border-b border-hairline bg-cream-50">
     <div class="mx-auto flex max-w-page flex-col space-y-4 px-6 py-4 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
         <a href="{{ route('home') }}" class="inline-flex items-center">
@@ -28,6 +29,16 @@
                 >
                     <x-ui.icon name="heart" :size="18" />
                     <span class="ml-1 font-mono text-micro" x-text="$store.favorites.count"></span>
+                </a>
+                <a
+                    href="{{ route('cart.index') }}"
+                    x-data
+                    x-init="$store.cart.count = {{ app(\Domain\Cart\CartManager::class)->count() }}"
+                    class="inline-flex items-center text-body-m text-ink-700 hover:text-rust"
+                    aria-label="{{ __('layout.nav.cart') }}"
+                >
+                    <x-ui.icon name="shopping-bag" :size="18" />
+                    <span class="ml-1 font-mono text-micro" x-text="$store.cart.count"></span>
                 </a>
                 <span class="text-body-m text-ink-700">{{ auth()->user()->name }}</span>
                 <x-ui.link :href="route('account.profile.edit')">{{ __('layout.nav.account') }}</x-ui.link>

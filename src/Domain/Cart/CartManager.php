@@ -4,271 +4,145 @@ declare(strict_types=1);
 
 namespace Domain\Cart;
 
-use Domain\Cart\Contracts\CartIdentityStorageContract;
 use Domain\Cart\Models\Cart;
 use Domain\Cart\Models\CartItem;
-use Domain\Cart\StorageIdentities\FakeIdentityStorage;
-use Domain\Catalog\Models\Category;
-use Domain\Order\Models\Order;
-use Domain\Product\Models\ProductVariation;
+use Domain\Catalog\Models\Product;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Cache;
-use ReflectionException;
 use Support\ValueObjects\Price;
 
+/**
+ * Только для авторизованных — у гостя все методы возвращают пустой/нулевой
+ * результат без единого запроса к БД (кнопка "Купить" и так видна только
+ * авторизованным, см. product-card.blade.php). Никакого Cache-слоя поверх
+ * Eloquent — та же логика, что и в Domain\Favorite\FavoriteManager: дешевле
+ * мемоизации на один HTTP-запрос, и не рассинхронивается с правками в обход
+ * менеджера. `$items` — CartItem текущего пользователя, keyBy('product_id'),
+ * без eager-load продукта (это ответственность вызывающего кода — см.
+ * CartController::index(), который сам грузит нужные связи).
+ */
 final class CartManager
 {
-    public function __construct(
-        protected CartIdentityStorageContract $identityStorage
-    ) {}
+    private ?Collection $items = null;
 
-    /**
-     * @throws ReflectionException
-     */
-    public static function fake(): void
+    private function items(): Collection
     {
-        app()->bind(CartIdentityStorageContract::class, FakeIdentityStorage::class);
-    }
-
-    private function cacheKey(): string
-    {
-
-        return auth()->check() ? str('cart_'.(auth()->user()->id * 123321))
-            ->slug('_')
-            ->value() : str('cart_'.$this->identityStorage->get())
-            ->slug('_')
-            ->value();
-    }
-
-    public function forgetCache(): void
-    {
-        Cache::forget($this->cacheKey());
-    }
-
-    public function updateStorageId(string $old, string $current): void
-    {
-        Cart::query()
-            ->where('storage_id', $old)
-            ->update($this->storeData($current));
-    }
-
-    private function storeData(string $id): array
-    {
-        $data = [
-            'storage_id' => $id,
-        ];
-
-        if (auth()->check()) {
-            $data['user_id'] = auth()->id();
+        if (! auth()->check()) {
+            return collect();
         }
 
-        return $data;
+        return $this->items ??= CartItem::query()
+            ->whereHas('cart', fn ($query) => $query->where('user_id', auth()->id()))
+            ->get()
+            ->keyBy('product_id');
     }
 
-    public function add(ProductVariation $productVariation, int $quantity): Cart
+    public function quantityOf(Product|int $product): int
     {
-        $cart = Cart::query()
-            ->updateOrCreate([
-                'user_id' => auth()->id(),
-            ], $this->storeData($this->identityStorage->get()));
+        $productId = $product instanceof Product ? $product->getKey() : $product;
 
-        $cart->cartItems()->updateOrCreate([
-            'product_variation_id' => $productVariation->getKey(),
-        ], [
-            'price' => $productVariation->price->value(),
-            'quantity' => $quantity,
-        ]);
-
-        $this->forgetCache();
-
-        return $cart;
+        return $this->items()->get($productId)?->quantity ?? 0;
     }
 
-    public function repeatOrder(int $orderId, $replace): Cart
+    public function has(Product|int $product): bool
     {
-        if ($replace) {
-            $this->truncate();
-        }
-
-        $cart = Cart::query()
-            ->updateOrCreate([
-                'user_id' => auth()->id(),
-            ], $this->storeData($this->identityStorage->get()));
-
-        $order = Order::with('orderItems.productVariation')->find($orderId);
-
-        $order->orderItems->each(function ($item) use ($cart) {
-
-            $cartItem = $cart->cartItems()
-                ->where('product_variation_id', $item->productVariation->getKey())
-                ->first();
-
-            $currentPrice = $item->productVariation->price->value();
-
-            if ($cartItem) { // Если товар уже есть - увеличиваем количество
-                $newQuantity = $cartItem->quantity + $item->quantity;
-                $quantity = $newQuantity > $item->productVariation->stock_quantity ? $item->productVariation->stock_quantity : $newQuantity;
-
-                $cartItem->update(['quantity' => $quantity, 'price' => $currentPrice]);
-            } else {
-                $quantity = $item->quantity > $item->productVariation->stock_quantity ? $item->productVariation->stock_quantity : $item->quantity;
-                $cart->cartItems()->create([
-                    'product_variation_id' => $item->productVariation->getKey(),
-                    'price' => $item->productVariation->price->value(),
-                    'quantity' => $quantity,
-                ]);
-            }
-        });
-
-        $this->forgetCache();
-
-        return $cart;
-    }
-
-    public function quantity(CartItem $cartItem, int $quantity = 1): void
-    {
-        if ($quantity == 0) {
-            $this->delete($cartItem);
-        } else {
-            $cartItem->update([
-                'quantity' => $quantity,
-            ]);
-        }
-
-        $this->forgetCache();
-    }
-
-    public function delete(CartItem $cartItem): void
-    {
-        $cartItem->delete();
-
-        $this->forgetCache();
-    }
-
-    public function truncate(): void
-    {
-        if ($this->get()) {
-            $this->get()?->delete();
-        }
-
-        $this->forgetCache();
-    }
-
-    //    public function items(): Collection
-    //    {
-    //        if (!$this->get()) {
-    //            return collect();
-    //        }
-    //        return CartItem::query()
-    //            ->with(['productVariation', 'productVariation.product'])
-    //            ->whereBelongsTo($this->get())
-    //            ->get();
-    //    }
-    //
-    //
-    //    public function cartItems(): Collection
-    //    {
-    //        if (!$this->get()) {
-    //            return collect();
-    //        }
-    //
-    //        return $this->get()->cartItems;
-    //    }
-
-    public function cartItems(): Collection|\Illuminate\Database\Eloquent\Collection
-    {
-        return $this->get()?->cartItems ?? collect([]);
-    }
-
-    /**
-     * Позиции корзины без товаров категории equipment и всех её потомков.
-     */
-    public function cartItemsWithoutEquipment(): Collection|\Illuminate\Database\Eloquent\Collection
-    {
-        $items = $this->cartItems();
-
-        $equipmentId = Category::query()
-            ->where('slug', config('equipment_import.site_category', 'equipment'))
-            ->value('id');
-
-        if (! $equipmentId || $items->isEmpty()) {
-            return $items;
-        }
-
-        // id категории equipment + все потомки (descendants-and-self)
-        $equipmentCategoryIds = Category::descendantsOf($equipmentId, ['*'], true)->pluck('id');
-
-        // product нужен для category_id; догрузим пачкой (без N+1)
-        $items->loadMissing('productVariation.product');
-
-        return $items
-            ->reject(fn (CartItem $item) => $equipmentCategoryIds->contains(
-                $item->productVariation?->product?->category_id
-            ))
-            ->values();
+        return $this->quantityOf($product) > 0;
     }
 
     public function count(): int
     {
-        return $this->cartItems()->sum(function ($item) {
-            return $item->quantity;
-        });
+        return (int) $this->items()->sum('quantity');
     }
 
     public function amount(): Price
     {
-        return Price::make(
-            $this->cartItems()->sum(function ($cartItem) {
-                return $cartItem->amount->raw();
-            }),
-            false
+        return $this->items()->reduce(
+            fn (Price $carry, CartItem $item) => $carry->add($item->amount ?? Price::fromMinor(0)),
+            Price::fromMinor(0)
         );
     }
 
-    public function amountWithoutEquipment(): Price
+    /**
+     * Добавляет $by штук товара (или убавляет — decrement() ниже переиспользует
+     * этот же метод с отрицательным $by). Цена переснимается с текущей
+     * $product->price при каждом изменении количества — отдельного действия
+     * "обновить цену в корзине" не требуется. Уход в 0 или ниже удаляет строку
+     * целиком — то самое поведение "минус на количестве 1 убирает товар и
+     * возвращает «Купить»" из брендбука (design-system.html, §06).
+     */
+    public function increment(Product $product, int $by = 1): ?CartItem
     {
-        return Price::make(
-            $this->cartItemsWithoutEquipment()->sum(function ($cartItem) {
-                return $cartItem->amount->raw();
-            }),
-            false
-        );
-    }
-
-    public function get()
-    {
-        return Cache::remember($this->cacheKey(), now()->addHour(), function () {
-            $cart = Cart::query()
-                ->with(['cartItems.productVariation'])
-                ->where('user_id', auth()->id())
-                ->first();
-
-            if (! $cart) {
-                return false;
-            }
-
-            // Скрыть позиции, чья вариация soft-deleted — иначе сериализация
-            // productVariation падает на null. Не удаляем: при восстановлении
-            // вариации позиция вернётся.
-            $cart->setRelation(
-                'cartItems',
-                $cart->cartItems->filter(
-                    fn (CartItem $item) => $item->productVariation !== null
-                )->values()
-            );
-
-            return $cart;
-        });
-    }
-
-    public function isIn(int $variationId): bool
-    {
-        if (! $this->get()) {
-            return false;
+        if (! auth()->check()) {
+            return null;
         }
 
-        return $this->get()->cartItems
-            ->where('product_variation_id', $variationId)
-            ->isNotEmpty();
+        $cart = Cart::query()->firstOrCreate(['user_id' => auth()->id()]);
+
+        $item = CartItem::query()->firstOrNew([
+            'cart_id' => $cart->id,
+            'product_id' => $product->getKey(),
+        ]);
+
+        $newQuantity = $this->clampQuantity($product, ($item->exists ? $item->quantity : 0) + $by);
+
+        $this->items = null;
+
+        if ($newQuantity <= 0) {
+            if ($item->exists) {
+                $item->delete();
+            }
+
+            return null;
+        }
+
+        $item->quantity = $newQuantity;
+        $item->price = $product->price;
+        $item->save();
+
+        return $item;
+    }
+
+    public function decrement(Product $product, int $by = 1): void
+    {
+        $this->increment($product, -$by);
+    }
+
+    public function remove(Product|int $product): void
+    {
+        if (! auth()->check()) {
+            return;
+        }
+
+        $productId = $product instanceof Product ? $product->getKey() : $product;
+
+        CartItem::query()
+            ->where('product_id', $productId)
+            ->whereHas('cart', fn ($query) => $query->where('user_id', auth()->id()))
+            ->delete();
+
+        $this->items = null;
+    }
+
+    public function truncate(): void
+    {
+        if (! auth()->check()) {
+            return;
+        }
+
+        CartItem::query()
+            ->whereHas('cart', fn ($query) => $query->where('user_id', auth()->id()))
+            ->delete();
+
+        $this->items = null;
+    }
+
+    /**
+     * 0..stock_quantity, всегда 0, если товар снят с наличия — клампит
+     * количество по фактическому остатку независимо от направления изменения.
+     */
+    private function clampQuantity(Product $product, int $quantity): int
+    {
+        $stock = $product->in_stock ? max(0, (int) $product->stock_quantity) : 0;
+
+        return max(0, min($quantity, $stock));
     }
 }

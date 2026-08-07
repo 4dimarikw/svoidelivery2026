@@ -3,6 +3,7 @@
 use App\Http\Controllers\Account\AddressController;
 use App\Http\Controllers\Account\FavoriteController;
 use App\Http\Controllers\Account\ProfileController;
+use App\Http\Controllers\CartController;
 use App\Http\Controllers\CatalogController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -18,6 +19,17 @@ Route::middleware(['auth', 'verified'])->prefix('account')->name('account.')->gr
     Route::get('favorites', [FavoriteController::class, 'index'])->name('favorites.index');
     Route::post('favorites/{product}', [FavoriteController::class, 'toggle'])->name('favorites.toggle');
     Route::delete('favorites', [FavoriteController::class, 'destroy'])->name('favorites.destroy');
+});
+
+// Корзина — не часть личного кабинета, отдельная самостоятельная страница
+// (Domain\Cart), поэтому вне prefix('account')/account-nav — но всё ещё
+// только для авторизованных, middleware не меняется.
+Route::middleware(['auth', 'verified'])->group(function () {
+    Route::get('cart', [CartController::class, 'index'])->name('cart.index');
+    Route::post('cart/{product}', [CartController::class, 'increase'])->name('cart.increase');
+    Route::patch('cart/{product}', [CartController::class, 'decrease'])->name('cart.decrease');
+    Route::delete('cart/{product}', [CartController::class, 'destroy'])->name('cart.destroy');
+    Route::delete('cart', [CartController::class, 'clear'])->name('cart.clear');
 });
 
 // Local-only preview of the <x-ui.*> component library — proves the value

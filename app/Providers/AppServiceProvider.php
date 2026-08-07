@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use Domain\Cart\Providers\CartServiceProvider;
 use Domain\Catalog\Filters\AbvRangeFilter;
 use Domain\Catalog\Filters\BeerStyleFilter;
 use Domain\Catalog\Filters\CategoryFilter;
@@ -32,6 +33,10 @@ class AppServiceProvider extends ServiceProvider
 
         $this->app->register(
             FavoriteServiceProvider::class
+        );
+
+        $this->app->register(
+            CartServiceProvider::class
         );
 
         // Illuminate\Pipeline\Pipeline::carry() re-make()s every stage per
