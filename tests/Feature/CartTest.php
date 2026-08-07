@@ -122,4 +122,40 @@ class CartTest extends TestCase
         $this->assertSame(0, CartItem::query()->where('cart_id', $cart->id)->count());
         $this->assertSame(1, CartItem::query()->where('cart_id', $otherCart->id)->count());
     }
+
+    public function test_index_with_items_shows_summary_and_continue_shopping_cta(): void
+    {
+        $user = User::factory()->create();
+        $product = Product::factory()->create(['price' => 100]);
+        $cart = Cart::factory()->create(['user_id' => $user->id]);
+        CartItem::factory()->create(['cart_id' => $cart->id, 'product_id' => $product->id, 'quantity' => 2, 'price' => 100]);
+
+        $response = $this->actingAs($user)->get(route('cart.index'));
+
+        $response->assertOk();
+        $response->assertSee(__('account.cart.items'));
+        $response->assertSee(__('account.cart.total_label'));
+        $response->assertSee(__('account.cart.continue'));
+        $response->assertSee(route('home'), false);
+    }
+
+    public function test_index_empty_shows_empty_state_and_hides_summary_behind_x_cloak(): void
+    {
+        $user = User::factory()->create();
+
+        $response = $this->actingAs($user)->get(route('cart.index'));
+
+        $response->assertOk();
+        $response->assertSee(__('account.cart.empty'));
+
+        // Панель со списком/итогом остаётся в разметке (server-render не
+        // условный на пустоту, а параллельный x-show — см. комментарий в
+        // pages/cart.blade.php), но помечена x-cloak: [x-cloak]{display:none}
+        // (app.css) скрывает её и без JS, до и после гидратации Alpine.
+        $content = $response->getContent();
+        $this->assertMatchesRegularExpression(
+            '/x-show="\$store\.cart\.count > 0"[^>]*x-cloak/',
+            $content
+        );
+    }
 }

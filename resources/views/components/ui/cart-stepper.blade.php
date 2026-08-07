@@ -51,14 +51,22 @@
             type="submit"
             aria-label="{{ __('catalog.cart.decrease') }}"
             class="grid w-[34px] shrink-0 place-items-center bg-cream-200 text-ink-900 transition hover:bg-cream-300"
-        >−</button>
-        <span class="grid flex-1 place-items-center font-mono text-caption" x-text="quantity"></span>
+        >−
+        </button>
+        {{-- min-w-[40px] — .qty span{width:40px} из брендбука (§10). flex-1
+             сам по себе имеет flex-basis:0 — там, где форме нечего раздавать
+             (grid-колонка auto в cart-line.blade.php), ячейка схлопывается
+             до ширины цифры; min-width держит брендбучные 40px и там, и
+             там, а flex-1 всё равно дотягивает ячейку шире на карточке
+             каталога (.card .actions .qty span{flex:1}), где строка растянута. --}}
+        <span class="grid min-w-[34px] flex-1 place-items-center font-mono text-caption" x-text="quantity"></span>
         <button
             type="submit"
             form="{{ $increaseId }}"
             aria-label="{{ __('catalog.cart.increase') }}"
             :disabled="quantity >= {{ (int) $product->stock_quantity }}"
             class="grid w-[34px] shrink-0 place-items-center bg-cream-200 text-ink-900 transition hover:bg-cream-300 disabled:cursor-not-allowed disabled:opacity-50"
-        >+</button>
+        >+
+        </button>
     </form>
 </div>

@@ -124,7 +124,9 @@ return [
     'cart' => [
         'title' => 'Cart',
         'empty' => 'Your cart is empty.',
-        'total' => 'Total (:count items)',
+        'items' => 'Items',
+        'total_label' => 'Total',
+        'continue' => 'Continue shopping',
         'clear' => 'Clear cart',
         'clear_confirm' => 'Clear the cart?',
         'remove' => 'Remove from cart',
