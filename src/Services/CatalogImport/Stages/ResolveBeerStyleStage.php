@@ -102,7 +102,7 @@ final class ResolveBeerStyleStage implements ImportStage
                 'rating_count' => $beerDto->rating_count,
                 'rating_score' => $beerDto->rating_score,
                 'label' => $beerDto->beer_image,
-                'url' => '/b/'.$beerDto->beer_slug.'/'.$beerDto->bid,
+                'url' => config('project.untappd_base_url').'/b/'.$beerDto->beer_slug.'/'.$beerDto->bid,
             ],
         );
 

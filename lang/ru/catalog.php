@@ -35,6 +35,9 @@ return [
 
     'no_image' => 'Изображение товара отсутствует',
 
+    'breadcrumbs' => 'Хлебные крошки',
+    'go_to_product' => 'Перейти на страницу товара',
+
     'found' => 'Найдено: :count',
     'empty' => 'По заданным фильтрам ничего не найдено.',
     'new' => 'Новинка',
@@ -54,5 +57,26 @@ return [
         // aria-label кнопок степпера −/+ (design-system.html, §06).
         'increase' => 'Добавить ещё',
         'decrease' => 'Убрать одну',
+    ],
+
+    // Страница товара (route `product.show`, pages/product.blade.php).
+    'product' => [
+        'specs' => 'Характеристики',
+        'description' => 'Описание',
+        'similar' => 'Похожие товары',
+        'untappd_link' => 'Смотреть на Untappd',
+        'rating_count' => 'Оценок: :count',
+
+        'spec_labels' => [
+            'abv' => 'Крепость',
+            'ibu' => 'Горечь',
+            'plato' => 'Плотность',
+            'ebc' => 'Цвет',
+            'volume' => 'Объём',
+            'container' => 'Тара',
+            'category' => 'Категория',
+            'manufacturer' => 'Производитель',
+            'style' => 'Стиль',
+        ],
     ],
 ];

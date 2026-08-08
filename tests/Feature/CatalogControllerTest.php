@@ -290,6 +290,16 @@ class CatalogControllerTest extends TestCase
         $response->assertDontSee('>Купить<', false);
     }
 
+    public function test_product_card_thumbnail_links_to_the_product_page(): void
+    {
+        $product = Product::factory()->create();
+
+        $response = $this->get(route('home'));
+
+        $response->assertOk();
+        $response->assertSee(route('product.show', $product), false);
+    }
+
     public function test_guest_does_not_see_the_favorite_button(): void
     {
         // Избранное — только для авторизованных (Domain\Favorite, CLAUDE.md):
@@ -314,11 +324,12 @@ class CatalogControllerTest extends TestCase
         $response->assertSee('account/favorites', false);
     }
 
-    public function test_favorited_product_renders_a_filled_heart(): void
+    public function test_favorited_product_seeds_alpine_state_as_favorited(): void
     {
-        // Сердце закрашивается (fill="currentColor") для товара, уже
-        // добавленного в избранное — и серверным сидом (:fill), и
-        // Alpine-биндингом (::fill) на случай клика без перезагрузки.
+        // Сердце теперь залито всегда (fill="currentColor" статично,
+        // design-system.html §06 .card .thumb-wrap .fav) — «в избранном»
+        // отражается только цветом через Alpine :class, которое читает
+        // favorited, засеянное сервером в x-data.
         $user = User::factory()->create();
         $product = Product::factory()->create();
         Favorite::factory()->create(['user_id' => $user->id, 'product_id' => $product->id]);
@@ -326,11 +337,11 @@ class CatalogControllerTest extends TestCase
         $response = $this->actingAs($user)->get(route('home'));
 
         $response->assertOk();
-        $response->assertSee('fill="currentColor"', false);
-        $response->assertSee(':fill="favorited ? \'currentColor\' : \'none\'"', false);
+        $response->assertSee('uiFavoriteToggle(true)', false);
+        $response->assertSee(':class="favorited ? \'text-rust\' : \'text-tan-500\'"', false);
     }
 
-    public function test_non_favorited_product_renders_an_empty_heart(): void
+    public function test_non_favorited_product_seeds_alpine_state_as_not_favorited(): void
     {
         $user = User::factory()->create();
         Product::factory()->create();
@@ -338,7 +349,7 @@ class CatalogControllerTest extends TestCase
         $response = $this->actingAs($user)->get(route('home'));
 
         $response->assertOk();
-        $response->assertDontSee('fill="currentColor"', false);
+        $response->assertSee('uiFavoriteToggle(false)', false);
     }
 
     public function test_guest_does_not_see_price_or_action_buttons(): void

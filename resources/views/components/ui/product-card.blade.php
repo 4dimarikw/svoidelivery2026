@@ -2,19 +2,23 @@
      из брендбука (data/design-system/project/design-system.html, §06) в
      токенах Tailwind.
 
-     Анатомия сверху вниз: картинка → производитель (mono) → заголовок
-     brand ?: name (2 строки) → плашка стиля (только пиво) → строка
-     «объём · тара» → mono-строка ABV/IBU/°P/EBC (только пиво) → чипы →
-     .actions (цена + «Купить»/«Сообщить» + избранное).
+     Анатомия сверху вниз: картинка-ссылка на страницу товара (+ избранное
+     поверх неё, @auth) → плашка «Новинка» (если is_new) → производитель
+     (mono) → заголовок brand ?: name (2 строки) → плашка стиля (только
+     пиво) → строка «объём · тара» → mono-строка ABV/IBU/°P/EBC (только
+     пиво) → чипы (рейтинг/нет в наличии) → .actions (цена + «Купить»/
+     «Сообщить»).
 
-     Сознательное расхождение с брендбуком — в проекте нет страницы товара,
-     поэтому <article>, не <a class="thumb" href="#">: незаглушаемая мёртвая
-     ссылка на несуществующую страницу, см. CLAUDE.md. Ховер-штриховка
-     картинки (.product-card-thumb в app.css) оставлена чисто декоративно.
+     Кликабельна только картинка — как в брендбуке (design-system.html §06,
+     <a class="thumb" href="#">), но не вся карточка целиком: <article>
+     остаётся корневым элементом, favorite-toggle/степпер/«Купить» внутри
+     него — свои независимые интерактивные элементы, вложенные в <a> они
+     были бы невалидны. Ховер-штриховка картинки (.product-card-thumb в
+     app.css) переехала на саму ссылку вместе с классом, см. ниже.
 
-     Вся .actions (цена + «Купить»/степпер + избранное) — только для @auth.
-     Цена и кнопки действий не показываются гостю вовсе, не просто
-     задизейблены — карточка гостя обрывается на чипах. Чтобы скрытие цены
+     .actions (цена + «Купить»/степпер) и кнопка избранного на картинке —
+     обе только для @auth. Цена и кнопки действий не показываются гостю
+     вовсе, не просто задизейблены — карточка гостя обрывается на чипах. Чтобы скрытие цены
      не было декоративным, фильтр «Цена, ₽» и сортировка по цене тоже
      выключены для гостя серверно (PriceRangeFilter::visible(),
      SortFilter::availableCases() — Domain\Catalog\Filters), а не только
@@ -22,10 +26,10 @@
      FavoriteManager::has() — первый рендер корректен без JS; клик —
      обычный POST-form, перехватываемый Alpine (uiFavoriteToggle,
      resources/js/favorites.js) с фолбэком на настоящую отправку формы при
-     сбое fetch/JS. Товар «в избранном» отражается и цветом контура кнопки
-     (:class на .border-rust/.text-rust), и заливкой самого сердца —
-     <x-ui.icon fill="…"> сидируется с сервера ($isFavorited) и
-     перекрывается Alpine-биндингом (::fill, favorited) после клика.
+     сбое fetch/JS. Товар «в избранном» отражается только цветом сердца
+     (:class на .text-rust/.text-tan-500) — в новом дизайне (брендбук
+     .card .thumb-wrap .fav) сердце залито всегда, форма (пусто/залито)
+     больше не участвует, см. комментарий у кнопки ниже.
 
      «Купить» — <x-ui.cart-stepper> (Domain\Cart, CLAUDE.md; сам компонент —
      resources/views/components/ui/cart-stepper.blade.php), воспроизводит
@@ -59,7 +63,52 @@
      $product->hasOwnImage() отличает настоящую медиа-картинку от
      заглушки Untappd (badge-beer-default-thumb) — при false рендерится
      <x-ui.product-placeholder> вместо <img>. Бьёт по уже eager-loaded
-     'media', нового N+1 не создаёт. --}}
+     'media', нового N+1 не создаёт.
+
+     Компактный режим (< xl, сетка на 3/4/5 колонок — pages/home.blade.php,
+     account/favorites/index.blade.php) переопределяет практически все
+     размеры: `xl:` дальше по тексту — это возврат к исходным брендбучным
+     значениям, а не «десктопный вариант поверх мобильного» — на lg-колонке
+     карточка ýже, чем на md, поэтому обычная mobile-first лесенка здесь не
+     работает, брендбук возвращается только на xl. По той же причине
+     `min-h-[180px]` у превью снят совсем: на 5 колонках карточка никогда
+     не шире ~160px, и фиксированный минимум растягивал бы превью в портрет.
+
+     Кнопка «в избранное» лежит поверх картинки (absolute) — раньше это
+     было сознательным расхождением с брендбуком (там она стояла в одной
+     строке с ценой и «Купить»), но брендбук обновили: теперь там прямо
+     есть вариант .card .thumb-wrap .fav — иконка поверх фото, без
+     фона/рамки, крупнее (22px), заливка всегда сплошная (currentColor),
+     без пары none/currentColor — состояние «в избранном» отличается
+     только цветом (tan-500 → rust целиком через :class на favorited —
+     НЕ дублировать text-tan-500 ещё и в статичном class: Alpine у
+     строкового :class убирает только классы, добавленные им самим на
+     предыдущем вычислении, авторский статичный class не трогает никогда,
+     так что дубль остался бы в DOM навсегда рядом с text-rust, а в
+     сгенерированном Tailwind CSS text-tan-500 идёт позже text-rust —
+     обычный каскад безнадёжно проигрывал бы дубль, сердце просто никогда
+     не перекрашивалось бы, несмотря на верный 200-ответ и верный favorited
+     в Alpine; ровно так и было, пока не убрали дубль отсюда), не формой.
+     Тонкая кремовая обводка (stroke-cream-50,
+     переопределяет hardcoded stroke="currentColor" в icon.blade.php —
+     class-селектор всегда бьёт presentation-атрибут, icon.blade.php не
+     трогаем) и drop-shadow-fav (tailwind.config.js — кремовый ореол +
+     мягкая тёмная тень, брендбучные значения, две функции drop-shadow()
+     цепочкой) держат сердце читаемым на любом фото без непрозрачной
+     подложки — тот же переход от квадрата к «только иконка», который уже
+     был сделан здесь раньше, просто теперь по брендбуку, а не в обход
+     него. Сама форма кнопки/POST (uiFavoriteToggle) не меняется.
+
+     overflow-hidden на .product-card-thumb — не только обрезка картинки
+     под object-cover, а необходимое условие для самого aspect-square:
+     <article> — flex flex-col, картинка внутри него — flex-item, а у
+     flex-item'ов по умолчанию min-height:auto — автоматический минимум
+     считается по контенту (родная высота/пропорции <img>) и может
+     перебить высоту, которую диктует aspect-ratio, если фото само по
+     себе высокое. overflow, отличный от visible, обнуляет этот
+     автоматический минимум — без него превью реально тянулось выше
+     квадрата вслед за высокими фотографиями, хотя aspect-square был
+     на месте. --}}
 @props(['product'])
 
 @php
@@ -87,14 +136,9 @@
 
     $rating = spec_number($beer?->untappdBeer?->rating_score);
 
-    // Только для авторизованных — у избранного нет гостевого режима (см.
-    // CLAUDE.md/Domain\Favorite). productIds() внутри FavoriteManager
-    // мемоизирован на запрос, поэтому 24 карточки на странице бьют в БД
-    // один раз, а не по разу на карточку.
-    $isFavorited = auth()->check() && app(\Domain\Favorite\FavoriteManager::class)->has($product);
-
-    // Аналогично избранному — только для авторизованных, мемоизировано в
-    // CartManager на один HTTP-запрос (см. Domain\Cart\CartManager::items()).
+    // Аналогично избранному (теперь <x-ui.favorite-toggle>) — только для
+    // авторизованных, мемоизировано в CartManager на один HTTP-запрос (см.
+    // Domain\Cart\CartManager::items()).
     $cartQuantity = auth()->check() ? app(\Domain\Cart\CartManager::class)->quantityOf($product) : 0;
 @endphp
 
@@ -102,32 +146,42 @@
     title="{{ $product->name }}"
     class="flex h-full flex-col overflow-hidden rounded-sm border border-hairline bg-cream-50 transition hover:-translate-y-0.5 hover:shadow-md"
 >
-    <div class="product-card-thumb aspect-[4/3] min-h-[180px] border-b border-hairline bg-cream-100">
-        @if ($product->hasOwnImage())
-            <img
-                src="{{ $product->thumb }}"
-                alt="{{ $product->name }}"
-                loading="lazy"
-                class="h-full w-full object-cover"
-            >
-        @else
-            <x-ui.product-placeholder :product="$product" />
-        @endif
+    <div class="relative aspect-square overflow-hidden border-b border-hairline bg-cream-100">
+        <a href="{{ route('product.show', $product) }}" aria-label="{{ __('catalog.go_to_product') }}" class="product-card-thumb block h-full w-full">
+            @if ($product->hasOwnImage())
+                <img
+                    src="{{ $product->thumb }}"
+                    alt="{{ $product->name }}"
+                    loading="lazy"
+                    class="h-full w-full object-cover"
+                >
+            @else
+                <x-ui.product-placeholder :product="$product" />
+            @endif
+        </a>
+
+        <x-ui.favorite-toggle :product="$product" class="absolute right-2 top-2 z-10" />
     </div>
 
-    <div class="flex flex-1 flex-col px-5 pb-5 pt-4.5">
+    @if ($product->is_new)
+        <div class="border-b border-hairline bg-cream-200 px-2 py-1 font-mono text-[10px] uppercase leading-[14px] tracking-label text-tan-600 xl:px-5 xl:pb-1.5 xl:pt-[7px]">
+            {{ __('catalog.new') }}
+        </div>
+    @endif
+
+    <div class="flex flex-1 flex-col px-2 pb-2.5 pt-2 xl:px-5 xl:pb-5 xl:pt-4.5">
         @if ($product->manufacturer)
             <div class="font-mono text-badge uppercase text-ink-300">{{ $product->manufacturer->name }}</div>
         @endif
 
-        <div class="mt-1 line-clamp-2 font-display text-btn-lg font-bold uppercase leading-[1.15] tracking-brand-snug text-ink-900">{{ $title }}</div>
+        <div class="mt-1 line-clamp-2 font-display text-caption font-bold uppercase leading-[1.15] tracking-brand-snug text-ink-900 xl:text-btn-lg">{{ $title }}</div>
 
         @if ($beerStyleName)
-            <div class="mt-1.5 inline-flex self-start items-center rounded-sm bg-teal-700 px-2.5 py-1 font-display text-micro font-semibold uppercase tracking-[0.06em] text-cream-100">{{ $beerStyleName }}</div>
+            <div class="mt-1.5 inline-flex self-start items-center rounded-sm bg-teal-700 px-1.5 py-0.5 font-display text-micro font-semibold uppercase tracking-[0.06em] text-cream-100 xl:px-2.5 xl:py-1">{{ $beerStyleName }}</div>
         @endif
 
         @if ($spec->isNotEmpty())
-            <div class="mt-1.5 text-caption text-ink-500">{{ $spec->implode(' · ') }}</div>
+            <div class="mt-1.5 text-micro text-ink-500 xl:text-caption">{{ $spec->implode(' · ') }}</div>
         @endif
 
         @if ($numbers->isNotEmpty())
@@ -143,73 +197,46 @@
              разной высоте. --}}
         <div class="mt-auto"></div>
 
-        @if ($product->is_new || $rating || ! $product->in_stock)
+        @if ($rating || ! $product->in_stock)
             <div class="-ml-1.5 mt-3 flex flex-wrap [&>*]:ml-1.5 [&>*]:mt-1.5">
-                @if ($product->is_new)
-                    <x-ui.chip tone="rust">{{ __('catalog.new') }}</x-ui.chip>
-                @endif
+                {{-- max-xl:!px-*/!py-* — chip.blade.php задаёт свой padding
+                     через $attributes->class(), а в сгенерированном Tailwind
+                     CSS px-2.5 (её дефолт) идёт позже px-1.5 в шкале
+                     отступов независимо от порядка классов в HTML, так что
+                     без ! мы проиграли бы каскад собственному паддингу
+                     чипа. Ограничиваем важность до xl (max-xl:), чтобы на
+                     xl вернулся обычный, ничем не переопределённый дефолт
+                     компонента. Новинка сюда больше не входит — у неё
+                     теперь своя плашка под картинкой, см. выше. --}}
                 @if ($rating)
-                    <x-ui.chip tone="warn"><x-ui.icon name="star" :size="12" class="mr-1" />{{ $rating }}</x-ui.chip>
+                    <x-ui.chip tone="warn" class="max-xl:!px-1.5 max-xl:!py-1"><x-ui.icon name="star" :size="12" class="mr-1" />{{ $rating }}</x-ui.chip>
                 @endif
                 @if (! $product->in_stock)
-                    <x-ui.chip tone="cream">{{ __('catalog.out_of_stock') }}</x-ui.chip>
+                    <x-ui.chip tone="cream" class="max-xl:!px-1.5 max-xl:!py-1">{{ __('catalog.out_of_stock') }}</x-ui.chip>
                 @endif
             </div>
         @endif
 
-        {{-- Зазор чипы → линия теперь фиксированный (mt-3.5, симметрично
-             pt-3.5 под линией) — низ карточки прижимает распорка mt-auto
-             выше, не эта строка. Высота самой строки действий тоже
-             фиксирована — h-[41px] на внутреннем flex-контейнере, как
-             .card .actions .qty{height:41px} в брендбуке (design-system.html
-             §06/§10): без этого при qty=0 строку тянет ~46px кнопка «Купить»
-             (<x-ui.btn size="md">, padding 12px + line-height 20px), а при
-             qty>0 (кнопка скрыта x-show) — степпер/избранное своей высоты не
-             имеют и схлопываются по цене (~28px), из-за чего у карточки, на
-             которой уже нажали «Купить», кнопки становятся заметно меньше,
-             чем у соседних. h-[41px] — на вложенном div, не на внешнем
-             (border-t + pt-3.5 в box-border иначе съели бы часть высоты из
-             тех же 41px и кнопки всё равно схлопнулись бы).
+        {{-- Зазор чипы → линия теперь фиксированный (mt-2.5, симметрично
+             pt-2.5 под линией; xl: возвращает брендбучные 3.5) — низ
+             карточки прижимает распорка mt-auto выше, не эта строка.
 
-             Без items-center на внутреннем div: flex по умолчанию stretch —
-             избранное и степпер растягиваются на все 41px сами.
-
-             mr-3 на цене, не mr-auto: у соседней кнопки flex-1 — по
-             спецификации flexbox flex-grow забирает свободное место раньше,
-             чем auto-margin успевает что-то поглотить на этапе выравнивания,
-             так что mr-auto тут резолвился бы в ~0px (цена оказывалась
-             впритык к кнопке). --}}
+             Избранное переехало на картинку (см. комментарий вверху файла)
+             — здесь остались только цена и степпер, друг под другом:
+             в строку они не помещаются ни на одной колонке после перехода
+             на 3/4/5 колонок, включая xl. Высота степпера всё равно
+             фиксирована — h-[41px], как .card .actions .qty{height:41px}
+             в брендбуке (design-system.html §06/§10): без этого при qty=0
+             блок тянет ~46px кнопка «Купить» (<x-ui.btn size="md">, padding
+             12px + line-height 20px), а при qty>0 (кнопка скрыта x-show) —
+             степпер своей высоты не имеет и схлопывается по цифре (~28px),
+             из-за чего у карточки, на которой уже нажали «Купить», кнопки
+             становятся заметно меньше, чем у соседних. --}}
         @auth
-            <div class="mt-3.5 border-t border-hairline pt-3.5">
-                <div class="flex h-[41px]">
-                    <span class="mr-3 self-center whitespace-nowrap font-display text-heading-s font-bold tracking-brand-body text-ink-900">{{ $product->price }}</span>
+            <div class="mt-2.5 border-t border-hairline pt-2.5 xl:mt-3.5 xl:pt-3.5">
+                <span class="block whitespace-nowrap font-display text-btn-lg font-bold tracking-brand-body text-ink-900 xl:text-heading-s">{{ $product->price }}</span>
 
-                    <x-ui.cart-stepper :product="$product" :quantity="$cartQuantity" class="flex-1" />
-
-                    <form
-                        method="POST"
-                        action="{{ route('account.favorites.toggle', $product) }}"
-                        x-data="uiFavoriteToggle(@js($isFavorited))"
-                        x-on:submit.prevent="toggle($el)"
-                        class="ml-2 shrink-0"
-                    >
-                        @csrf
-                        <button
-                            type="submit"
-                            :aria-pressed="favorited"
-                            :class="favorited ? 'border-rust text-rust' : 'border-hairline text-ink-500'"
-                            class="grid h-full w-[41px] place-items-center rounded-sm border bg-cream-50 transition hover:border-rust hover:text-rust"
-                            :aria-label="favorited ? @js(__('catalog.remove_from_favorites')) : @js(__('catalog.add_to_favorites'))"
-                        >
-                            <x-ui.icon
-                                name="heart"
-                                :size="18"
-                                :fill="$isFavorited ? 'currentColor' : 'none'"
-                                ::fill="favorited ? 'currentColor' : 'none'"
-                            />
-                        </button>
-                    </form>
-                </div>
+                <x-ui.cart-stepper :product="$product" :quantity="$cartQuantity" class="mt-2 h-[41px]" />
             </div>
         @endauth
     </div>

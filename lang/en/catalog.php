@@ -35,6 +35,9 @@ return [
 
     'no_image' => 'Product image unavailable',
 
+    'breadcrumbs' => 'Breadcrumbs',
+    'go_to_product' => 'Go to product page',
+
     'found' => 'Found: :count',
     'empty' => 'No products match the selected filters.',
     'new' => 'New',
@@ -54,5 +57,26 @@ return [
         // Stepper −/+ button aria-labels (design-system.html, §06).
         'increase' => 'Add one more',
         'decrease' => 'Remove one',
+    ],
+
+    // Product page (route `product.show`, pages/product.blade.php).
+    'product' => [
+        'specs' => 'Specifications',
+        'description' => 'Description',
+        'similar' => 'Similar products',
+        'untappd_link' => 'View on Untappd',
+        'rating_count' => 'Ratings: :count',
+
+        'spec_labels' => [
+            'abv' => 'ABV',
+            'ibu' => 'Bitterness',
+            'plato' => 'Gravity',
+            'ebc' => 'Color',
+            'volume' => 'Volume',
+            'container' => 'Container',
+            'category' => 'Category',
+            'manufacturer' => 'Manufacturer',
+            'style' => 'Style',
+        ],
     ],
 ];

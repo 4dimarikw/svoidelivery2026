@@ -269,9 +269,9 @@
 
     /* ——— Карточка товара ——————————————————————————————————————
        Ховер картинки, воспроизводящий design-system §06 .card a.thumb:hover —
-       у нас это <div>, не <a> (страницы товара не существует, см. комментарий
-       в product-card.blade.php), поэтому диагональная штриховка декоративная,
-       без реального перехода. */
+       класс теперь на самой <a href="{{ route('product.show', $product) }}">,
+       см. product-card.blade.php, а не на .thumb-wrap вокруг неё, иначе
+       штриховка красилась бы и под кнопкой избранного. */
     .product-card-thumb:hover {
         background: repeating-linear-gradient(135deg, theme('colors.cream.100') 0 8px, theme('colors.cream.200') 8px 16px);
     }

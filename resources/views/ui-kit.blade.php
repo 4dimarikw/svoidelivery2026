@@ -55,6 +55,16 @@
             </div>
         </section>
 
+        {{-- ————————————————————————————————————————— Breadcrumbs ————————— --}}
+        <section class="mb-12">
+            <h2 class="mb-4 font-mono text-label uppercase text-ink-500">Breadcrumbs</h2>
+            <x-ui.breadcrumbs :items="[
+                ['label' => 'Каталог', 'url' => '#'],
+                ['label' => 'Пиво', 'url' => '#'],
+                ['label' => 'Hop Machine DDH IPA'],
+            ]" />
+        </section>
+
         {{-- ————————————————————————————————————————— Alerts ————— --}}
         <section class="mb-12 grid gap-3">
             <h2 class="font-mono text-label uppercase text-ink-500">Alerts</h2>

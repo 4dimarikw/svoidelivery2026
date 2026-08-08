@@ -6,11 +6,16 @@ use App\Http\Controllers\Account\ProfileController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\CatalogController;
 use App\Http\Controllers\PageController;
+use App\Http\Controllers\ProductController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', [CatalogController::class, 'index'])->name('home');
 Route::get('about', [PageController::class, 'about'])->name('about');
+
+// Self-healing slug-биндинг (Domain\Catalog\Models\Product::getSlugOptions())
+// резолвит {product} сам — {product:slug} тут не нужен, см. HasSlug::resolveRouteBinding().
+Route::get('product/{product}', [ProductController::class, 'show'])->name('product.show');
 
 Route::middleware(['auth', 'verified'])->prefix('account')->name('account.')->group(function () {
     Route::get('profile', [ProfileController::class, 'edit'])->name('profile.edit');

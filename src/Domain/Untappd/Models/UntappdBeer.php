@@ -6,6 +6,7 @@ use Database\Factories\Catalog\UntappdBeerFactory;
 use Domain\Catalog\Models\BeerProductDetail;
 use Eloquent;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -83,5 +84,26 @@ class UntappdBeer extends Model
     public function beerProductDetails(): HasMany
     {
         return $this->hasMany(BeerProductDetail::class);
+    }
+
+    /**
+     * Столбец исторически хранит относительный путь ('/b/slug/bid' —
+     * ResolveBeerStyleStage писал так до этого фикса, старые засинканные
+     * записи остаются такими и без ре-импорта) — на чтении всегда отдаём
+     * абсолютный URL, независимо от того, что реально лежит в БД.
+     * Идемпотентно: уже абсолютные значения (в т.ч. из UntappdBeerFactory)
+     * возвращаются как есть, домен не задваивается.
+     */
+    protected function url(): Attribute
+    {
+        return Attribute::get(function (?string $value): ?string {
+            if ($value === null || $value === '') {
+                return null;
+            }
+
+            return str_starts_with($value, 'http://') || str_starts_with($value, 'https://')
+                ? $value
+                : config('project.untappd_base_url').$value;
+        });
     }
 }
