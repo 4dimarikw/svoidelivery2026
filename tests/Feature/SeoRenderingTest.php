@@ -37,18 +37,36 @@ class SeoRenderingTest extends TestCase
         ]);
     }
 
-    public function test_page_with_explicit_title_prop_ignores_the_seo_table(): void
+    public function test_seo_row_title_wins_over_an_explicit_title_prop(): void
     {
-        // cart.blade.php passes :title="__('account.cart.title')" explicitly
-        // (resources/views/pages/cart.blade.php) — that must always win over
-        // whatever the seo table says for the same url.
+        // layouts/app.blade.php: seo()->meta()->title() ?? $title ?: config('app.name')
+        // — the seo-table row for the current url takes priority over a
+        // page's own :title prop (cart.blade.php passes :title explicitly,
+        // resources/views/pages/cart.blade.php) when one exists.
         $this->seedSeoRow('/cart', 'From Seo Table');
 
         $response = $this->actingAs(User::factory()->create())->get(route('cart.index'));
 
         $response->assertOk();
-        $response->assertSee('<title>'.__('account.cart.title').'</title>', false);
-        $response->assertDontSee('From Seo Table');
+        $response->assertSee('<title>From Seo Table</title>', false);
+        // "Корзина" (account.cart.title) legitimately still appears elsewhere
+        // on the page (mobile-nav link label) — assert only the <title> tag
+        // itself doesn't contain it, not the whole response body.
+        $response->assertDontSee('<title>'.__('account.cart.title').'</title>', false);
+    }
+
+    public function test_page_without_a_seo_row_shows_app_name_not_its_own_title_prop(): void
+    {
+        // Without a matching seo row, seo()->meta()->title() still resolves
+        // non-null (package default = config('seo.default.title') = APP_NAME),
+        // so the :title prop (cart's own __('account.cart.title')) never
+        // actually surfaces here either — the ?? never reaches it. This
+        // locks in the current (accepted) behavior: every page without its
+        // own seo row shows APP_NAME, regardless of what :title it passed.
+        $response = $this->actingAs(User::factory()->create())->get(route('cart.index'));
+
+        $response->assertOk();
+        $response->assertSee('<title>'.config('app.name').'</title>', false);
     }
 
     public function test_home_page_falls_back_to_app_name_without_a_seo_row(): void

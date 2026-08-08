@@ -150,27 +150,29 @@ class Product extends Model implements HasMedia
      * wasRecentlyCreated || wasChanged(self::SEO_WATCHED_ATTRIBUTES) — не
      * "пиши всегда на saved()": catalog:import (PersistProductStage) гоняет
      * update(['price'=>..,'stock_quantity'=>..,'in_stock'=>..]) по всему
-     * каталогу на каждом повторном импорте (тысячи строк). Цена в SEO-тексте
-     * не участвует (магазин не занимается оптом — цену/«купить» убрали из
-     * шаблона, см. SyncProductSeoAction), поэтому price в списке нет; но
-     * in_stock/volume_id/container_id/category_id/manufacturer_id всё ещё
-     * влияют на текст (наличие — в JSON-LD Offer.availability, остальные —
-     * в title/description/JSON-LD name), их приходится наблюдать. wasChanged()
-     * всё равно сравнивает значения, а не факт наличия ключа в update():
-     * повторный импорт с теми же значениями по-прежнему не пишет ничего.
+     * каталогу на каждом повторном импорте (тысячи строк). Ни цена, ни
+     * brand не входят ни в один SEO-текст (магазин не занимается оптом —
+     * цену/«купить» убрали из шаблона; title строится из name, не brand —
+     * см. SyncProductSeoAction), поэтому их в списке нет; но
+     * name/in_stock/volume_id/container_id/category_id/manufacturer_id
+     * всё ещё влияют на текст (name — везде, наличие — в JSON-LD
+     * Offer.availability, остальные — в title/description/JSON-LD name),
+     * их приходится наблюдать. wasChanged() всё равно сравнивает значения,
+     * а не факт наличия ключа в update(): повторный импорт с теми же
+     * значениями по-прежнему не пишет ничего.
      *
      * Известное ограничение: PersistProductStage создаёт Product раньше,
      * чем PersistBeerDetailsStage/PersistProductImageStage добавляют
      * beerDetails/картинку (config/catalog_import.php:76,77,90) — у только
-     * что импортированного товара первая seo-строка выйдет без пивных
-     * полей/og:image, досоздать некому (BeerProductDetail — другая модель).
-     * Касается только первого прохода нового товара при bulk-импорте;
-     * админка/тесты/фабрики получают уже полностью загруженный $product.
+     * что импортированного товара первая seo-строка выйдет без картинки,
+     * досоздать некому (BeerProductDetail — другая модель). Касается
+     * только первого прохода нового товара при bulk-импорте; админка/
+     * тесты/фабрики получают уже полностью загруженный $product.
      * Полноценный фикс — отдельный финальный stage в пайплайне, вне рамок
      * этой правки.
      */
     private const SEO_WATCHED_ATTRIBUTES = [
-        'slug', 'brand', 'name', 'in_stock',
+        'slug', 'name', 'in_stock',
         'volume_id', 'container_id', 'category_id', 'manufacturer_id',
     ];
 

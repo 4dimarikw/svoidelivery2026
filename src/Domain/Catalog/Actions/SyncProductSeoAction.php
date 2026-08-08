@@ -27,18 +27,40 @@ final class SyncProductSeoAction
      * одного и того же полностью собранного товара, но тащить приватную
      * константу контроллера в Action не стоит.
      */
-    private const RELATIONS = [
+    private const array RELATIONS = [
         'category', 'manufacturer', 'volume', 'container', 'media',
         'beerDetails.beerStyle', 'beerDetails.untappdBeer',
     ];
 
-    private const KEYWORDS_SUFFIX = 'крафтовое пиво с доставкой';
+    private const ?string KEYWORDS_SUFFIX = null;
+
+    /** FK-колонка => имя связи, которую она определяет — см. комментарий в __invoke(). */
+    private const array FK_TO_RELATION = [
+        'manufacturer_id' => 'manufacturer',
+        'volume_id' => 'volume',
+        'container_id' => 'container',
+        'category_id' => 'category',
+    ];
 
     public function __invoke(Product $product): void
     {
-        // loadMissing() — защита от лишних lazy-load запросов, если вызвано
-        // не из ProductController::show() (там всё уже eager-loaded), а,
-        // например, из MoonShine-формы товара или tinker.
+        // FK-поля из SEO_WATCHED_ATTRIBUTES (volume_id/container_id/
+        // category_id/manufacturer_id) могли измениться прямо на этом
+        // $product прямо перед вызовом (тот же объект — Product::booted()
+        // передаёт саму сохранённую модель) — а loadMissing() пропускает
+        // связь, если она уже когда-то была загружена, даже устаревшую
+        // (например, если что-то читало $product->manufacturer до save()
+        // с новым manufacturer_id). Сбрасываем только те связи, чей FK
+        // реально изменился на этом save() — иначе catalog:sync-seo
+        // (Product::query()->with(RELATIONS)->chunk(...), FK там не
+        // меняются) на каждый товар заново бил бы по всем 7 связям вместо
+        // переиспользования eager-load с уровня запроса чанка.
+        foreach (self::FK_TO_RELATION as $column => $relation) {
+            if ($product->wasChanged($column) && $product->relationLoaded($relation)) {
+                $product->unsetRelation($relation);
+            }
+        }
+
         $product->loadMissing(self::RELATIONS);
 
         $oldSlug = $product->getOriginal('slug');
@@ -79,7 +101,7 @@ final class SyncProductSeoAction
      */
     private function fields(Product $product): array
     {
-        $title = $product->brand ?: $product->name;
+        $title = $product->name;
         $absoluteUrl = route('product.show', $product);
 
         $seoTitle = $this->buildTitle($product, $title);
@@ -112,23 +134,11 @@ final class SyncProductSeoAction
         $beer = $product->beerDetails;
         $manufacturer = $product->manufacturer?->name;
 
-        $head = collect([$product->category?->name, $manufacturer, $title])->filter()->implode(' ');
-
-        $styleParts = collect([$beer?->beerStyle?->name, $beer?->untappdBeer?->style])->filter();
-        if ($styleParts->isNotEmpty()) {
-            $head .= ' - '.$styleParts->implode(' - ');
-        }
-
-        $specSentence = collect([
-            $beer?->abv !== null ? number_format((float) $beer->abv, 2, '.', '').'% алк.' : null,
-            $product->volume?->label,
-        ])->filter()->implode(', ');
+        $head = collect([$product->category?->name, $title])->filter()->implode(' ');
 
         $description = $head;
-        if ($specSentence !== '') {
-            $description .= ', '.$specSentence;
-        }
-        $description .= '. '.$product->packaging_raw.'. Закажите онлайн!';
+
+        $description .= '. '.$product->packaging_raw;
 
         return $description;
     }
@@ -138,7 +148,7 @@ final class SyncProductSeoAction
         $manufacturer = $product->manufacturer?->name;
         $head = $manufacturer ? "{$manufacturer}, {$title}" : $title;
 
-        return "{$head}, ".self::KEYWORDS_SUFFIX;
+        return self::KEYWORDS_SUFFIX ? "{$head}, ".self::KEYWORDS_SUFFIX : $head;
     }
 
     private function buildText(
@@ -185,7 +195,7 @@ final class SyncProductSeoAction
         $jsonLd = json_encode(
             $this->buildJsonLd($product, $title, $seoDescription, $absoluteUrl, $imageUrl),
             JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT
-                | JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP,
+            | JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP,
         );
 
         return $ogHtml."\n\n".'<script type="application/ld+json">'."\n".$jsonLd."\n".'</script>';

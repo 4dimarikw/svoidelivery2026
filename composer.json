@@ -16,6 +16,7 @@
         "laravel/socialite": "^5.29",
         "laravel/tinker": "^2.10.1",
         "lee-to/laravel-seo-by-url": "^2.2",
+        "mews/purifier": "^3.4",
         "moonshine/ace": "^1.0",
         "moonshine/import-export": "^2.1",
         "moonshine/moonshine": "^4.18",

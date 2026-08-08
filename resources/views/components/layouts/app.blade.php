@@ -1,17 +1,12 @@
 @props(['title' => null])
-<!doctype html>
+    <!doctype html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="h-full">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    {{-- Приоритет: явный :title-проп страницы (все auth/account/cart/product
-         экраны его уже задают) → строка seo-таблицы (lee-to/laravel-seo-by-url,
-         матчится по текущему url — см. Product::booted()/database/seeders/SeoSeeder.php)
-         → APP_NAME. Не @seo целиком — та сама рендерит <title> (задвоила бы
-         тег там, где :title уже задан) и пишет meta без экранирования. --}}
-    <title>{{ $title ?? (seo()->meta()->title() ?: config('app.name')) }}</title>
+    <title>{{ (seo()->meta()->title() ?? $title  ?: config('app.name')) }}</title>
 
     @if ($seoDescription = seo()->meta()->description())
         <meta name="description" content="{{ $seoDescription }}">
@@ -29,10 +24,11 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body class="h-full bg-cream-100 text-ink-900 antialiased">
-    <a href="#main" class="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-50 focus:rounded-sm focus:bg-teal-700 focus:px-4 focus:py-2 focus:text-cream-100">
-        {{ __('ui.skip_to_content') }}
-    </a>
+<a href="#main"
+   class="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-50 focus:rounded-sm focus:bg-teal-700 focus:px-4 focus:py-2 focus:text-cream-100">
+    {{ __('ui.skip_to_content') }}
+</a>
 
-    {{ $slot }}
+{{ $slot }}
 </body>
 </html>

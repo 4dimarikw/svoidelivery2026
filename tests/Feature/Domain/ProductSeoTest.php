@@ -33,7 +33,7 @@ class ProductSeoTest extends TestCase
             'manufacturer_id' => $manufacturer->id,
             'volume_id' => $volume->id,
             'container_id' => $container->id,
-            'brand' => 'Жигулёвское',
+            'name' => 'Жигулёвское',
             'price' => 5680,
             'packaging_raw' => null,
         ], $overrides));
@@ -76,12 +76,15 @@ class ProductSeoTest extends TestCase
             "Пиво 'Балтика' Жигулёвское 0,5 л ст. бут.",
             $seo->title,
         );
+        // title (products.name) — единственный источник в description; ни
+        // производитель, ни пивные поля (style/abv/объём) там больше не
+        // участвуют (SyncProductSeoAction::buildDescription()).
         $this->assertSame(
-            'Пиво Балтика Жигулёвское - IPA - Other, 5.80% алк., 0,5 л. . Закажите онлайн!',
+            'Пиво Жигулёвское. ',
             $seo->description,
         );
         $this->assertSame(
-            'Балтика, Жигулёвское, крафтовое пиво с доставкой',
+            'Балтика, Жигулёвское',
             $seo->keywords,
         );
 
@@ -99,24 +102,24 @@ class ProductSeoTest extends TestCase
         $this->assertSame(route('product.show', $product), $jsonLd['offers']['url']);
     }
 
-    public function test_changing_brand_updates_the_seo_title_in_place(): void
+    public function test_changing_manufacturer_updates_the_seo_title_in_place(): void
     {
-        // brand не участвует в генерации slug (только name/article) —
+        // manufacturer_id не участвует в генерации slug (только name/article) —
         // url остаётся прежним, строка обновляется на месте, не дублируется.
-        $product = Product::factory()->create(['brand' => 'Old Brand']);
+        $oldManufacturer = Manufacturer::factory()->create(['name' => 'Old Manufacturer']);
+        $newManufacturer = Manufacturer::factory()->create(['name' => 'New Manufacturer']);
+        $product = Product::factory()->create(['manufacturer_id' => $oldManufacturer->id]);
         $url = route('product.show', $product, absolute: false);
 
-        $product->update(['brand' => 'New Brand']);
+        $product->update(['manufacturer_id' => $newManufacturer->id]);
 
         $this->assertSame(1, Seo::where('url', $url)->count());
-        $this->assertStringContainsString('New Brand', Seo::where('url', $url)->value('title'));
+        $this->assertStringContainsString('New Manufacturer', Seo::where('url', $url)->value('title'));
     }
 
     public function test_changing_name_moves_the_seo_row_to_the_new_url(): void
     {
-        // brand=null — title и slug оба опираются на name, чтобы реально
-        // сдвинуть self-healing url (Product::getSlugOptions()).
-        $product = Product::factory()->create(['name' => 'Старое Название', 'brand' => null]);
+        $product = Product::factory()->create(['name' => 'Старое Название']);
         $oldUrl = route('product.show', $product, absolute: false);
 
         $product->update(['name' => 'Новое Название']);
@@ -130,9 +133,9 @@ class ProductSeoTest extends TestCase
 
     public function test_changing_price_does_not_touch_seo(): void
     {
-        // Цена больше не входит ни в один SEO-текст (магазин не занимается
-        // оптом, цену и «купить» из шаблона убрали) — реальное изменение
-        // цены не должно трогать seo, как и в обычном price/stock-ре-импорте.
+        // Цена не входит ни в один SEO-текст (магазин не занимается оптом,
+        // цену и «купить» из шаблона убрали) — реальное изменение цены не
+        // должно трогать seo, как и в обычном price/stock-ре-импорте.
         $product = Product::factory()->create(['price' => 100]);
         $seoId = Seo::where('url', route('product.show', $product, absolute: false))->value('id');
 
@@ -175,7 +178,7 @@ class ProductSeoTest extends TestCase
     public function test_text_escapes_html_and_json_breaking_characters(): void
     {
         $product = Product::factory()->create([
-            'brand' => 'Evil</script><script>alert(1)</script>"Beer',
+            'name' => 'Evil</script><script>alert(1)</script>"Beer',
         ]);
 
         $seo = Seo::where('url', route('product.show', $product, absolute: false))->firstOrFail();
@@ -191,7 +194,7 @@ class ProductSeoTest extends TestCase
         $this->assertStringContainsString('Evil</script><script>alert(1)</script>"Beer', $jsonLd['brand']['name']);
     }
 
-    public function test_product_without_beer_details_omits_beer_specific_fields(): void
+    public function test_accessory_product_builds_title_and_description(): void
     {
         $category = Category::factory()->create(['name' => 'Аксессуары']);
         $manufacturer = Manufacturer::factory()->create(['name' => 'NoName Co']);
@@ -199,16 +202,14 @@ class ProductSeoTest extends TestCase
         $product = Product::factory()->create([
             'category_id' => $category->id,
             'manufacturer_id' => $manufacturer->id,
-            'brand' => 'Аксессуар',
-            'price' => 300,
+            'name' => 'Аксессуар',
             'packaging_raw' => null,
         ]);
 
         $seo = Seo::where('url', route('product.show', $product, absolute: false))->firstOrFail();
 
         $this->assertSame("Аксессуары 'NoName Co' Аксессуар", $seo->title);
-        $this->assertSame('Аксессуары NoName Co Аксессуар. . Закажите онлайн!', $seo->description);
-        $this->assertStringNotContainsString('алк.', $seo->description);
+        $this->assertSame('Аксессуары Аксессуар. ', $seo->description);
 
         $jsonLd = $this->jsonLd($seo);
         $this->assertSame('Product', $jsonLd['@type']);

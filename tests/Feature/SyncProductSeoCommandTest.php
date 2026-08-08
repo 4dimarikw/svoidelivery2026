@@ -29,7 +29,7 @@ class SyncProductSeoCommandTest extends TestCase
         // Product::booted() — удаляем её, имитируя товар, заведённый до
         // появления этой автоматики (ровно та ситуация, для которой нужна
         // команда: 888 существующих товаров без seo-строк).
-        $product = Product::factory()->create(['brand' => 'Старый Товар']);
+        $product = Product::factory()->create(['name' => 'Старый Товар']);
         Seo::where('url', $this->seoUrl($product))->delete();
         $this->assertDatabaseMissing('seo', ['url' => $this->seoUrl($product)]);
 

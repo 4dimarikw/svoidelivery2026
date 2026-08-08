@@ -8,12 +8,12 @@ use App\MoonShine\Resources\Seo\SeoResource;
 use Illuminate\Validation\Rule;
 use Leeto\Seo\Models\Seo;
 use Leeto\Seo\Rules\UrlRule;
+use MoonShine\Ace\Fields\Code;
 use MoonShine\Contracts\Core\TypeCasts\DataWrapperContract;
 use MoonShine\Contracts\UI\ComponentContract;
 use MoonShine\Contracts\UI\FieldContract;
 use MoonShine\Laravel\Pages\Crud\FormPage;
 use MoonShine\Support\ListOf;
-use MoonShine\TinyMce\Fields\TinyMce;
 use MoonShine\UI\Components\ActionButton;
 use MoonShine\UI\Components\Layout\Box;
 use MoonShine\UI\Fields\ID;
@@ -42,7 +42,7 @@ class SeoFormPage extends FormPage
                     ->unescape(),
                 Text::make('Keywords')
                     ->unescape(),
-                TinyMce::make('Text'),
+                Code::make('Text')->language('javascript'),
             ]),
         ];
     }
