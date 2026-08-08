@@ -141,6 +141,15 @@ export default {
                 none: 'none',
             },
 
+            // design-system.html §06 .card .thumb-wrap .fav — иконка избранного
+            // поверх фото товара: мягкий кремовый ореол + лёгкая тёмная тень
+            // вместо непрозрачной подложки. Два drop-shadow() цепочкой — своя
+            // утилита, а не два класса drop-shadow-*: они все пишут в один
+            // --tw-drop-shadow, второй класс просто перетёр бы первый.
+            dropShadow: {
+                fav: ['0 0 2px rgba(250,246,236,.95)', '0 1px 3px rgba(15,46,55,.25)'],
+            },
+
             // NOTE: redefines stock meanings — md 6px→3px, lg 8px→4px, xl 12px→6px.
             // Intentional: the brand is deliberately near-square. `rounded-full` survives.
             borderRadius: {

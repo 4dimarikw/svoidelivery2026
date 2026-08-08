@@ -39,7 +39,7 @@
                         <p class="text-body-m text-ink-500">{{ __('catalog.empty') }}</p>
                     </x-ui.surface>
                 @else
-                    <div x-ref="grid" class="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3">
+                    <div x-ref="grid" class="grid grid-cols-2 gap-1 sm:gap-4 md:grid-cols-4 lg:grid-cols-5 xl:gap-1">
                         @include('pages.catalog._cards')
                     </div>
 

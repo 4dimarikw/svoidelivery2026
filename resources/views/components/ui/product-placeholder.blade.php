@@ -23,12 +23,10 @@
 <div class="flex h-full w-full flex-col items-center justify-center">
     <svg
         viewBox="0 0 96 96"
-        width="56"
-        height="56"
         role="img"
         aria-label="{{ __('catalog.no_image') }}"
         data-container="{{ $containerCode ?? 'none' }}"
-        class="{{ $toneClass }} stroke-ink-300"
+        class="h-10 w-10 xl:h-14 xl:w-14 {{ $toneClass }} stroke-ink-300"
         stroke-width="1.75"
         stroke-linecap="round"
         stroke-linejoin="round"
@@ -86,6 +84,6 @@
     </svg>
 
     @if ($product->volume?->label)
-        <span class="mt-2 font-mono text-micro uppercase tracking-meta text-ink-500">{{ $product->volume->label }}</span>
+        <span class="hidden font-mono text-micro uppercase tracking-meta text-ink-500 xl:mt-2 xl:block">{{ $product->volume->label }}</span>
     @endif
 </div>

@@ -15,7 +15,16 @@
      на форму increase через HTML5-атрибут form="…" — экономит отдельный
      маршрут на "уже есть, но нужно ещё"), «−» — на cart.decrease. Обе формы
      делят один x-data (uiCartStepper, resources/js/cart.js), тот же
-     fetch+JSON+фолбэк-на-submit приём, что и у избранного. --}}
+     fetch+JSON+фолбэк-на-submit приём, что и у избранного.
+
+     Компакт < xl (карточка каталога на 3/4/5-колоночной сетке — см.
+     product-card.blade.php): кнопки −/+ и цифра уже 26px вместо
+     брендбучных 34px, «Купить» — px-2 вместо .btn'ового 22px. .btn — класс
+     из @layer components (app.css), а px-*/w-*-утилиты лежат в @layer
+     utilities, который в app.css идёт следующим директивом — при равной
+     специфичности они и так побеждают .btn без !important. Тот же
+     компонент используется в cart-line.blade.php (/cart) — компакт заодно
+     улучшает и её на мобиле. --}}
 @props(['product', 'quantity', 'showBuyButton' => true])
 
 @php
@@ -32,7 +41,7 @@
     >
         @csrf
         @if ($showBuyButton)
-            <x-ui.btn type="submit" variant="primary" size="md" block class="h-full" :disabled="! $product->in_stock">
+            <x-ui.btn type="submit" variant="primary" size="md" block class="h-full px-2 xl:px-[22px]" :disabled="! $product->in_stock">
                 {{ $product->in_stock ? __('catalog.buy') : __('catalog.notify') }}
             </x-ui.btn>
         @endif
@@ -50,22 +59,24 @@
         <button
             type="submit"
             aria-label="{{ __('catalog.cart.decrease') }}"
-            class="grid w-[34px] shrink-0 place-items-center bg-cream-200 text-ink-900 transition hover:bg-cream-300"
+            class="grid w-[26px] shrink-0 place-items-center bg-cream-200 text-ink-900 transition hover:bg-cream-300 xl:w-[34px]"
         >−
         </button>
-        {{-- min-w-[40px] — .qty span{width:40px} из брендбука (§10). flex-1
-             сам по себе имеет flex-basis:0 — там, где форме нечего раздавать
-             (grid-колонка auto в cart-line.blade.php), ячейка схлопывается
-             до ширины цифры; min-width держит брендбучные 40px и там, и
-             там, а flex-1 всё равно дотягивает ячейку шире на карточке
-             каталога (.card .actions .qty span{flex:1}), где строка растянута. --}}
-        <span class="grid min-w-[34px] flex-1 place-items-center font-mono text-caption" x-text="quantity"></span>
+        {{-- min-w-[40px] — .qty span{width:40px} из брендбука (§10), возвращается
+             только от xl (min-w-[34px] xl: — фактическая колонка 34px, не 40,
+             см. кнопки выше). flex-1 сам по себе имеет flex-basis:0 — там, где
+             форме нечего раздавать (grid-колонка auto в cart-line.blade.php),
+             ячейка схлопывается до ширины цифры; min-width держит нужную
+             ширину и там, и там, а flex-1 всё равно дотягивает ячейку шире на
+             карточке каталога (.card .actions .qty span{flex:1}), где строка
+             растянута. --}}
+        <span class="grid min-w-[26px] flex-1 place-items-center font-mono text-caption xl:min-w-[34px]" x-text="quantity"></span>
         <button
             type="submit"
             form="{{ $increaseId }}"
             aria-label="{{ __('catalog.cart.increase') }}"
             :disabled="quantity >= {{ (int) $product->stock_quantity }}"
-            class="grid w-[34px] shrink-0 place-items-center bg-cream-200 text-ink-900 transition hover:bg-cream-300 disabled:cursor-not-allowed disabled:opacity-50"
+            class="grid w-[26px] shrink-0 place-items-center bg-cream-200 text-ink-900 transition hover:bg-cream-300 disabled:cursor-not-allowed disabled:opacity-50 xl:w-[34px]"
         >+
         </button>
     </form>
