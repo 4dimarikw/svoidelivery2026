@@ -169,7 +169,12 @@ class PersistProductStageTest extends TestCase
 
         $result = $this->runStage($ctx);
 
-        $this->assertSame('Untappd-описание', $result->product->description);
+        // containsString, не assertSame — description теперь идёт через
+        // Support\Casts\PurifiedHtml (AutoFormat.AutoParagraph оборачивает
+        // голый текст в <p>, см. tests/Feature/Domain/ProductDescriptionPurificationTest.php);
+        // здесь важен только источник (Untappd, не CSV), не точное форматирование.
+        $this->assertStringContainsString('Untappd-описание', $result->product->description);
+        $this->assertStringNotContainsString('CSV-описание', $result->product->description);
     }
 
     public function test_flags_default_to_empty_array_when_not_set(): void

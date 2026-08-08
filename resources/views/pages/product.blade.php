@@ -102,7 +102,10 @@
                 @if ($product->description)
                     <div class="mt-5 border-t border-hairline pt-5">
                         <h2 class="font-mono text-label uppercase tracking-label text-ink-500">{{ __('catalog.product.description') }}</h2>
-                        <p class="mt-2 whitespace-pre-line text-body-m text-ink-700">{{ $product->description }}</p>
+                        {{-- {!! !!}, не {{ }}: $product->description уже прошло
+                             Support\Casts\PurifiedHtml (профиль product_description)
+                             и на записи, и на чтении — безопасно рендерить как HTML. --}}
+                        <p class="mt-2 whitespace-pre-line text-body-m text-ink-700">{!! $product->description !!}</p>
                     </div>
                 @endif
 

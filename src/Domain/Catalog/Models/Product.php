@@ -25,6 +25,7 @@ use Spatie\Sluggable\HasSlug;
 use Spatie\Sluggable\SlugOptions;
 use Support\Casts\HtmlEntityDecoder;
 use Support\Casts\PriceCast;
+use Support\Casts\PurifiedHtml;
 use Support\ValueObjects\Price;
 
 /**
@@ -123,7 +124,10 @@ class Product extends Model implements HasMedia
             'status' => ProductStatus::class,
             'flags' => 'json',
             'article' => HtmlEntityDecoder::class,
-            'description' => HtmlEntityDecoder::class,
+            // PurifiedHtml, не HtmlEntityDecoder — description рендерится как
+            // HTML на странице товара (pages/product.blade.php), а не текстом,
+            // источник (1С-импорт + свободный Textarea в MoonShine) не доверенный.
+            'description' => PurifiedHtml::class.':product_description',
             'name' => HtmlEntityDecoder::class,
         ];
     }
