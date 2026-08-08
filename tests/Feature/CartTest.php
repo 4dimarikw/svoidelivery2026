@@ -135,6 +135,8 @@ class CartTest extends TestCase
         $response->assertOk();
         $response->assertSee(__('account.cart.items'));
         $response->assertSee(__('account.cart.total_label'));
+        $response->assertSee(__('account.cart.checkout'));
+        $response->assertSee(route('checkout.index'), false);
         $response->assertSee(__('account.cart.continue'));
         $response->assertSee(route('home'), false);
     }

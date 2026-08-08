@@ -36,6 +36,18 @@ final class CartManager
             ->keyBy('product_id');
     }
 
+    /**
+     * Все строки корзины текущего пользователя с догруженным product —
+     * то, что нужно Domain\Order\Processes (сборка позиций заказа, проверка
+     * наличия, списание остатка), а не только числа (quantityOf/count/amount
+     * ниже). loadMissing(), не with() внутри items() — сама items() уже
+     * мемоизирована, повторный вызов cartItems() не бьёт по БД второй раз.
+     */
+    public function cartItems(): Collection
+    {
+        return $this->items()->loadMissing('product');
+    }
+
     public function quantityOf(Product|int $product): int
     {
         $productId = $product instanceof Product ? $product->getKey() : $product;

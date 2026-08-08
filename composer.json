@@ -27,7 +27,8 @@
         "spatie/laravel-settings": "^3.9",
         "spatie/laravel-sluggable": "^4.0",
         "spatie/simple-excel": "^3.10",
-        "visual-ideas/moonshine-spatie-medialibrary": "^4.1"
+        "visual-ideas/moonshine-spatie-medialibrary": "^4.1",
+        "ext-simplexml": "*"
     },
     "require-dev": {
         "barryvdh/laravel-debugbar": "^4.4",

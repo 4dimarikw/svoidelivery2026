@@ -255,4 +255,60 @@ return [
             'resync_failed' => 'Failed to fetch data from Untappd',
         ],
     ],
+
+    'order' => [
+        'title' => 'Orders',
+        'fields' => [
+            'number' => 'Order number',
+            'comment' => 'Comment',
+            'amount' => 'Amount',
+            'status' => 'Status',
+            'created_at' => 'Created at',
+            'user' => 'User',
+        ],
+    ],
+
+    'order_customer' => [
+        'title' => 'Order customers',
+        'fields' => [
+            'first_name' => 'First name',
+            'last_name' => 'Last name',
+            'phone' => 'Phone',
+            'city' => 'City',
+            'street' => 'Street',
+            'house' => 'House',
+            'apartment' => 'Apartment',
+            'entrance' => 'Entrance',
+            'floor' => 'Floor',
+            'intercom' => 'Intercom',
+            'comment' => 'Comment',
+        ],
+    ],
+
+    'order_item' => [
+        'title' => 'Order items',
+        'fields' => [
+            'price' => 'Price',
+            'quantity' => 'Quantity',
+            'product' => 'Product',
+            'order' => 'Order',
+        ],
+    ],
+
+    'payment_method' => [
+        'title' => 'Payment methods',
+        'fields' => [
+            'title' => 'Title',
+            'redirect_to_pay' => 'Redirect to pay',
+        ],
+    ],
+
+    'delivery_type' => [
+        'title' => 'Delivery types',
+        'fields' => [
+            'title' => 'Title',
+            'price' => 'Price',
+            'with_address' => 'Requires address',
+        ],
+    ],
 ];

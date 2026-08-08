@@ -75,6 +75,7 @@ return [
 
     'nav' => [
         'profile' => 'Profile',
+        'orders' => 'My orders',
     ],
 
     'profile' => [
@@ -126,6 +127,7 @@ return [
         'empty' => 'Your cart is empty.',
         'items' => 'Items',
         'total_label' => 'Total',
+        'checkout' => 'Checkout',
         'continue' => 'Continue shopping',
         'clear' => 'Clear cart',
         'clear_confirm' => 'Clear the cart?',

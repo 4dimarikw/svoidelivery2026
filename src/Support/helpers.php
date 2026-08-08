@@ -1,5 +1,6 @@
 <?php
 
+use Domain\Cart\CartManager;
 use Domain\Catalog\Filters\FilterManager;
 use Illuminate\Support\Str;
 use Services\ProductFlagsManager;
@@ -36,6 +37,13 @@ if (! function_exists('productVariationMetaData')) {
     function productVariationMetaData(): ProductFlagsManager
     {
         return app(ProductFlagsManager::class);
+    }
+}
+
+if (! function_exists('cart')) {
+    function cart(): CartManager
+    {
+        return app(CartManager::class);
     }
 }
 

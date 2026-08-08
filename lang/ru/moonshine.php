@@ -255,4 +255,60 @@ return [
             'resync_failed' => 'Не удалось получить данные из Untappd',
         ],
     ],
+
+    'order' => [
+        'title' => 'Заказы',
+        'fields' => [
+            'number' => 'Номер заказа',
+            'comment' => 'Комментарий',
+            'amount' => 'Сумма',
+            'status' => 'Статус',
+            'created_at' => 'Дата создания',
+            'user' => 'Пользователь',
+        ],
+    ],
+
+    'order_customer' => [
+        'title' => 'Клиенты заказов',
+        'fields' => [
+            'first_name' => 'Имя',
+            'last_name' => 'Фамилия',
+            'phone' => 'Телефон',
+            'city' => 'Город',
+            'street' => 'Улица',
+            'house' => 'Дом',
+            'apartment' => 'Квартира',
+            'entrance' => 'Подъезд',
+            'floor' => 'Этаж',
+            'intercom' => 'Домофон',
+            'comment' => 'Комментарий',
+        ],
+    ],
+
+    'order_item' => [
+        'title' => 'Позиции заказа',
+        'fields' => [
+            'price' => 'Цена',
+            'quantity' => 'Количество',
+            'product' => 'Товар',
+            'order' => 'Заказ',
+        ],
+    ],
+
+    'payment_method' => [
+        'title' => 'Способы оплаты',
+        'fields' => [
+            'title' => 'Название',
+            'redirect_to_pay' => 'Редирект на оплату',
+        ],
+    ],
+
+    'delivery_type' => [
+        'title' => 'Способы доставки',
+        'fields' => [
+            'title' => 'Название',
+            'price' => 'Стоимость',
+            'with_address' => 'Требует адрес',
+        ],
+    ],
 ];

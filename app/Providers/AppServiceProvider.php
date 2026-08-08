@@ -16,6 +16,7 @@ use Domain\Catalog\Filters\SearchFilter;
 use Domain\Catalog\Filters\SortFilter;
 use Domain\Catalog\Filters\VolumeFilter;
 use Domain\Favorite\Providers\FavoriteServiceProvider;
+use Domain\Order\Providers\OrderServiceProvider;
 use Illuminate\Support\ServiceProvider;
 use Services\CatalogImport\CategoryRegistry;
 use Services\Untappd\Providers\UntappdProvider;
@@ -37,6 +38,10 @@ class AppServiceProvider extends ServiceProvider
 
         $this->app->register(
             CartServiceProvider::class
+        );
+
+        $this->app->register(
+            OrderServiceProvider::class
         );
 
         // Illuminate\Pipeline\Pipeline::carry() re-make()s every stage per

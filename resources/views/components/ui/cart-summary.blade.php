@@ -1,9 +1,10 @@
 {{-- Тёмная панель итога (/cart, pages/cart.blade.php) — воспроизводит
      .summary из брендбука (design-system.html §10). Брендбук показывает там
-     же строки «Доставка»/«Промокод» и кнопку «Оформить заказ» — в проекте
-     нет ни промокодов, ни Order/checkout (routes/web.php — только cart.*),
-     поэтому здесь только реальные данные: «Товары»/«Итого» и CTA
-     «Продолжить покупки» на home — панель не тупик.
+     же строки «Доставка»/«Промокод» — промокодов в проекте нет, поэтому
+     здесь только реальные данные: «Товары»/«Итого». Две кнопки: основная
+     «Оформить заказ» ведёт на /checkout (App\Http\Controllers\OrderController,
+     см. checkout.blade.php), вторичная «Продолжить покупки» — на home,
+     понижена до ghost-light, чтобы не спорить с основным CTA за внимание.
 
      Обе строки x-text перекрывают серверное число сразу после гидратации
      Alpine — держат $store.cart.count/$store.cart.amount (resources/js/cart.js),
@@ -24,7 +25,11 @@
         <span class="font-mono" x-text="$store.cart.amount">{{ $amount }}</span>
     </div>
 
-    <x-ui.btn :href="route('home')" variant="cream" size="lg" block class="mt-5">
+    <x-ui.btn :href="route('checkout.index')" variant="cream" size="lg" block class="mt-5">
+        {{ __('account.cart.checkout') }}
+    </x-ui.btn>
+
+    <x-ui.btn :href="route('home')" variant="ghost-light" size="lg" block class="mt-3">
         {{ __('account.cart.continue') }}
     </x-ui.btn>
 </div>
