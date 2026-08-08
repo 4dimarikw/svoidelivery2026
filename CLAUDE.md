@@ -121,6 +121,7 @@ npm run build    # vite build
 # Catalog import (1С CSV → products) — see src/Services/CatalogImport/README.md
 php artisan catalog:import              # download from FTP + import
 php artisan catalog:validate-registry   # check category registry invariants (also run as a pre-flight by catalog:import)
+php artisan catalog:sync-seo            # bulk create/refresh product seo rows (see Domain\Catalog\Actions\SyncProductSeoAction)
 ```
 
 ## Skills available in this repo

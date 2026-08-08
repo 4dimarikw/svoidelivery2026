@@ -6,7 +6,25 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <title>{{ $title ?? config('app.name') }}</title>
+    {{-- Приоритет: явный :title-проп страницы (все auth/account/cart/product
+         экраны его уже задают) → строка seo-таблицы (lee-to/laravel-seo-by-url,
+         матчится по текущему url — см. Product::booted()/database/seeders/SeoSeeder.php)
+         → APP_NAME. Не @seo целиком — та сама рендерит <title> (задвоила бы
+         тег там, где :title уже задан) и пишет meta без экранирования. --}}
+    <title>{{ $title ?? (seo()->meta()->title() ?: config('app.name')) }}</title>
+
+    @if ($seoDescription = seo()->meta()->description())
+        <meta name="description" content="{{ $seoDescription }}">
+    @endif
+    @if ($seoKeywords = seo()->meta()->keywords())
+        <meta name="keywords" content="{{ $seoKeywords }}">
+    @endif
+    {{-- text — сырой HTML-блок (OG-теги + JSON-LD), собранный и уже
+         экранированный на этапе генерации (Domain\Catalog\Actions\SyncProductSeoAction) —
+         {!! !!}, не {{ }}: это готовая доверенная разметка, а не пользовательский ввод. --}}
+    @if ($seoText = seo()->meta()->text())
+        {!! $seoText !!}
+    @endif
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
