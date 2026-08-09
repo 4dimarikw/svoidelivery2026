@@ -2,7 +2,8 @@
 
 namespace Domain\Content\Observers;
 
-use App\Models\SiteMenuItem;
+
+use Domain\Content\Models\SiteMenuItem;
 use Illuminate\Validation\ValidationException;
 
 class SiteMenuItemObserver
@@ -15,7 +16,7 @@ class SiteMenuItemObserver
     public static function validate(SiteMenuItem $item): void
     {
         $hasSection = $item->site_section_id !== null;
-        $hasExternalUrl = trim((string) $item->external_url) !== '';
+        $hasExternalUrl = trim((string)$item->external_url) !== '';
 
         if ($hasSection === $hasExternalUrl) {
             throw ValidationException::withMessages([
@@ -39,19 +40,19 @@ class SiteMenuItemObserver
             return;
         }
 
-        if ($item->exists && (int) $item->parent_id === (int) $item->getKey()) {
+        if ($item->exists && (int)$item->parent_id === (int)$item->getKey()) {
             self::throwInvalidParent();
         }
 
         $parent = SiteMenuItem::query()->find($item->parent_id);
 
-        if ($parent === null || (int) $parent->site_menu_id !== (int) $item->site_menu_id) {
+        if ($parent === null || (int)$parent->site_menu_id !== (int)$item->site_menu_id) {
             self::throwInvalidParent();
         }
 
         $visited = [];
         while ($parent !== null) {
-            if (($item->exists && (int) $parent->getKey() === (int) $item->getKey())
+            if (($item->exists && (int)$parent->getKey() === (int)$item->getKey())
                 || isset($visited[$parent->getKey()])) {
                 self::throwInvalidParent();
             }

@@ -2,17 +2,20 @@
 
 namespace Domain\Content\Observers;
 
-use App\Content\ContentBlockTypeRegistry;
-use App\Models\ContentBlock;
+
+use Domain\Content\ContentBlockTypeRegistry;
+use Domain\Content\Models\ContentBlock;
 use Illuminate\Validation\ValidationException;
 
 class ContentBlockObserver
 {
-    public function __construct(private readonly ContentBlockTypeRegistry $types) {}
+    public function __construct(private readonly ContentBlockTypeRegistry $types)
+    {
+    }
 
     public function creating(ContentBlock $block): void
     {
-        if (! $this->types->has($block->type)) {
+        if (!$this->types->has($block->type)) {
             throw ValidationException::withMessages([
                 'type' => 'Выбран неизвестный тип блока.',
             ]);
@@ -30,6 +33,6 @@ class ContentBlockObserver
 
     public function deleting(ContentBlock $block): void
     {
-        $block->items()->eachById(static fn ($item) => $item->delete());
+        $block->items()->eachById(static fn($item) => $item->delete());
     }
 }

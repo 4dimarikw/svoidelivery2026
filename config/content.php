@@ -6,6 +6,7 @@ use Domain\Content\Types\FaqBlockType;
 use Domain\Content\Types\HeroBlockType;
 use Domain\Content\Types\LocationBlockType;
 use Domain\Content\Types\MarketBlockType;
+use Domain\Content\Types\PageHeadersBlockType;
 use Domain\Content\Types\ProgramBlockType;
 
 return [
@@ -19,6 +20,7 @@ return [
         'faq' => 'components.blocks.faq',
     ],
     'types' => [
+        PageHeadersBlockType::class,
         HeroBlockType::class,
         AboutBlockType::class,
         ProgramBlockType::class,

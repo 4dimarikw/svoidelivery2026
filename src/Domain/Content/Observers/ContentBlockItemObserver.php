@@ -2,13 +2,16 @@
 
 namespace Domain\Content\Observers;
 
-use App\Content\ContentBlockTypeRegistry;
-use App\Models\ContentBlockItem;
+
+use Domain\Content\ContentBlockTypeRegistry;
+use Domain\Content\Models\ContentBlockItem;
 use Illuminate\Validation\ValidationException;
 
 class ContentBlockItemObserver
 {
-    public function __construct(private readonly ContentBlockTypeRegistry $types) {}
+    public function __construct(private readonly ContentBlockTypeRegistry $types)
+    {
+    }
 
     public function creating(ContentBlockItem $item): void
     {
@@ -30,7 +33,7 @@ class ContentBlockItemObserver
     {
         $type = $this->types->get($item->block()->value('type'));
 
-        if ($type === null || ! array_key_exists($item->group_key, $type->itemGroups())) {
+        if ($type === null || !array_key_exists($item->group_key, $type->itemGroups())) {
             throw ValidationException::withMessages([
                 'group_key' => 'Группа не поддерживается типом родительского блока.',
             ]);

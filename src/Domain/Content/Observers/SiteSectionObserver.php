@@ -2,7 +2,8 @@
 
 namespace Domain\Content\Observers;
 
-use App\Models\SiteSection;
+
+use Domain\Content\Models\SiteSection;
 use Illuminate\Validation\ValidationException;
 
 class SiteSectionObserver
@@ -15,6 +16,6 @@ class SiteSectionObserver
             ]);
         }
 
-        $section->blocks()->eachById(static fn ($block) => $block->delete());
+        $section->blocks()->eachById(static fn($block) => $block->delete());
     }
 }

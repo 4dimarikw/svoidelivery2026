@@ -4,8 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration
-{
+return new class extends Migration {
     public function up(): void
     {
         Schema::create('site_sections', function (Blueprint $table): void {
@@ -33,6 +32,7 @@ return new class extends Migration
         Schema::create('site_menu_items', function (Blueprint $table): void {
             $table->id();
             $table->foreignId('site_menu_id')->constrained()->cascadeOnDelete();
+            $table->string('key', 100)->nullable();
             $table->foreignId('parent_id')->nullable()->constrained('site_menu_items')->cascadeOnDelete();
             $table->unsignedInteger('_lft')->default(0);
             $table->unsignedInteger('_rgt')->default(0);

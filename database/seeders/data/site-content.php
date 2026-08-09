@@ -1,31 +1,22 @@
 <?php
 
 return [
+    'settings' => [
+        'site_name' => 'SvoiDelivery',
+    ],
     'sections' => [
-        ['key' => 'hero', 'title' => 'Главная', 'fragment' => '', 'sort_order' => 10],
-
+        ['key' => 'home', 'title' => 'Каталог', 'fragment' => '', 'sort_order' => 10],
+        ['key' => 'about', 'title' => 'О нас', 'fragment' => '', 'sort_order' => 20],
     ],
-    'blocks' => [
-        'hero' => [
-            'type' => 'hero', 'title' => 'Первый экран', 'media' => ['background' => 'festival-hero.jpg'],
-            'content' => [],
-            'items' => [],
-        ],
-        'about' => [
-            'type' => 'about', 'title' => 'О фестивале',
-            'content' => [
-                'eyebrow' => 'О фестивале', 'heading' => 'Светлей там, где мы вместе.',
-                'description' => '«Светлей» — это новый душевный семейный фестиваль Сергиева Посада. Мы собираем на природе мастеров, спортсменов, музыкантов и всех, кто любит наш город, уют и тёплое человеческое общение.',
-                'story_heading' => 'Приезжайте всей семьёй!',
-                'story' => 'На фестивале будет одинаково интересно и взрослому, и ребёнку. Вы сможете пробежаться по сосновому лесу, покататься на сапах, послушать живую музыку у воды, выбрать эксклюзивные вещи на маркете и сделать доброе дело.',
-                'cta_label' => 'Подать заявку на маркет', 'cta_url' => '#market',
-            ],
+    'menus' => [
+        'main' => [
+            'title' => 'Главное меню',
+            'is_active' => true,
             'items' => [
-                ['group_key' => 'benefits', 'key' => 'guests', 'title' => '1000+ гостей', 'content' => ['heading' => '1000+ ГОСТЕЙ', 'description' => 'Живое объединение локального городского сообщества', 'icon' => 'users']],
-                ['group_key' => 'benefits', 'key' => 'makers', 'title' => 'Маркет мастеров', 'content' => ['heading' => 'МАРКЕТ МАСТЕРОВ', 'description' => 'Ручная работа, свечи, керамика, сувениры с душой', 'icon' => 'sparkles']],
-                ['group_key' => 'benefits', 'key' => 'good-deed', 'title' => 'Светлое дело', 'content' => ['heading' => '«СВЕТЛОЕ ДЕЛО»', 'description' => 'Поддержка приюта для бездомных собак', 'icon' => 'heart']],
-                ['group_key' => 'benefits', 'key' => 'sea', 'title' => 'Загорское море', 'content' => ['heading' => 'ЗАГОРСКОЕ МОРЕ', 'description' => 'Уютная природная локация у воды среди соснового леса', 'icon' => 'map-pin']],
+                ['key' => 'home', 'parent_key' => null, 'section_key' => 'home', 'external_url' => null, 'label' => 'Каталог', 'open_in_new_tab' => false, 'is_active' => false],
+                ['key' => 'about', 'parent_key' => null, 'section_key' => 'about', 'external_url' => null, 'label' => null, 'open_in_new_tab' => false, 'is_active' => true],
             ],
         ],
     ],
+    'blocks' => []
 ];

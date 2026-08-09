@@ -34,6 +34,7 @@ class SiteMenuItem extends Model
 
     protected $fillable = [
         'site_menu_id',
+        'key',
         'parent_id',
         'site_section_id',
         'external_url',
@@ -103,11 +104,11 @@ class SiteMenuItem extends Model
 
     public function save(array $options = [])
     {
-        return $this->getConnection()->transaction(fn (): bool => parent::save($options), 3);
+        return $this->getConnection()->transaction(fn(): bool => parent::save($options), 3);
     }
 
     public function delete()
     {
-        return $this->getConnection()->transaction(fn (): ?bool => parent::delete(), 3);
+        return $this->getConnection()->transaction(fn(): ?bool => parent::delete(), 3);
     }
 }

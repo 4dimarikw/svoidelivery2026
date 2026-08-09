@@ -1,4 +1,3 @@
-@php use Domain\Cart\CartManager; @endphp
 {{-- No separate nav links — the catalog lives on `home`, and the logo already
      links there. Stacks vertically on mobile, one row from `sm:` up. Spacing
      uses `space-y-*`/`space-x-*` (margin-based), never flex `gap` — see
@@ -34,7 +33,7 @@
                     <a
                         href="{{ route('cart.index') }}"
                         x-data
-                        x-init="$store.cart.count = {{ app(CartManager::class)->count() }}"
+                        x-init="$store.cart.count = {{ cart()->count() }}"
                         class="inline-flex items-center text-body-m text-ink-700 hover:text-rust"
                         aria-label="{{ __('layout.nav.cart') }}"
                     >

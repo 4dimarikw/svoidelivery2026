@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+
 use App\Http\Requests\CatalogFilterRequest;
 use Domain\Catalog\Filters\FilterManager;
 use Domain\Catalog\Models\Product;
+use Domain\Content\Actions\Content\LoadPublicPage;
 use Illuminate\Http\Response;
 use Illuminate\View\View;
 
@@ -17,7 +19,7 @@ class CatalogController extends Controller
     // выполнения тела контроллера, так что невалидный categories[]=999999
     // всё ещё 422/редиректит, даже несмотря на то что $filters->apply()
     // ниже читает request() напрямую, а не провалидированные данные.
-    public function index(CatalogFilterRequest $request, FilterManager $filters): View|Response
+    public function index(CatalogFilterRequest $request, FilterManager $filters, LoadPublicPage $loadPublicPage): View|Response
     {
         $products = $filters->apply(
             Product::query()
@@ -28,8 +30,8 @@ class CatalogController extends Controller
                 // пива; beerDetails есть не у всех товаров (аксессуары), но
                 // eager-load всё равно нужен, иначе N+1 по каждой карточке.
                 ->with(['manufacturer', 'volume', 'container', 'media', 'beerDetails.beerStyle', 'beerDetails.untappdBeer'])
-            // Порядок сортировки задаёт SortFilter внутри пайплайна выше
-            // (ProductBuilder::sorted()) — здесь больше нет хардкода.
+        // Порядок сортировки задаёт SortFilter внутри пайплайна выше
+        // (ProductBuilder::sorted()) — здесь больше нет хардкода.
         )
             ->paginate(24)
             ->withQueryString();
@@ -40,8 +42,10 @@ class CatalogController extends Controller
         if ($request->hasHeader('X-Catalog-Partial')) {
             return response()
                 ->view('pages.catalog._cards', ['products' => $products])
-                ->header('X-Next-Page', (string) $products->nextPageUrl());
+                ->header('X-Next-Page', (string)$products->nextPageUrl());
         }
+
+        dump($loadPublicPage->handle((string)$request->route()?->getName()));
 
         return view('pages.home', [
             'products' => $products,
