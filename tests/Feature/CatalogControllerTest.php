@@ -884,8 +884,11 @@ class CatalogControllerTest extends TestCase
         $queryCount = count(DB::getQueryLog());
         DB::disableQueryLog();
 
-        // Товары + справочники фильтров (категории/производители/объёмы/тара) —
-        // фиксированное небольшое число запросов независимо от количества товаров.
-        $this->assertLessThan(15, $queryCount, 'Ожидались фиксированные запросы без N+1 по manufacturer/volume/container.');
+        // Товары + справочники фильтров (категории/производители/объёмы/тара) +
+        // главное меню (site_menus/site_menu_items — 2 запроса, читаются
+        // LoadPublicPage и View Composer шапки из одного мемоизированного
+        // LoadSiteMenu, см. AppServiceProvider::boot()) — фиксированное
+        // небольшое число запросов независимо от количества товаров.
+        $this->assertLessThan(17, $queryCount, 'Ожидались фиксированные запросы без N+1 по manufacturer/volume/container.');
     }
 }

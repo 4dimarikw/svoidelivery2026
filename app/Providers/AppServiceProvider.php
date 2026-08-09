@@ -16,9 +16,11 @@ use Domain\Catalog\Filters\PriceRangeFilter;
 use Domain\Catalog\Filters\SearchFilter;
 use Domain\Catalog\Filters\SortFilter;
 use Domain\Catalog\Filters\VolumeFilter;
+use Domain\Content\Actions\Content\LoadSiteMenu;
 use Domain\Favorite\Providers\FavoriteServiceProvider;
 use Domain\Order\Providers\OrderServiceProvider;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 use Services\CatalogImport\CategoryRegistry;
 use Services\Untappd\Providers\UntappdProvider;
@@ -61,6 +63,11 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(FilterOptionsRegistry::class);
 
         $this->app->singleton(FilterManager::class);
+
+        // Singleton, не readonly-объект per-request — LoadSiteMenu
+        // мемоизирует построенное дерево (см. класс), так что View Composer
+        // ниже и LoadPublicPage::handle() на home/about не строят его дважды.
+        $this->app->singleton(LoadSiteMenu::class);
     }
 
     /**
@@ -101,5 +108,18 @@ class AppServiceProvider extends ServiceProvider
             new IbuRangeFilter,
 
         ]);
+
+        // $menu доступен в шапке на ЛЮБОЙ публичной странице, а не только
+        // на home/about (единственных, чьи контроллеры зовут LoadPublicPage
+        // напрямую) — прокидывать проп через каждый контроллер/view ради
+        // одинаковых на всём сайте данных было бы избыточно. <x-ui.mobile-nav>
+        // (нижняя мобильная панель) к CMS-меню намеренно не привязана — её
+        // ссылки хардкожены отдельно, composer её не задевает. На
+        // <x-layouts.auth> (нет шапки) и в MoonShine composer не
+        // срабатывает вовсе, лишних запросов там нет.
+        View::composer(
+            'components.layouts.header',
+            fn ($view) => $view->with('menu', app(LoadSiteMenu::class)->handle()),
+        );
     }
 }

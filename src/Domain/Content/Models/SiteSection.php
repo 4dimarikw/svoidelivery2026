@@ -2,9 +2,11 @@
 
 namespace Domain\Content\Models;
 
+use Database\Factories\Content\SiteSectionFactory;
 use Domain\Content\Concerns\HasPublicationState;
 use Domain\Content\Observers\SiteSectionObserver;
 use Illuminate\Database\Eloquent\Attributes\ObservedBy;
+use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -39,6 +41,15 @@ class SiteSection extends Model
             'sort_order' => 'integer',
             'is_active' => 'boolean',
         ];
+    }
+
+    // HasFactory guesses App\Models\SiteSection's factory by convention;
+    // this model lives in Domain\Content\Models instead (see CLAUDE.md's
+    // PSR-4 layout), so the guess misses — same reason Address/Profile/User
+    // override newFactory() explicitly.
+    protected static function newFactory(): Factory
+    {
+        return SiteSectionFactory::new();
     }
 
     public function blocks(): HasMany

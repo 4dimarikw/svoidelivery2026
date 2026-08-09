@@ -1,7 +1,15 @@
-{{-- No separate nav links — the catalog lives on `home`, and the logo already
-     links there. Stacks vertically on mobile, one row from `sm:` up. Spacing
-     uses `space-y-*`/`space-x-*` (margin-based), never flex `gap` — see
+{{-- Каталог + CMS-меню (<x-ui.nav-menu>, $items = $menu) справа от логотипа.
+     $menu сидируется View Composer'ом (AppServiceProvider::boot()), а не
+     пропом страницы — он одинаков на всём сайте, а не только там, где
+     контроллер вызывает LoadPublicPage напрямую (home/about). Stacks
+     vertically on mobile, one row from `sm:` up. Spacing uses
+     `space-y-*`/`space-x-*` (margin-based), never flex `gap` — see
      CLAUDE.md's legacy-browser section (Safari < 14.1 has no flex-gap).
+
+     <x-ui.nav-menu> сама скрыта до `md:` (hidden md:flex) — только desktop.
+     <x-ui.mobile-nav> (нижняя панель на мобиле) к этому CMS-меню намеренно
+     не привязана: её ссылки хардкожены отдельно, ниже `md:` CMS-пункты
+     нигде не дублируются.
 
      @auth показывает иконку корзины со счётчиком (корзина — не часть
      личного кабинета, см. account-nav.blade.php) и <x-ui.user-menu> — имя
@@ -16,6 +24,7 @@
      Избранное здесь отдельной иконкой не дублируется — это пункт меню.
      x-init сидирует $store.cart.count (resources/js/cart.js) с сервера;
      $store.favorites.count сидируется внутри user-menu.blade.php. --}}
+@props(['menu' => []])
 <header class="border-b border-hairline bg-cream-50">
     <div
         class="mx-auto flex max-w-page flex-col  px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
@@ -25,6 +34,8 @@
         </a>
 
         <div class="flex items-center space-x-4">
+            <x-ui.nav-menu :items="$menu" />
+
             @guest
                 <x-ui.link :href="route('login')">{{ __('account.login.submit') }}</x-ui.link>
                 <x-ui.btn :href="route('register')" size="sm">{{ __('layout.nav.register') }}</x-ui.btn>
