@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers;
 
 use Domain\Cart\CartManager;
+use Domain\Cart\Models\CartItem;
 use Domain\Catalog\Models\Product;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -44,16 +45,16 @@ class CartController extends Controller
 
     public function increase(Request $request, Product $product, CartManager $cart): RedirectResponse|JsonResponse
     {
-        $cart->increment($product);
+        $item = $cart->increment($product);
 
-        return $this->respond($request, $cart, $product, 'cart-item-added');
+        return $this->respond($request, $cart, $product, 'cart-item-added', $item);
     }
 
     public function decrease(Request $request, Product $product, CartManager $cart): RedirectResponse|JsonResponse
     {
-        $cart->decrement($product);
+        $item = $cart->decrement($product);
 
-        return $this->respond($request, $cart, $product, 'cart-item-removed');
+        return $this->respond($request, $cart, $product, 'cart-item-removed', $item);
     }
 
     public function destroy(Request $request, Product $product, CartManager $cart): RedirectResponse|JsonResponse
@@ -70,13 +71,19 @@ class CartController extends Controller
         return redirect()->route('cart.index')->with('status', 'cart-cleared');
     }
 
-    private function respond(Request $request, CartManager $cart, Product $product, string $status): RedirectResponse|JsonResponse
+    private function respond(Request $request, CartManager $cart, Product $product, string $status, ?CartItem $item = null): RedirectResponse|JsonResponse
     {
         if ($request->wantsJson()) {
             return response()->json([
                 'quantity' => $cart->quantityOf($product),
                 'count' => $cart->count(),
                 'amount' => (string) $cart->amount(),
+                // Сумма конкретной строки (price × quantity), не общий итог
+                // выше — cart-line.blade.php реактивно обновляет её при
+                // +/− в степпере (см. resources/js/cart.js). null у destroy()
+                // и при уходе количества в 0 — строка в обоих случаях
+                // убирается целиком, ей эта сумма уже не нужна.
+                'lineAmount' => $item ? (string) $item->amount : null,
             ]);
         }
 

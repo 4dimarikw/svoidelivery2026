@@ -4,12 +4,12 @@
      через CSS Grid (не flex — grid `gap` безопасен для Safari >= 13.1, флекс-
      gap запрещён CLAUDE.md только для Safari < 14.1).
 
-     Сумма строки пишется как «2 × ₽ 400» (количество × цена за штуку), не
-     одним числом — цена за штуку берётся из CartItem::price (снятый снапшот,
-     не живая $product->price — тот же источник, что и у общего итога,
+     Цена строки — две строчки в одной ячейке: сверху расшифровка «2 × ₽ 400»
+     (количество × цена за штуку, CartItem::price — снятый снапшот, не живая
+     $product->price), снизу сама сумма строки (CartItem::amount(), тот же
+     снапшот × quantity — тот же источник, что и у общего итога,
      CartManager::amount() в cart-summary.blade.php, иначе сумма строк и итог
-     могли бы разойтись при смене цены товара после добавления в корзину) и
-     не меняется сама по себе; реактивно здесь только количество.
+     могли бы разойтись при смене цены товара после добавления в корзину).
 
      Крестик — отдельная маленькая Alpine-обвязка (uiCartRemove,
      resources/js/cart.js), не часть степпера: убирает товар целиком
@@ -24,13 +24,13 @@
      из брендбука (design-system.html §10); без явной высоты корневой div
      степпера в grid-ячейке садится по контенту и «плющится».
 
-     Количество — реактивное значение здесь: приходит с сервера как снапшот
-     на первый рендер (`x-data`), но при +/− в степпере (cart-stepper.blade.php,
-     свой обособленный x-data) должно обновиться без перезагрузки. Степпер и
-     эта обёртка — разные Alpine-scope, поэтому напрямую состоянием не
-     делятся: uiCartStepper.send() (resources/js/cart.js) шлёт window-событие
-     cart:item-updated, по тому же образцу, что и cart:item-removed для
-     скрытия строки при уходе в 0. --}}
+     Количество и сумма — реактивные значения здесь: приходят с сервера как
+     снапшот на первый рендер (`x-data`), но при +/− в степпере
+     (cart-stepper.blade.php, свой обособленный x-data) должны обновиться без
+     перезагрузки. Степпер и эта обёртка — разные Alpine-scope, поэтому
+     напрямую состоянием не делятся: uiCartStepper.send() (resources/js/cart.js)
+     шлёт window-событие cart:item-updated, по тому же образцу, что и
+     cart:item-removed для скрытия строки при уходе в 0. --}}
 @props(['cartItem'])
 
 @php
@@ -45,10 +45,10 @@
 @endphp
 
 <div
-    x-data="{ removed: false, quantity: {{ $cartItem->quantity }}, unitPrice: @js((string) $cartItem->price) }"
+    x-data="{ removed: false, quantity: {{ $cartItem->quantity }}, unitPrice: @js((string) $cartItem->price), amount: @js((string) $cartItem->amount) }"
     x-show="! removed"
     x-on:cart:item-removed.window="if ($event.detail.productId === {{ $product->id }}) removed = true"
-    x-on:cart:item-updated.window="if ($event.detail.productId === {{ $product->id }}) quantity = $event.detail.quantity"
+    x-on:cart:item-updated.window="if ($event.detail.productId === {{ $product->id }}) { quantity = $event.detail.quantity; amount = $event.detail.amount }"
     class="grid grid-cols-[56px_1fr_auto] items-center gap-x-4 gap-y-3 border-b border-hairline py-3.5 last:border-b-0 sm:grid-cols-[56px_1fr_auto_auto_auto] sm:gap-y-0"
 >
     <div class="row-span-2 h-14 w-14 shrink-0 overflow-hidden rounded-sm border border-hairline bg-cream-100 sm:row-span-1">
@@ -81,7 +81,10 @@
         class="col-start-2 row-start-2 h-[34px] sm:col-start-3 sm:row-start-1"
     />
 
-    <span class="col-start-3 row-start-2 justify-self-end whitespace-nowrap font-mono text-body-m text-ink-900 sm:col-start-4 sm:row-start-1 sm:w-24 sm:text-right" x-text="quantity + ' × ' + unitPrice"></span>
+    <div class="col-start-3 row-start-2 justify-self-end text-right sm:col-start-4 sm:row-start-1 sm:w-24">
+        <div class="whitespace-nowrap font-mono text-micro text-ink-500" x-text="quantity + ' × ' + unitPrice"></div>
+        <div class="whitespace-nowrap font-mono text-body-m text-ink-900" x-text="amount"></div>
+    </div>
 
     <form
         method="POST"

@@ -60,11 +60,15 @@ document.addEventListener('alpine:init', () => {
                 if (this.quantity === 0) {
                     window.dispatchEvent(new CustomEvent('cart:item-removed', { detail: { productId } }));
                 } else {
-                    // Строка корзины пишет сумму как «2 × ₽ 400» — степпер и
-                    // строка (cart-line.blade.php) сидят в разных Alpine-scope,
-                    // состоянием напрямую не делятся, поэтому новое количество
-                    // идёт тем же событийным приёмом, что и cart:item-removed.
-                    window.dispatchEvent(new CustomEvent('cart:item-updated', { detail: { productId, quantity: body.quantity } }));
+                    // Строка корзины (cart-line.blade.php) показывает и
+                    // «2 × ₽ 400» (количество × цена за штуку), и сумму
+                    // строки ниже — степпер и строка сидят в разных Alpine-
+                    // scope, состоянием напрямую не делятся, поэтому оба
+                    // значения идут тем же событийным приёмом, что и
+                    // cart:item-removed.
+                    window.dispatchEvent(new CustomEvent('cart:item-updated', {
+                        detail: { productId, quantity: body.quantity, amount: body.lineAmount },
+                    }));
                 }
             } catch (e) {
                 // Сеть недоступна — откатываемся к обычной отправке формы.

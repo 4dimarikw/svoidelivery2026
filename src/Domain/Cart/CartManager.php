@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Domain\Cart;
 
-use Closure;
 use Domain\Cart\Models\Cart;
 use Domain\Cart\Models\CartItem;
 use Domain\Catalog\Models\Product;
@@ -27,12 +26,12 @@ final class CartManager
 
     private function items(): Collection
     {
-        if (!auth()->check()) {
+        if (! auth()->check()) {
             return collect();
         }
 
         return $this->items ??= CartItem::query()
-            ->whereHas('cart', fn($query) => $query->where('user_id', auth()->id()))
+            ->whereHas('cart', fn ($query) => $query->where('user_id', auth()->id()))
             ->get()
             ->keyBy('product_id');
     }
@@ -63,13 +62,13 @@ final class CartManager
 
     public function count(): int
     {
-        return (int)$this->items()->sum('quantity');
+        return (int) $this->items()->sum('quantity');
     }
 
-    public function amount(): Closure
+    public function amount(): Price
     {
         return $this->items()->reduce(
-            fn(Price $carry, CartItem $item) => $carry->add($item->amount ?? Price::fromMinor(0)),
+            fn (Price $carry, CartItem $item) => $carry->add($item->amount ?? Price::fromMinor(0)),
             Price::fromMinor(0)
         );
     }
@@ -84,7 +83,7 @@ final class CartManager
      */
     public function increment(Product $product, int $by = 1): ?CartItem
     {
-        if (!auth()->check()) {
+        if (! auth()->check()) {
             return null;
         }
 
@@ -121,7 +120,7 @@ final class CartManager
 
     public function remove(Product|int $product): void
     {
-        if (!auth()->check()) {
+        if (! auth()->check()) {
             return;
         }
 
@@ -129,7 +128,7 @@ final class CartManager
 
         CartItem::query()
             ->where('product_id', $productId)
-            ->whereHas('cart', fn($query) => $query->where('user_id', auth()->id()))
+            ->whereHas('cart', fn ($query) => $query->where('user_id', auth()->id()))
             ->delete();
 
         $this->items = null;
@@ -137,12 +136,12 @@ final class CartManager
 
     public function truncate(): void
     {
-        if (!auth()->check()) {
+        if (! auth()->check()) {
             return;
         }
 
         CartItem::query()
-            ->whereHas('cart', fn($query) => $query->where('user_id', auth()->id()))
+            ->whereHas('cart', fn ($query) => $query->where('user_id', auth()->id()))
             ->delete();
 
         $this->items = null;
@@ -154,7 +153,7 @@ final class CartManager
      */
     private function clampQuantity(Product $product, int $quantity): int
     {
-        $stock = $product->in_stock ? max(0, (int)$product->stock_quantity) : 0;
+        $stock = $product->in_stock ? max(0, (int) $product->stock_quantity) : 0;
 
         return max(0, min($quantity, $stock));
     }
