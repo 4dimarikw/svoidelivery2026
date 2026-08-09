@@ -8,6 +8,7 @@ use Domain\Catalog\Filters\BeerStyleFilter;
 use Domain\Catalog\Filters\CategoryFilter;
 use Domain\Catalog\Filters\ContainerFilter;
 use Domain\Catalog\Filters\FilterManager;
+use Domain\Catalog\Filters\FilterOptionsRegistry;
 use Domain\Catalog\Filters\IbuRangeFilter;
 use Domain\Catalog\Filters\InStockFilter;
 use Domain\Catalog\Filters\ManufacturerFilter;
@@ -50,6 +51,11 @@ class AppServiceProvider extends ServiceProvider
         // Singleton + explicit CategoryRegistry::flush() (see that class)
         // keeps it to one lookup per process/until invalidated.
         $this->app->singleton(CategoryRegistry::class);
+
+        // Тот же мотив, что у CategoryRegistry выше — singleton +
+        // forgetInstance() в flush() (см. FilterOptionsRegistry), не голая
+        // static-переменная.
+        $this->app->singleton(FilterOptionsRegistry::class);
 
         $this->app->singleton(FilterManager::class);
     }
