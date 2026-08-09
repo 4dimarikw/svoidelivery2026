@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Domain\Catalog\Filters;
 
 use Domain\Catalog\Builders\ProductBuilder;
+use Illuminate\Validation\Rule;
 
 /**
  * Не ложится под requestValue()/name() из AbstractFilter — это два отдельных
@@ -43,7 +44,12 @@ final class AbvRangeFilter extends AbstractFilter
     {
         return [
             'abv_min' => ['nullable', 'numeric', 'min:0', 'max:100'],
-            'abv_max' => ['nullable', 'numeric', 'min:0', 'max:100', 'gte:abv_min'],
+            // gte:abv_min — только когда abv_min реально заполнен, см.
+            // комментарий в PriceRangeFilter::rules() (тот же баг/фикс).
+            'abv_max' => [
+                'nullable', 'numeric', 'min:0', 'max:100',
+                Rule::when(request()->filled('abv_min'), ['gte:abv_min']),
+            ],
         ];
     }
 }

@@ -3,11 +3,11 @@
      токенах Tailwind.
 
      Анатомия сверху вниз: картинка-ссылка на страницу товара (+ избранное
-     поверх неё, @auth) → плашка «Новинка» (если is_new) → производитель
-     (mono) → заголовок brand ?: name (2 строки) → плашка стиля (только
-     пиво) → строка «объём · тара» → mono-строка ABV/IBU/°P/EBC (только
-     пиво) → чипы (рейтинг/нет в наличии) → .actions (цена + «Купить»/
-     «Сообщить»).
+     и бейдж рейтинга Untappd поверх неё, см. ниже) → плашка «Новинка»
+     (если is_new) → производитель (mono) → заголовок brand ?: name
+     (2 строки) → плашка стиля (только пиво) → строка «объём · тара» →
+     mono-строка ABV/IBU/°P/EBC (только пиво) → чип «нет в наличии» →
+     .actions (цена + «Купить»/«Сообщить»).
 
      Кликабельна только картинка — как в брендбуке (design-system.html §06,
      <a class="thumb" href="#">), но не вся карточка целиком: <article>
@@ -55,10 +55,18 @@
      $product->beerDetails (HasOne на beer_product_details) есть только у
      товаров, для которых импорт нашёл хотя бы один пивной атрибут — у
      аксессуаров её нет вовсе, поэтому плашка стиля, 4-я строка
-     (abv/ibu/plato/ebc) и чип рейтинга рендерятся только когда есть что
+     (abv/ibu/plato/ebc) и бейдж рейтинга рендерятся только когда есть что
      показывать. Требует CatalogController::index() eager-load
      'beerDetails.beerStyle' и 'beerDetails.untappdBeer' — без этого N+1 на
      каждую карточку.
+
+     Бейдж рейтинга Untappd (design-system.html §06 .card .rate) — поверх
+     картинки, absolute в правом нижнем углу (favorite-toggle — в правом
+     верхнем, см. ниже), не чип в общем ряду под спеками: тот теперь несёт
+     только «нет в наличии». Свой цвет (text-untappd, tailwind.config.js) —
+     не warn/gold, ни один из них не совпадает с брендбучным rgb(251,188,4);
+     иконка — новый залитый @case('untappd') в icon.blade.php (марка
+     Untappd, не звезда), не x-ui.icon name="star" из старого вида.
 
      $product->hasOwnImage() отличает настоящую медиа-картинку от
      заглушки Untappd (badge-beer-default-thumb) — при false рендерится
@@ -156,6 +164,15 @@
         </a>
 
         <x-ui.favorite-toggle :product="$product" class="absolute right-2 top-2 z-10" />
+
+        {{-- Рейтинг Untappd — design-system.html §06 .card .rate: бейдж
+             поверх фото, не чип в общем ряду ниже (там теперь только
+             «нет в наличии», см. ниже). --}}
+        @if ($rating)
+            <span class="absolute bottom-1.5 right-1.5 z-10 inline-flex items-center gap-1 rounded-sm bg-cream-50/90 px-[5px] py-0.5 font-mono text-[11px] font-medium leading-none tracking-[0.02em] text-untappd">
+                <x-ui.icon-untappd :size="12" />{{ $rating }}
+            </span>
+        @endif
     </div>
 
     @if ($product->is_new)
@@ -199,7 +216,7 @@
              разной высоте. --}}
         <div class="mt-auto"></div>
 
-        @if ($rating || ! $product->in_stock)
+        @if (! $product->in_stock)
             <div class="-ml-1.5 mt-3 flex flex-wrap [&>*]:ml-1.5 [&>*]:mt-1.5">
                 {{-- max-xl:!px-*/!py-* — chip.blade.php задаёт свой padding
                      через $attributes->class(), а в сгенерированном Tailwind
@@ -208,14 +225,10 @@
                      без ! мы проиграли бы каскад собственному паддингу
                      чипа. Ограничиваем важность до xl (max-xl:), чтобы на
                      xl вернулся обычный, ничем не переопределённый дефолт
-                     компонента. Здесь только рейтинг и «нет в наличии» —
-                     «Новинка» отдельная плашка под картинкой, см. выше. --}}
-                @if ($rating)
-                    <x-ui.chip tone="warn" class="max-xl:!px-1.5 max-xl:!py-1"><x-ui.icon name="star" :size="12" class="mr-1" />{{ $rating }}</x-ui.chip>
-                @endif
-                @if (! $product->in_stock)
-                    <x-ui.chip tone="cream" class="max-xl:!px-1.5 max-xl:!py-1">{{ __('catalog.out_of_stock') }}</x-ui.chip>
-                @endif
+                     компонента. Рейтинг сюда больше не входит — он бейджем
+                     на фото (см. выше); «Новинка» — отдельная плашка под
+                     картинкой, тоже выше. --}}
+                <x-ui.chip tone="cream" class="max-xl:!px-1.5 max-xl:!py-1">{{ __('catalog.out_of_stock') }}</x-ui.chip>
             </div>
         @endif
 

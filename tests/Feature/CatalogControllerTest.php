@@ -115,6 +115,24 @@ class CatalogControllerTest extends TestCase
         $response->assertDontSee($cheap->name);
     }
 
+    public function test_price_range_filter_narrows_results_with_only_max_bound(): void
+    {
+        // Регрессия: gte:price_min раньше падало на несовпадении типов
+        // (пустой price_min → null после ConvertEmptyStringsToNull), весь
+        // запрос 422-ился и редиректил обратно — фильтр молча ничего не
+        // делал при заполненном только «до». См. PriceRangeFilter::rules().
+        $cheap = Product::factory()->create(['name' => 'Дешёвое', 'price' => 100]);
+        $expensive = Product::factory()->create(['name' => 'Дорогое', 'price' => 4000]);
+
+        $response = $this->actingAs(User::factory()->create())
+            ->get(route('home', ['price_max' => 1000]));
+
+        $response->assertOk();
+        $response->assertSessionHasNoErrors();
+        $response->assertSee($cheap->name);
+        $response->assertDontSee($expensive->name);
+    }
+
     public function test_guest_price_range_query_params_are_ignored(): void
     {
         // Гость не может подобрать цену подставив price_min/price_max в URL —
@@ -522,6 +540,25 @@ class CatalogControllerTest extends TestCase
         $response->assertOk();
         $response->assertSee($strong->name);
         $response->assertDontSee($light->name);
+    }
+
+    public function test_abv_and_ibu_range_filters_narrow_results_with_only_max_bound(): void
+    {
+        // Та же регрессия, что у цены (см. test_price_range_filter_narrows_
+        // results_with_only_max_bound), но для abv_max/ibu_max — оба поля
+        // тоже несли gte:*_min без защиты от null.
+        $light = Product::factory()->create(['name' => 'Лёгкое Пиво']);
+        BeerProductDetail::factory()->create(['product_id' => $light->id, 'abv' => 3.5, 'ibu' => 15]);
+
+        $strong = Product::factory()->create(['name' => 'Крепкое Пиво']);
+        BeerProductDetail::factory()->create(['product_id' => $strong->id, 'abv' => 9.0, 'ibu' => 70]);
+
+        $response = $this->get(route('home', ['abv_max' => 5, 'ibu_max' => 50]));
+
+        $response->assertOk();
+        $response->assertSessionHasNoErrors();
+        $response->assertSee($light->name);
+        $response->assertDontSee($strong->name);
     }
 
     public function test_beer_filters_hide_products_without_beer_details_when_explicitly_applied(): void

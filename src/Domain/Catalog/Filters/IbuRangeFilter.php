@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Domain\Catalog\Filters;
 
 use Domain\Catalog\Builders\ProductBuilder;
+use Illuminate\Validation\Rule;
 
 /**
  * Не ложится под requestValue()/name() из AbstractFilter — это два отдельных
@@ -45,7 +46,12 @@ final class IbuRangeFilter extends AbstractFilter
         // угадывать разумный максимум не буду (в отличие от ABV — это проценты).
         return [
             'ibu_min' => ['nullable', 'numeric', 'min:0'],
-            'ibu_max' => ['nullable', 'numeric', 'min:0', 'gte:ibu_min'],
+            // gte:ibu_min — только когда ibu_min реально заполнен, см.
+            // комментарий в PriceRangeFilter::rules() (тот же баг/фикс).
+            'ibu_max' => [
+                'nullable', 'numeric', 'min:0',
+                Rule::when(request()->filled('ibu_min'), ['gte:ibu_min']),
+            ],
         ];
     }
 }

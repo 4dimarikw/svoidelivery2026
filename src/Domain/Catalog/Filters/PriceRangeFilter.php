@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Domain\Catalog\Filters;
 
 use Domain\Catalog\Builders\ProductBuilder;
+use Illuminate\Validation\Rule;
 
 /**
  * Не ложится под requestValue()/name() из AbstractFilter — это два отдельных
@@ -42,7 +43,15 @@ final class PriceRangeFilter extends AbstractFilter
     {
         return [
             'price_min' => ['nullable', 'numeric', 'min:0'],
-            'price_max' => ['nullable', 'numeric', 'min:0', 'gte:price_min'],
+            // gte:price_min — только когда price_min реально заполнен.
+            // ConvertEmptyStringsToNull превращает пустое поле формы в null,
+            // а validateGte() сравнивает типы (string !== NULL) раньше, чем
+            // значения — без этой обёртки заполнение одного «до» без «от»
+            // 422-ит весь запрос, и фильтр молча не применяется вовсе.
+            'price_max' => [
+                'nullable', 'numeric', 'min:0',
+                Rule::when(request()->filled('price_min'), ['gte:price_min']),
+            ],
         ];
     }
 

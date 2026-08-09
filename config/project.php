@@ -3,7 +3,7 @@
 return [
     'timezone' => 'Europe/Moscow',
 
-    'default_beer_label' => env('APP_URL').'/img/product-placeholder.svg',
+    'default_beer_label' => env('APP_URL').'/img/product-placeholder.png',
 
     // Домен Untappd — untappd_beers.url исторически хранит относительный
     // путь (см. ResolveBeerStyleStage), UntappdBeer::url() приклеивает этот

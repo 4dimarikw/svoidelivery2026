@@ -53,6 +53,9 @@ export default {
                 gold: {
                     DEFAULT: '#C58B2A',
                 },
+                untappd: {
+                    DEFAULT: '#FBBC04', // рейтинг Untappd, design-system.html §06 .card .rate
+                },
 
                 // alert tints, promoted from magic hex in the design system
                 warn: {
