@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Domain\Catalog\Filters;
 
 use Domain\Catalog\Builders\ProductBuilder;
-use Domain\Catalog\Models\Volume;
 
 final class VolumeFilter extends AbstractFilter
 {
@@ -26,8 +25,7 @@ final class VolumeFilter extends AbstractFilter
 
     public function values(): array
     {
-        // У Volume нет is_active, в отличие от остальных справочников.
-        return Volume::query()->orderBy('milliliters')->pluck('label', 'id')->all();
+        return FilterOptionsRegistry::for('volumes');
     }
 
     public function view(): string

@@ -36,11 +36,22 @@ class OrderController extends Controller
             return redirect()->route('cart.index');
         }
 
+        $addresses = $request->user()->addresses()->latest()->get();
+
+        // Уже посчитали коллекцию — отдаём то же число в addressesCount()
+        // (account-nav.blade.php, user-menu.blade.php), чтобы она не делала
+        // свой отдельный count()-запрос по той же таблице.
+        $request->user()->setAttribute('addresses_count', $addresses->count());
+
+        // profile передаём явно, а не читаем в шаблоне (auth()->user()->profile) —
+        // тот же паттерн, что ProfileController::edit(), иначе шаблон бьёт
+        // в БД сам.
         return view('pages.checkout', [
             'cartItems' => cart()->cartItems(),
             'count' => cart()->count(),
             'amount' => cart()->amount(),
-            'addresses' => $request->user()->addresses()->latest()->get(),
+            'addresses' => $addresses,
+            'profile' => $request->user()->profile,
         ]);
     }
 

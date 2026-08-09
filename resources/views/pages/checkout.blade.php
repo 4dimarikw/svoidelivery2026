@@ -6,8 +6,7 @@
 
      Способ доставки/оплаты клиенту не выбрать — фиксированы сервером
      («Служба доставки»/«При получении», config/order.php,
-     OrderController::store()) и на странице не показываются: блоков
-     выбора здесь больше нет.
+     OrderController::store()) и на странице не показываются.
 
      mode="ajax" — общий паттерн форм проекта (CLAUDE.md, "Private account
      area"), 422-ошибка бизнес-правил пайплайна (мин. сумма/нет в наличии)
@@ -16,7 +15,6 @@
 @php
     $defaultAddress = $addresses->firstWhere('is_default', true) ?? $addresses->first();
     $selectedAddressId = old('address_id', $defaultAddress?->id);
-    $profile = auth()->user()->profile;
 @endphp
 
 <x-layouts.site :title="__('order.title')">

@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Http\Controllers;
 
 use Domain\Cart\CartManager;
-use Domain\Cart\Models\CartItem;
 use Domain\Catalog\Models\Product;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -14,29 +13,27 @@ use Illuminate\View\View;
 
 class CartController extends Controller
 {
-    public function index(Request $request, CartManager $cart): View
+    public function index(CartManager $cart): View
     {
-        // Eager-load — тот же набор, что и в CatalogController::index()/
-        // FavoriteController::index(), иначе N+1 на каждую строку (см.
-        // комментарий в product-card.blade.php). Без пагинации — в отличие
-        // от каталога/избранного, корзина по своей природе небольшая.
-        // Отдаём сами CartItem, не голые Product — цена строки в строчной
-        // вёрстке (cart-line.blade.php) берётся из CartItem::amount()
-        // (снятый снапшот цены), тот же источник, что CartManager::amount()
-        // для общего итога — если бы строки считались по живой
-        // $product->price, сумма строк и итог могли бы разъехаться.
-        $cartItems = CartItem::query()
-            ->whereHas('cart', fn ($query) => $query->where('user_id', $request->user()->id))
-            ->latest()
-            ->with([
-                'product.manufacturer',
-                'product.volume',
-                'product.container',
-                'product.media',
-                'product.beerDetails.beerStyle',
-                'product.beerDetails.untappdBeer',
-            ])
-            ->get();
+        // CartManager::cartItems() — тот же мемоизированный на HTTP-запрос
+        // $items, что читают $cart->count()/->amount() ниже и шапка
+        // (header.blade.php, mobile-nav.blade.php): отдельный CartItem::query()
+        // здесь означал бы второй SELECT по cart_items поверх уже
+        // прогретого менеджера. loadMissing() дозагружает только то, чего
+        // ещё нет — product уже загружен внутри cartItems(), тут довешиваем
+        // только relations, нужные cart-line.blade.php/product-placeholder.blade.php
+        // (manufacturer/untappdBeer там не используются). Отдаём сами
+        // CartItem, не голые Product — цена строки берётся из
+        // CartItem::amount() (снятый снапшот цены), тот же источник, что
+        // CartManager::amount() для общего итога — если бы строки
+        // считались по живой $product->price, сумма строк и итог могли бы
+        // разъехаться.
+        $cartItems = $cart->cartItems()->loadMissing([
+            'product.volume',
+            'product.container',
+            'product.media',
+            'product.beerDetails.beerStyle',
+        ]);
 
         return view('pages.cart', [
             'cartItems' => $cartItems,

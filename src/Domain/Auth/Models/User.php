@@ -75,6 +75,25 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->hasMany(Address::class);
     }
 
+    /**
+     * Мемоизированный счётчик адресов: `<x-ui.user-menu>` и
+     * `<x-ui.account-nav>` рендерятся на одной странице /account/* и оба
+     * показывают это число. loadCount() кладёт результат в атрибут
+     * `addresses_count` того же инстанса модели, а auth()->user() в рамках
+     * запроса всегда один и тот же объект (гвард его мемоизирует) — второй
+     * вызов запрос не повторяет. Отдельный менеджер, как у избранного/
+     * корзины, тут не нужен: счётчик один и мутаций через него нет (пишет
+     * AddressController напрямую).
+     */
+    public function addressesCount(): int
+    {
+        if (! array_key_exists('addresses_count', $this->attributes)) {
+            $this->loadCount('addresses');
+        }
+
+        return (int) $this->addresses_count;
+    }
+
     public function favorites(): HasMany
     {
         return $this->hasMany(Favorite::class);

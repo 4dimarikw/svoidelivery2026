@@ -13,7 +13,7 @@ class PropertySeeder extends Seeder
      * `storage_column` are metadata pointers for the application, not
      * MySQL foreign keys — they say where a filterable value actually lives.
      */
-    private const PROPERTIES = [
+    private const array PROPERTIES = [
         'volume' => ['name' => 'Объём', 'data_type' => 'reference', 'unit' => 'мл', 'storage_table' => 'products', 'storage_column' => 'volume_id'],
         'container' => ['name' => 'Тара', 'data_type' => 'reference', 'unit' => null, 'storage_table' => 'products', 'storage_column' => 'container_id'],
         'abv' => ['name' => 'ABV', 'data_type' => 'decimal', 'unit' => '%', 'storage_table' => 'beer_product_details', 'storage_column' => 'abv'],
@@ -34,7 +34,7 @@ class PropertySeeder extends Seeder
      * the actual code ('non-alcoholic' slug → 'non_alcoholic' code), so that
      * category silently got no properties; fixed to match reality.
      */
-    private const CATEGORY_PROPERTIES = [
+    private const array CATEGORY_PROPERTIES = [
         'beer' => ['volume', 'container', 'abv', 'ibu', 'plato', 'ebc', 'beer_style', 'untappd'],
         'mead' => ['volume', 'container', 'abv', 'beer_style', 'untappd'],
         'cider' => ['volume', 'container', 'abv', 'beer_style', 'untappd'],

@@ -14,21 +14,23 @@
      сидируются в header.blade.php ($store.cart) и user-menu.blade.php
      ($store.favorites), оба рендерятся на каждой странице <x-layouts.site>
      раньше этого компонента. Повторный x-init тут просто перезаписал бы
-     то же значение вторым запросом к БД — бессмысленно и дороже.
+     то же значение — бессмысленно. Серверные числа в бейджах ниже (нужны
+     как no-JS фолбэк под x-text) берутся из CartManager/FavoriteManager —
+     оба мемоизированы на HTTP-запрос, так что тут это не второй запрос к
+     БД, а переиспользование уже прогретого в этом же запросе состояния.
 
      Активный пункт подсвечивается только цветом (text-teal-700), без
      fill="currentColor" на иконке — в мокапе он есть (.app-bottom
-     .nav.active svg{fill:...}), но в этом проекте залитая иконка уже
-     означает конкретно «товар в избранном» (product-card.blade.php,
-     см. CatalogControllerTest::test_non_favorited_product_renders_an_empty_heart);
+     .nav.active svg{fill:...}), но в этом проекте залитая иконка означает
+     конкретно «товар в избранном» (product-card.blade.php, favorite-toggle.blade.php);
      переиспользовать тот же приём для «активная вкладка» смешало бы два
      разных смысла на одной странице. --}}
 @php
     $isActive = fn (string ...$patterns) => request()->routeIs(...$patterns);
-    // Один запрос на каждый счётчик — переиспользуется и в тексте бейджа,
-    // и (со стороны Alpine) как серверный фолбэк для x-text.
-    $favoritesCount = auth()->check() ? auth()->user()->favorites()->count() : 0;
-    $cartCount = auth()->check() ? app(\Domain\Cart\CartManager::class)->count() : 0;
+    // FavoriteManager/CartManager сами возвращают 0 гостю без запроса —
+    // отдельная проверка auth()->check() тут не нужна.
+    $favoritesCount = favorites()->count();
+    $cartCount = cart()->count();
 @endphp
 
 <nav

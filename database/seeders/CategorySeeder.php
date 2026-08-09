@@ -18,7 +18,7 @@ use Illuminate\Database\Seeder;
  */
 class CategorySeeder extends Seeder
 {
-    private const CATEGORIES = [
+    private const array CATEGORIES = [
         'beer' => 'Пиво',
         'mead' => 'Мёд',
         'cider' => 'Сидр',

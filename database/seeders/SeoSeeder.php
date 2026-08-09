@@ -14,7 +14,7 @@ class SeoSeeder extends Seeder
      * <title> явным :title-пропом на своём layout — им seo-строка не нужна,
      * см. resources/views/components/layouts/app.blade.php.
      */
-    private const PAGES = [
+    private const array PAGES = [
         '/' => [
             'title' => 'Каталог пива и напитков с доставкой — Свои Delivery',
             'description' => 'Свои Delivery — доставка крафтового пива и напитков от локальных производителей. Каталог сортов, брендов и объёмов.',

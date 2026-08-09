@@ -7,7 +7,7 @@
     $toneClass = match ($tone) {
         'teal' => 'bg-teal-100 text-teal-800 border-teal-200',
         'cream' => 'bg-cream-200 text-ink-700 border-cream-400',
-        'rust' => 'bg-rust-50 text-rust-700 border-rust-200', // rust-700: contrast fix, see CLAUDE.md
+        'rust' => 'bg-rust-50 text-rust-700 border-rust-200', // rust-700 — контрастный токен, см. CLAUDE.md
         'solid' => 'bg-teal-700 text-cream-100 border-transparent',
         'warn' => 'bg-warn-50 text-warn-700 border-warn-200', // рейтинг Untappd — design-system §06 .chip-untappd
         default => 'bg-cream-50 text-ink-700 border-hairline',

@@ -3,7 +3,7 @@
      getValue() === false, which is never in that list. So under x-model this
      component emits NO `checked` attribute at all; the caller must seed state
      from PHP via <x-ui.form :state="[...]"> (Path C). Without x-model, this
-     falls back to plain Blade (Path A) — including the old()-repopulation fix
+     falls back to plain Blade (Path A) — including old()-repopulation handling
      for unchecked checkboxes (they don't submit, so old($name) alone would
      wrongly restore the default after a failed POST). --}}
 @props([

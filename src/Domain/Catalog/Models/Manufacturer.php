@@ -3,10 +3,13 @@
 namespace Domain\Catalog\Models;
 
 use Database\Factories\Catalog\ManufacturerFactory;
+use Domain\Catalog\Filters\FilterOptionsRegistry;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Carbon;
 use Spatie\Sluggable\HasSlug;
 use Spatie\Sluggable\SlugOptions;
 
@@ -16,10 +19,11 @@ use Spatie\Sluggable\SlugOptions;
  * @property string $normalized_name
  * @property string $slug
  * @property bool $is_active
- * @property \Illuminate\Support\Carbon|null $created_at
- * @property \Illuminate\Support\Carbon|null $updated_at
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \Domain\Catalog\Models\Product> $products
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
+ * @property-read Collection<int, Product> $products
  * @property-read int|null $products_count
+ *
  * @method static \Database\Factories\Catalog\ManufacturerFactory factory($count = null, $state = [])
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Manufacturer newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Manufacturer newQuery()
@@ -31,6 +35,7 @@ use Spatie\Sluggable\SlugOptions;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Manufacturer whereNormalizedName($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Manufacturer whereSlug($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Manufacturer whereUpdatedAt($value)
+ *
  * @mixin \Eloquent
  */
 class Manufacturer extends Model
@@ -95,5 +100,10 @@ class Manufacturer extends Model
                 $manufacturer->normalized_name = normalize_name($manufacturer->name);
             }
         });
+
+        // Значения этого справочника кешируются целиком в FilterOptionsRegistry —
+        // см. её докблок.
+        static::saved(fn () => FilterOptionsRegistry::flush());
+        static::deleted(fn () => FilterOptionsRegistry::flush());
     }
 }

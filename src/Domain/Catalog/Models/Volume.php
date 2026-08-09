@@ -3,6 +3,7 @@
 namespace Domain\Catalog\Models;
 
 use Database\Factories\Catalog\VolumeFactory;
+use Domain\Catalog\Filters\FilterOptionsRegistry;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -43,6 +44,16 @@ class Volume extends Model
     protected static function newFactory(): Factory
     {
         return VolumeFactory::new();
+    }
+
+    /**
+     * Значения этого справочника кешируются целиком в FilterOptionsRegistry —
+     * см. её докблок.
+     */
+    protected static function booted(): void
+    {
+        static::saved(fn () => FilterOptionsRegistry::flush());
+        static::deleted(fn () => FilterOptionsRegistry::flush());
     }
 
     public function products(): HasMany

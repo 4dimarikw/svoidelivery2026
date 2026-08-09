@@ -18,7 +18,7 @@ return new class extends Migration
      * is now made explicit via the `priority` column (10, 20, 30, ... in
      * encounter order, flattened across all categories).
      */
-    private const CATEGORIES = [
+    private const array CATEGORIES = [
         'beer' => [
             'name' => 'Пиво',
             'expects_container' => true,

@@ -13,8 +13,15 @@ class AddressController extends Controller
 {
     public function index(Request $request): View
     {
+        $addresses = $request->user()->addresses()->latest()->get();
+
+        // Уже посчитали коллекцию — отдаём то же число в addressesCount()
+        // (account-nav.blade.php, user-menu.blade.php), чтобы она не делала
+        // свой отдельный count()-запрос по той же таблице.
+        $request->user()->setAttribute('addresses_count', $addresses->count());
+
         return view('account.addresses.index', [
-            'addresses' => $request->user()->addresses()->latest()->get(),
+            'addresses' => $addresses,
         ]);
     }
 

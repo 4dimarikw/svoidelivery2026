@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Domain\Catalog\Filters;
 
 use Domain\Catalog\Builders\ProductBuilder;
-use Domain\Catalog\Models\BeerStyle;
 
 final class BeerStyleFilter extends AbstractFilter
 {
@@ -26,7 +25,7 @@ final class BeerStyleFilter extends AbstractFilter
 
     public function values(): array
     {
-        return BeerStyle::query()->where('is_active', true)->orderBy('name')->pluck('name', 'id')->all();
+        return FilterOptionsRegistry::for('beer_styles');
     }
 
     public function view(): string

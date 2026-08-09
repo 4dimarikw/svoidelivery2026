@@ -15,7 +15,7 @@ use Services\CatalogImport\Dto\ImportContext;
  * Стартует с GeneralSettings::$product_flags как seed, затем переопределяет:
  * `wu` — true, если товар не сматчен с Untappd ($ctx->untappdBeer === null);
  * `mss` — всегда false (нет источника данных для этого флага в текущем пайплайне);
- * `promo` — РейтингПродаж равен `catalog_import.flags.featured_marker` ('Акция').
+ * `promo` — РейтингПродаж равен `catalog_import.flags.promo_marker` ('Акция').
  * `$ctx->attributes['flags']` читает PersistProductStage — только в create-ветке
  * (флаги вычисляются один раз при создании товара, повторный импорт их не
  * пересчитывает — как и остальные "статичные" атрибуты товара).
@@ -32,7 +32,7 @@ final class ResolveFlagsStage implements ImportStage
 
         $ctx->attributes['flags']['mss'] = false;
 
-        $ctx->attributes['flags']['promo'] = $flag === config('catalog_import.flags.featured_marker', 'Акция');
+        $ctx->attributes['flags']['promo'] = $flag === config('catalog_import.flags.promo_marker', 'Акция');
 
         return $next($ctx);
     }

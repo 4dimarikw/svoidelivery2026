@@ -2,6 +2,7 @@
 
 use Domain\Cart\CartManager;
 use Domain\Catalog\Filters\FilterManager;
+use Domain\Favorite\FavoriteManager;
 use Illuminate\Support\Str;
 use Services\ProductFlagsManager;
 
@@ -44,6 +45,13 @@ if (! function_exists('cart')) {
     function cart(): CartManager
     {
         return app(CartManager::class);
+    }
+}
+
+if (! function_exists('favorites')) {
+    function favorites(): FavoriteManager
+    {
+        return app(FavoriteManager::class);
     }
 }
 

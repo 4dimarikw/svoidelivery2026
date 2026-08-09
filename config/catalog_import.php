@@ -210,10 +210,10 @@ return [
     |--------------------------------------------------------------------------
     | ResolveFlagsStage — маркеры статуса из колонки РейтингПродаж
     |--------------------------------------------------------------------------
-    | featured_marker → is_featured = true (Акция)
-    | is_new вычисляется в PersistVariationStage по категории и возрасту вариации (см. new_flag).
+    |
+    | promo_marker → products.flags.promo
     */
     'flags' => [
-        'featured_marker' => 'Акция',
+        'promo_marker' => 'Акция',
     ],
 ];

@@ -3,6 +3,7 @@
 namespace Domain\Catalog\Models;
 
 use Database\Factories\Catalog\CategoryFactory;
+use Domain\Catalog\Filters\FilterOptionsRegistry;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -104,11 +105,21 @@ class Category extends Model
      * catalog:import evaluates the resolver once per CSV row (thousands per
      * run), so a per-row query is out. Any admin edit here or on
      * CategoryMatchRule must invalidate that cache immediately.
+     *
+     * FilterOptionsRegistry::flush() тоже сбрасывается здесь — список
+     * категорий для витринного фильтра каталога кешируется отдельно (см. её
+     * докблок), но по тому же событию.
      */
     protected static function booted(): void
     {
-        static::saved(fn () => CategoryRegistry::flush());
-        static::deleted(fn () => CategoryRegistry::flush());
+        static::saved(function () {
+            CategoryRegistry::flush();
+            FilterOptionsRegistry::flush();
+        });
+        static::deleted(function () {
+            CategoryRegistry::flush();
+            FilterOptionsRegistry::flush();
+        });
     }
 
     /**

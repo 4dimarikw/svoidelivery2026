@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Domain\Catalog\Filters;
 
 use Domain\Catalog\Builders\ProductBuilder;
-use Domain\Catalog\Models\Container;
 
 final class ContainerFilter extends AbstractFilter
 {
@@ -26,10 +25,7 @@ final class ContainerFilter extends AbstractFilter
 
     public function values(): array
     {
-        return Container::query()->where('is_active', true)->orderBy('name')
-            ->get(['id', 'label', 'name'])
-            ->mapWithKeys(fn (Container $container) => [$container->id => $container->label ?: $container->name])
-            ->all();
+        return FilterOptionsRegistry::for('containers');
     }
 
     public function view(): string

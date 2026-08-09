@@ -10,14 +10,13 @@
      /account/profile, где те же 4 пункта уже есть в <x-ui.account-nav> —
      тот же приём "работает и без JS", что у избранного/степпера корзины.
 
-     x-init сидирует $store.favorites.count — раньше это делала иконка
-     избранного в шапке (убрана отсюда же, см. header.blade.php), без
-     сидирования здесь счётчик избранного (тут и на карточках товара) после
-     гидратации Alpine обнулился бы на каждой странице. --}}
+     x-init сидирует $store.favorites.count — единственная точка сидирования
+     этого стора; без неё счётчик избранного (тут и на карточках товара)
+     после гидратации Alpine обнулился бы на каждой странице. --}}
 <div
     class="relative"
     x-data="{ open: false }"
-    x-init="$store.favorites.count = {{ auth()->user()->favorites()->count() }}"
+    x-init="$store.favorites.count = {{ favorites()->count() }}"
     x-on:keydown.escape.window="open = false"
     x-on:click.outside="open = false"
 >
@@ -48,7 +47,7 @@
             class="flex items-center justify-between rounded-sm px-3.5 py-2.5 text-body-m text-ink-700 hover:bg-cream-200 hover:text-ink-900"
         >
             {{ __('account.address.index_title') }}
-            <span class="font-mono text-micro">{{ auth()->user()->addresses()->count() }}</span>
+            <span class="font-mono text-micro">{{ auth()->user()->addressesCount() }}</span>
         </a>
 
         {{-- x-text перекрывает серверное число сразу после гидратации Alpine
@@ -60,7 +59,7 @@
             class="flex items-center justify-between rounded-sm px-3.5 py-2.5 text-body-m text-ink-700 hover:bg-cream-200 hover:text-ink-900"
         >
             {{ __('account.favorites.title') }}
-            <span class="font-mono text-micro" x-text="$store.favorites.count">{{ auth()->user()->favorites()->count() }}</span>
+            <span class="font-mono text-micro" x-text="$store.favorites.count">{{ favorites()->count() }}</span>
         </a>
 
         <div class="my-1.5 h-px bg-hairline"></div>

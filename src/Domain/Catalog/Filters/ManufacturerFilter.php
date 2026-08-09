@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Domain\Catalog\Filters;
 
 use Domain\Catalog\Builders\ProductBuilder;
-use Domain\Catalog\Models\Manufacturer;
 
 final class ManufacturerFilter extends AbstractFilter
 {
@@ -26,7 +25,7 @@ final class ManufacturerFilter extends AbstractFilter
 
     public function values(): array
     {
-        return Manufacturer::query()->where('is_active', true)->orderBy('name')->pluck('name', 'id')->all();
+        return FilterOptionsRegistry::for('manufacturers');
     }
 
     public function view(): string

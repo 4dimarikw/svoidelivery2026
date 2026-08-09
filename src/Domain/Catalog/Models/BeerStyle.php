@@ -3,6 +3,7 @@
 namespace Domain\Catalog\Models;
 
 use Database\Factories\Catalog\BeerStyleFactory;
+use Domain\Catalog\Filters\FilterOptionsRegistry;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -84,5 +85,10 @@ class BeerStyle extends Model
                 $beerStyle->normalized_name = normalize_name($beerStyle->name);
             }
         });
+
+        // Значения этого справочника кешируются целиком в FilterOptionsRegistry —
+        // см. её докблок.
+        static::saved(fn () => FilterOptionsRegistry::flush());
+        static::deleted(fn () => FilterOptionsRegistry::flush());
     }
 }
