@@ -40,6 +40,32 @@ return [
         'db' => env('BCRAFTFEST_DB', 1),
     ],
 
+    /*
+     * Telegram Login Widget (socialiteproviders/telegram).
+     *
+     * Драйвер не ходит по OAuth — getAuthUrl()/getTokenUrl() возвращают null.
+     * Виджет сам редиректит браузер на data-auth-url с GET-параметрами, а
+     * Provider::user() проверяет их HMAC на ключе hash('sha256', bot_token).
+     *
+     * Значения НЕ читаются из .env — токен бота живёт в БД (telegraph_bots,
+     * см. Domain\Telegram\Models\TelegramBot), это её и есть единственный
+     * источник правды (заводится штатной `php artisan telegraph:new-bot`).
+     * app/Providers/AppServiceProvider::boot() перезаписывает этот массив на
+     * каждый запрос значениями активного бота (кеш-бэкед, дёшево). Пока бот
+     * не заведён — остаётся null, и <x-ui.telegram-login-button> прячет
+     * кнопку по тому же null.
+     *
+     * client_id/redirect формально обязательны для
+     * SocialiteProviders\Manager\Helpers\ConfigRetriever (иначе
+     * MissingConfigException), самим драйвером не используются.
+     */
+    'telegram' => [
+        'client_id' => null,
+        'client_secret' => null,
+        'redirect' => null,
+        'bot' => null,
+    ],
+
     'catalog_1c_ftp' => [
         'host' => env('DB_1C_FTP_SERVER'),
         'port' => (int) env('DB_1C_FTP_PORT', 21),

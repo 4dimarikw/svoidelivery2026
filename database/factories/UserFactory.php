@@ -48,4 +48,21 @@ class UserFactory extends Factory
             'email_verified_at' => null,
         ]);
     }
+
+    /**
+     * Аккаунт, созданный через Telegram Login Widget: ни email, ни пароля —
+     * Telegram их не отдаёт (см. TelegramLoginController). Сама привязка
+     * (telegraph_chats.user_id) сюда не входит — телеграм-идентичность
+     * принадлежит Domain\Telegram, не users; тесты, которым нужен именно
+     * связанный чат, заводят Domain\Telegram\Models\TelegramChat отдельно
+     * (см. TelegramLoginTest).
+     */
+    public function telegram(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'email' => null,
+            'email_verified_at' => null,
+            'password' => null,
+        ]);
+    }
 }

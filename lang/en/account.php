@@ -32,6 +32,20 @@ return [
         'submit' => 'Log in',
         'no_account' => 'First time here?',
         'create' => 'Create an account',
+        'or' => 'or',
+    ],
+
+    'telegram' => [
+        'section_title' => 'Telegram',
+        'linked_as' => 'Account linked to Telegram ID :id.',
+        'not_linked' => 'Open the bot in Telegram and press "Start" to link your account.',
+        'open_in_telegram' => 'Open in Telegram',
+        'unlink' => 'Unlink Telegram',
+        'unlink_blocked' => 'Telegram cannot be unlinked: it is the only way into this account. Add an email and a password first.',
+        'email_optional' => 'You signed in with Telegram — an email is optional.',
+        'failed' => 'Could not sign in with Telegram. Please try again.',
+        'linked' => 'Telegram linked.',
+        'unlinked' => 'Telegram unlinked.',
     ],
 
     'register' => [

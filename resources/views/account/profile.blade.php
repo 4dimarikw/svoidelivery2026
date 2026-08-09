@@ -11,8 +11,15 @@
         'profile-information-updated' => __('account.profile.basic_updated'),
         'account-profile-updated' => __('account.profile.details_updated'),
         'password-updated' => __('account.profile.password_updated'),
+        // Привязка Telegram всегда идёт через полную перезагрузку (виджет
+        // уводит браузер сам), поэтому обе ветки читаются отсюда, а не из
+        // Alpine-статуса ajax-формы.
+        'telegram-linked' => __('account.telegram.linked'),
+        'telegram-unlinked' => __('account.telegram.unlinked'),
         default => null,
     };
+
+    $user = auth()->user();
 @endphp
 
 <x-layouts.account active="profile" :title="__('account.nav.profile')">
@@ -34,18 +41,24 @@
                     <x-ui.input-field
                         name="name"
                         :label="__('account.field.name')"
-                        :value="auth()->user()->name"
+                        :value="$user->name"
                         bag="updateProfileInformation"
                         required
                     />
+                    {{-- У аккаунта, созданного через Telegram, email нет и
+                         взяться ему неоткуда — required только для остальных,
+                         иначе такой пользователь не смог бы поменять даже имя.
+                         Серверное правило зеркалит это в
+                         App\Actions\Fortify\UpdateUserProfileInformation. --}}
                     <x-ui.input-field
                         name="email"
                         type="email"
                         :label="__('account.field.email')"
-                        :value="auth()->user()->email"
+                        :value="$user->email"
+                        :help="$user->email === null ? __('account.telegram.email_optional') : null"
                         autocomplete="username"
                         bag="updateProfileInformation"
-                        required
+                        :required="! $user->telegramLinked()"
                     />
 
                     <x-ui.form-actions>
@@ -90,7 +103,14 @@
             </x-ui.form>
         </x-ui.surface>
 
-        {{-- Section 3 — password, Fortify's own endpoint. --}}
+        {{-- Section 3 — password, Fortify's own endpoint.
+
+             Скрыта у аккаунтов без пароля (вход только через Telegram):
+             App\Actions\Fortify\UpdateUserPassword требует current_password,
+             которого у них нет, а Hash::check() против null-хеша — это
+             TypeError, а не чистый false. Отдельная форма «задать пароль»
+             в объём этой задачи не входит. --}}
+        @if ($user->password !== null)
         <x-ui.surface tone="paper-2" class="rounded-sm border border-hairline p-6">
             <h2 class="mb-5 font-display text-heading-s uppercase text-ink-900">{{ __('account.profile.password_title') }}</h2>
 
@@ -133,6 +153,47 @@
                     </x-ui.form-actions>
                 </div>
             </x-ui.form>
+        </x-ui.surface>
+        @endif
+
+        {{-- Section 4 — Telegram. Привязка не через форму: пользователь
+             открывает диплинк в самом Telegram, чат находит его через
+             /start (App\Telegraph\WebhookHandler) — см. ProfileController::edit(). --}}
+        <x-ui.surface tone="paper-2" class="rounded-sm border border-hairline p-6">
+            <h2 class="mb-5 font-display text-heading-s uppercase text-ink-900">{{ __('account.telegram.section_title') }}</h2>
+
+            @if ($user->telegramLinked())
+                <p class="mb-4 text-body-m text-ink-700">
+                    {{ __('account.telegram.linked_as', ['id' => $user->telegramChat->chat_id]) }}
+                </p>
+
+                @if ($user->canUnlinkTelegram())
+                    <x-ui.form :action="route('account.telegram.unlink')" method="DELETE" mode="ajax">
+                        <div x-show="status === 'ok'" x-cloak class="mb-4">
+                            <x-ui.alert tone="ok">{{ __('account.telegram.unlinked') }}</x-ui.alert>
+                        </div>
+
+                        <x-ui.form-actions>
+                            <x-ui.btn type="submit" variant="ghost" x-bind:disabled="submitting">
+                                <span x-show="!submitting">{{ __('account.telegram.unlink') }}</span>
+                                <span x-show="submitting" x-cloak class="inline-flex items-center">
+                                    <x-ui.spinner size="16" class="mr-2" />{{ __('account.profile.saving') }}
+                                </span>
+                            </x-ui.btn>
+                        </x-ui.form-actions>
+                    </x-ui.form>
+                @else
+                    <x-ui.help>{{ __('account.telegram.unlink_blocked') }}</x-ui.help>
+                @endif
+            @else
+                <p class="mb-4 text-body-m text-ink-700">{{ __('account.telegram.not_linked') }}</p>
+
+                @if ($telegramBotUsername)
+                    <x-ui.btn href="https://t.me/{{ $telegramBotUsername }}?start={{ $telegramLinkCode }}" variant="ghost">
+                        {{ __('account.telegram.open_in_telegram') }}
+                    </x-ui.btn>
+                @endif
+            @endif
         </x-ui.surface>
     </div>
 </x-layouts.account>

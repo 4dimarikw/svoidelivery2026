@@ -34,6 +34,16 @@
             </div>
         </x-ui.form>
 
+        {{-- Виджет ничего не рендерит, пока бот не заведён (см.
+             <x-ui.telegram-login-button>), поэтому разделитель тоже под тем
+             же условием — иначе на локали осталась бы висеть «или» без
+             второй половины. --}}
+        @if (\Domain\Telegram\Models\TelegramBot::current()?->username)
+            <x-ui.divider class="my-6">{{ __('account.login.or') }}</x-ui.divider>
+
+            <x-ui.telegram-login-button />
+        @endif
+
         <x-slot:footer>
             <p class="text-caption text-ink-500">
                 {{ __('account.login.no_account') }}

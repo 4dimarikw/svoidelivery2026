@@ -32,6 +32,20 @@ return [
         'submit' => 'Войти',
         'no_account' => 'Впервые у нас?',
         'create' => 'Создать аккаунт',
+        'or' => 'или',
+    ],
+
+    'telegram' => [
+        'section_title' => 'Telegram',
+        'linked_as' => 'Аккаунт привязан к Telegram ID :id.',
+        'not_linked' => 'Откройте бота в Telegram и нажмите «Start», чтобы привязать аккаунт.',
+        'open_in_telegram' => 'Открыть в Telegram',
+        'unlink' => 'Отвязать Telegram',
+        'unlink_blocked' => 'Отвязать Telegram нельзя: это единственный способ войти в аккаунт. Сначала добавьте e-mail и пароль.',
+        'email_optional' => 'Вы вошли через Telegram — e-mail можно не указывать.',
+        'failed' => 'Не удалось войти через Telegram. Попробуйте ещё раз.',
+        'linked' => 'Telegram привязан.',
+        'unlinked' => 'Telegram отвязан.',
     ],
 
     'register' => [

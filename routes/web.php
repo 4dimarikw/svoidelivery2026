@@ -4,6 +4,7 @@ use App\Http\Controllers\Account\AddressController;
 use App\Http\Controllers\Account\FavoriteController;
 use App\Http\Controllers\Account\OrderController as AccountOrderController;
 use App\Http\Controllers\Account\ProfileController;
+use App\Http\Controllers\Auth\TelegramLoginController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\CatalogController;
 use App\Http\Controllers\OrderController;
@@ -19,9 +20,22 @@ Route::get('about', [PageController::class, 'about'])->name('about');
 // резолвит {product} сам — {product:slug} тут не нужен, см. HasSlug::resolveRouteBinding().
 Route::get('product/{product}', [ProductController::class, 'show'])->name('product.show');
 
+// Точка возврата Telegram Login Widget — только вход/регистрация гостя.
+// Привязка Telegram к уже авторизованному аккаунту через этот роут не идёт
+// (см. комментарий у DELETE account/telegram ниже) — см. TelegramLoginController.
+Route::get('auth/telegram/callback', [TelegramLoginController::class, 'callback'])
+    ->middleware('throttle:10,1')
+    ->name('auth.telegram.callback');
+
 Route::middleware(['auth', 'verified'])->prefix('account')->name('account.')->group(function () {
     Route::get('profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::put('profile', [ProfileController::class, 'update'])->name('profile.update');
+
+    // Привязка Telegram к уже авторизованному аккаунту НЕ роут этого
+    // приложения — пользователь открывает t.me/<bot>?start=<code> в самом
+    // Telegram, а обрабатывает это webhook-роут пакета defstudio/telegraph
+    // (POST /telegraph/{token}/webhook, App\Telegraph\WebhookHandler::start()).
+    Route::delete('telegram', [TelegramLoginController::class, 'unlink'])->name('telegram.unlink');
 
     Route::resource('addresses', AddressController::class)->except(['show']);
 

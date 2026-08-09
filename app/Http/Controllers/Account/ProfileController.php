@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Account;
 
 use App\Http\Controllers\Controller;
+use Domain\Telegram\Models\TelegramBot;
+use Domain\Telegram\Support\TelegramLinkCode;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -12,10 +14,21 @@ class ProfileController extends Controller
 {
     public function edit(Request $request): View
     {
-        // profile can be null — legacy users, or users created before the
-        // CreateUserProfile listener existed. The view/form must be
-        // null-safe rather than assume it always exists.
-        return view('account.profile', ['profile' => $request->user()->profile]);
+        $user = $request->user();
+
+        // Код нужен только тому, кто ещё не привязан, и только когда есть
+        // активный бот (иначе кнопку показывать всё равно не для чего) — не
+        // тратим кеш на код, который никто никогда не откроет.
+        $bot = ! $user->telegramLinked() ? TelegramBot::current() : null;
+
+        return view('account.profile', [
+            // profile can be null — legacy users, or users created before the
+            // CreateUserProfile listener existed. The view/form must be
+            // null-safe rather than assume it always exists.
+            'profile' => $user->profile,
+            'telegramBotUsername' => $bot?->username,
+            'telegramLinkCode' => $bot ? TelegramLinkCode::issue($user) : null,
+        ]);
     }
 
     public function update(Request $request): RedirectResponse|JsonResponse

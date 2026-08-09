@@ -18,9 +18,12 @@ use Domain\Catalog\Filters\SortFilter;
 use Domain\Catalog\Filters\VolumeFilter;
 use Domain\Favorite\Providers\FavoriteServiceProvider;
 use Domain\Order\Providers\OrderServiceProvider;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\ServiceProvider;
 use Services\CatalogImport\CategoryRegistry;
 use Services\Untappd\Providers\UntappdProvider;
+use SocialiteProviders\Manager\SocialiteWasCalled;
+use SocialiteProviders\Telegram\Provider as TelegramProvider;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -65,6 +68,24 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Регистрация telegram-драйвера Socialite (форма для Laravel 11+, см.
+        // README пакета). Живёт здесь, а не в FortifyServiceProvider: Socialite
+        // от Fortify не зависит, это два независимых механизма входа.
+        // config('services.telegram.*') заполняется НЕ здесь. boot() всех
+        // провайдеров отрабатывает на каждый запрос ещё до того, как
+        // гарантированно применены миграции (ломает свежую БД/тесты —
+        // TelegramBot::current() кинул бы QueryException на
+        // ещё не существующую telegraph_bots) и до того, как маршруты
+        // гарантированно загружены. Единственное место, которому эти
+        // значения реально нужны, — TelegramLoginController::callback()
+        // (там же и заполняются, локально и лениво). Кнопка виджета тоже
+        // не читает config() — берёт username прямо у TelegramBot::current()
+        // (см. <x-ui.telegram-login-button>).
+        Event::listen(fn (SocialiteWasCalled $event) => $event->extendSocialite(
+            'telegram',
+            TelegramProvider::class,
+        ));
+
         // Порядок = визуальный порядок в pages/catalog/_filters.blade.php.
         app(FilterManager::class)->registerFilters([
             new SortFilter,
