@@ -5,8 +5,8 @@ return [
         'site_name' => 'SvoiDelivery',
     ],
     'sections' => [
-        ['key' => 'home', 'title' => 'Каталог', 'fragment' => '', 'sort_order' => 10],
-        ['key' => 'about', 'title' => 'О нас', 'fragment' => '', 'sort_order' => 20],
+        ['key' => 'home', 'title' => 'Каталог', 'route_name' => 'home', 'fragment' => '', 'sort_order' => 10],
+        ['key' => 'about', 'title' => 'О нас', 'route_name' => 'about', 'fragment' => '', 'sort_order' => 20],
     ],
     'menus' => [
         'main' => [

@@ -12,6 +12,7 @@ use Domain\Content\Support\SafeContentUrl;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Route;
 use Infrastructure\Settings\SiteSettings;
 use LogicException;
 use Spatie\MediaLibrary\MediaCollections\Exceptions\FileDoesNotExist;
@@ -70,8 +71,10 @@ final class SiteContentSeeder extends Seeder
             $section = SiteSection::query()->create([
                 'key' => $sectionData['key'],
                 'title' => $sectionData['title'],
-                'route_name' => 'home',
-                'fragment' => $sectionData['fragment'],
+                'route_name' => $sectionData['route_name'],
+                // Нормализация как в SiteSectionFormPage::prepareForValidation() —
+                // якорь хранится без ведущего "#".
+                'fragment' => ltrim(trim((string) ($sectionData['fragment'] ?? '')), '#'),
                 'sort_order' => $sectionData['sort_order'],
                 'is_active' => true,
             ]);
@@ -185,6 +188,7 @@ final class SiteContentSeeder extends Seeder
     private function validateFixture(): void
     {
         $sections = [];
+        $routeFragments = [];
 
         foreach ($this->fixture['sections'] ?? [] as $section) {
             $key = trim((string)($section['key'] ?? ''));
@@ -192,6 +196,20 @@ final class SiteContentSeeder extends Seeder
                 throw new LogicException("Ключ раздела [$key] пуст или повторяется в fixture.");
             }
 
+            $routeName = trim((string)($section['route_name'] ?? ''));
+            if ($routeName === '' || !Route::has($routeName)) {
+                throw new LogicException("Раздел [$key] ссылается на неизвестный маршрут [$routeName].");
+            }
+
+            // Зеркалим уникальный индекс site_sections_route_name_fragment_unique —
+            // иначе fixture падает не читаемым LogicException, а сырым SQL 1062.
+            $fragment = ltrim(trim((string)($section['fragment'] ?? '')), '#');
+            $routeFragmentKey = $routeName.'#'.$fragment;
+            if (isset($routeFragments[$routeFragmentKey])) {
+                throw new LogicException("Раздел [$key] дублирует пару маршрут+якорь [$routeFragmentKey].");
+            }
+
+            $routeFragments[$routeFragmentKey] = true;
             $sections[$key] = true;
         }
 
