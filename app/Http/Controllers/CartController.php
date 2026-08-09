@@ -21,9 +21,8 @@ class CartController extends Controller
         // здесь означал бы второй SELECT по cart_items поверх уже
         // прогретого менеджера. loadMissing() дозагружает только то, чего
         // ещё нет — product уже загружен внутри cartItems(), тут довешиваем
-        // только relations, нужные cart-line.blade.php/product-placeholder.blade.php
-        // (manufacturer/untappdBeer там не используются). Отдаём сами
-        // CartItem, не голые Product — цена строки берётся из
+        // только relations, нужные cart-line.blade.php/product-placeholder.blade.php.
+        // Отдаём сами CartItem, не голые Product — цена строки берётся из
         // CartItem::amount() (снятый снапшот цены), тот же источник, что
         // CartManager::amount() для общего итога — если бы строки
         // считались по живой $product->price, сумма строк и итог могли бы
@@ -32,6 +31,7 @@ class CartController extends Controller
             'product.volume',
             'product.container',
             'product.media',
+            'product.manufacturer',
             'product.beerDetails.beerStyle',
         ]);
 

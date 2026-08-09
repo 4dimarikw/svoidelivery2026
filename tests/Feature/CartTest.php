@@ -82,7 +82,59 @@ class CartTest extends TestCase
         $response = $this->actingAs($user)->postJson(route('cart.increase', $product));
 
         $response->assertOk();
-        $response->assertJson(['quantity' => 1, 'count' => 1, 'amount' => '₽ 100']);
+        $response->assertJson(['quantity' => 1, 'count' => 1, 'amount' => '₽ 100', 'lineAmount' => '₽ 100']);
+    }
+
+    public function test_increase_json_response_reports_the_updated_line_amount(): void
+    {
+        // Регрессия: сумма строки в корзине (cart-line.blade.php) раньше не
+        // реагировала на +/- в степпере, потому что lineAmount в JSON-ответе
+        // вообще не было.
+        $user = User::factory()->create();
+        $product = Product::factory()->create(['price' => 100, 'stock_quantity' => 5, 'in_stock' => true]);
+
+        $this->actingAs($user)->postJson(route('cart.increase', $product));
+        $response = $this->actingAs($user)->postJson(route('cart.increase', $product));
+
+        $response->assertOk();
+        $response->assertJson(['quantity' => 2, 'lineAmount' => '₽ 200']);
+    }
+
+    public function test_decrease_json_response_reports_the_updated_line_amount(): void
+    {
+        $user = User::factory()->create();
+        $product = Product::factory()->create(['price' => 100, 'stock_quantity' => 5, 'in_stock' => true]);
+
+        $this->actingAs($user)->postJson(route('cart.increase', $product));
+        $this->actingAs($user)->postJson(route('cart.increase', $product));
+        $response = $this->actingAs($user)->patchJson(route('cart.decrease', $product));
+
+        $response->assertOk();
+        $response->assertJson(['quantity' => 1, 'lineAmount' => '₽ 100']);
+    }
+
+    public function test_decrease_to_zero_reports_a_null_line_amount(): void
+    {
+        $user = User::factory()->create();
+        $product = Product::factory()->create(['price' => 100, 'stock_quantity' => 5, 'in_stock' => true]);
+
+        $this->actingAs($user)->postJson(route('cart.increase', $product));
+        $response = $this->actingAs($user)->patchJson(route('cart.decrease', $product));
+
+        $response->assertOk();
+        $response->assertJson(['quantity' => 0, 'lineAmount' => null]);
+    }
+
+    public function test_destroy_json_response_reports_a_null_line_amount(): void
+    {
+        $user = User::factory()->create();
+        $product = Product::factory()->create(['price' => 100, 'stock_quantity' => 5, 'in_stock' => true]);
+
+        $this->actingAs($user)->postJson(route('cart.increase', $product));
+        $response = $this->actingAs($user)->deleteJson(route('cart.destroy', $product));
+
+        $response->assertOk();
+        $response->assertJson(['lineAmount' => null]);
     }
 
     public function test_index_lists_only_the_current_users_cart_items(): void

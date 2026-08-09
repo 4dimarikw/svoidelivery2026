@@ -59,6 +59,12 @@ document.addEventListener('alpine:init', () => {
                 // слушателя нет, там просто откатывается на «Купить».
                 if (this.quantity === 0) {
                     window.dispatchEvent(new CustomEvent('cart:item-removed', { detail: { productId } }));
+                } else {
+                    // Строка корзины пишет сумму как «2 × ₽ 400» — степпер и
+                    // строка (cart-line.blade.php) сидят в разных Alpine-scope,
+                    // состоянием напрямую не делятся, поэтому новое количество
+                    // идёт тем же событийным приёмом, что и cart:item-removed.
+                    window.dispatchEvent(new CustomEvent('cart:item-updated', { detail: { productId, quantity: body.quantity } }));
                 }
             } catch (e) {
                 // Сеть недоступна — откатываемся к обычной отправке формы.
