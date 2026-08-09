@@ -17,10 +17,10 @@ use Services\CatalogImport\Dto\ImportContext;
  * Литры умножаются на 1000 и округляются до целых миллилитров.
  * Volume создаётся через firstOrCreate по milliliters (unique) — объём является открытым множеством.
  * Примеры:
- *   "кор. 12х0,45л ж/б" → 450 мл,   метка "0.45"
- *   "пэт кег 20л" → 20000 мл, метка "20"
- *   "кор. 06х0,75л ст. бут."  → 750 мл,   метка "0.75"
- *   "кег кег 30л/кк" → 30000 мл, метка "30"
+ *   "кор. 12х0,45л ж/б" → 450 мл,   метка "0.45 л"
+ *   "пэт кег 20л" → 20000 мл, метка "20 л"
+ *   "кор. 06х0,75л ст. бут."  → 750 мл,   метка "0.75 л"
+ *   "кег кег 30л/кк" → 30000 мл, метка "30 л"
  */
 final class ResolveVolumeStage implements ImportStage
 {
@@ -67,7 +67,7 @@ final class ResolveVolumeStage implements ImportStage
         if (preg_match_all('/(\d+[,\.]?\d*)\s*л/', $package, $matches)) {
             $values = $matches[1];
             $raw = end($values);
-            $label = str_replace(',', '.', $raw);
+            $label = str_replace(',', '.', $raw).' л';
             $liters = (float) $label;
             $volumeMl = (int) round($liters * 1000);
 

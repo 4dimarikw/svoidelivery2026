@@ -2,6 +2,8 @@
 
 namespace Services\CatalogImport\Stages;
 
+use App\Events\UntappdBeerSynced;
+use App\Events\UntappdBeerSyncFailed;
 use Closure;
 use Domain\Catalog\Models\BeerStyle;
 use Domain\Untappd\Models\UntappdBeer;
@@ -9,8 +11,6 @@ use Services\CatalogImport\Contracts\ImportStage;
 use Services\CatalogImport\Dto\ImportContext;
 use Services\Untappd\DTOs\BeerResponseDTO;
 use Services\Untappd\Facades\Untappd;
-use Support\Logging\Events\UntappdBeerSynced;
-use Support\Logging\Events\UntappdBeerSyncFailed;
 
 /**
  * Резолвит стиль пива и синкает Untappd-данные при наличии UntappdRef.

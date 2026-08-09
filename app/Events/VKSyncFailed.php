@@ -1,6 +1,6 @@
 <?php
 
-namespace Support\Logging\Events;
+namespace App\Events;
 
 final readonly class VKSyncFailed implements LoggableEvent
 {

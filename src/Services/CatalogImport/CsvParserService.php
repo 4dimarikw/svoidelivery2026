@@ -2,13 +2,13 @@
 
 namespace Services\CatalogImport;
 
+use App\Events\CatalogImportCompleted;
+use App\Events\CatalogImportFailed;
 use Illuminate\Pipeline\Pipeline;
 use Illuminate\Support\Facades\DB;
 use Services\CatalogImport\Dto\ImportContext;
 use Services\CatalogImport\Dto\ImportOptions;
 use Services\CatalogImport\Dto\ImportReport;
-use Support\Logging\Events\CatalogImportCompleted;
-use Support\Logging\Events\CatalogImportFailed;
 use Throwable;
 
 readonly class CsvParserService

@@ -1,24 +1,26 @@
 <?php
 
-namespace Support\Logging\Events;
+namespace App\Events;
 
 final readonly class CatalogImportCompleted implements LoggableEvent
 {
     /**
-     * @param  list<array{line: int, stage: string, message: string, value: string}>  $warnings
+     * @param list<array{line: int, stage: string, message: string, value: string}> $warnings
      */
     public function __construct(
         public string $path,
-        public int $processed,
-        public int $skipped,
-        public int $manufacturersCreated,
-        public int $stylesCreated,
-        public int $productsCreated,
-        public int $productsUpdated,
-        public int $warningsCount,
-        public array $warnings,
-        public int $durationMs,
-    ) {}
+        public int    $processed,
+        public int    $skipped,
+        public int    $manufacturersCreated,
+        public int    $stylesCreated,
+        public int    $productsCreated,
+        public int    $productsUpdated,
+        public int    $warningsCount,
+        public array  $warnings,
+        public int    $durationMs,
+    )
+    {
+    }
 
     public function eventType(): string
     {

@@ -45,7 +45,7 @@ class ResolveVolumeStageTest extends TestCase
 
         $this->assertNotNull($ctx->volume);
         $this->assertSame(450, $ctx->volume->milliliters);
-        $this->assertSame('0.45', $ctx->volume->label);
+        $this->assertSame('0.45 л', $ctx->volume->label);
     }
 
     public function test_liters_converted_and_rounded_to_milliliters(): void
@@ -53,7 +53,7 @@ class ResolveVolumeStageTest extends TestCase
         $ctx = $this->runStage('пэт кег 20л');
 
         $this->assertSame(20000, $ctx->volume->milliliters);
-        $this->assertSame('20', $ctx->volume->label);
+        $this->assertSame('20 л', $ctx->volume->label);
     }
 
     public function test_firstorcreate_reuses_existing_volume_by_milliliters(): void

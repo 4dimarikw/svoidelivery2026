@@ -2,9 +2,10 @@
 
 namespace App\Listeners;
 
-use Domain\Logging\Events\LoggableEvent;
+use App\Events\LoggableEvent;
+use Domain\Logging\Models\EventLog;
 use Illuminate\Support\Str;
-use Support\Models\Log;
+use Throwable;
 
 class PersistEventLog
 {
@@ -13,7 +14,7 @@ class PersistEventLog
         [$userId, $causerType] = $this->resolveCauser();
 
         try {
-            Log::create([
+            EventLog::query()->create([
                 'event_type' => $event->eventType(),
                 'level' => $event->level(),
                 'message' => $event->message(),
@@ -22,7 +23,7 @@ class PersistEventLog
                 'caused_by_type' => $causerType,
                 'created_at' => now(),
             ]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             report($e);
         }
     }
@@ -43,7 +44,7 @@ class PersistEventLog
     private function scrubContext(array $context): array
     {
         foreach ($context as $key => $value) {
-            if (Str::contains(strtolower((string)$key), self::SENSITIVE_KEY_FRAGMENTS)) {
+            if (Str::contains(strtolower((string) $key), self::SENSITIVE_KEY_FRAGMENTS)) {
                 $context[$key] = '[REDACTED]';
             } elseif (is_array($value)) {
                 $context[$key] = $this->scrubContext($value);
