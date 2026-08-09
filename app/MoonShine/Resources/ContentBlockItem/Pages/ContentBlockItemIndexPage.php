@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 namespace App\MoonShine\Resources\ContentBlockItem\Pages;
 
-use App\Content\ContentBlockTypeRegistry;
-use App\Models\ContentBlock;
+
 use App\MoonShine\Resources\ContentBlock\ContentBlockResource;
 use App\MoonShine\Resources\ContentBlockItem\ContentBlockItemResource;
+use Domain\Content\ContentBlockTypeRegistry;
+use Domain\Content\Models\ContentBlock;
+use Illuminate\Contracts\Container\BindingResolutionException;
 use MoonShine\Laravel\Fields\Relationships\BelongsTo;
 use MoonShine\Laravel\Pages\Crud\IndexPage;
 use MoonShine\UI\Fields\ID;
@@ -23,7 +25,7 @@ final class ContentBlockItemIndexPage extends IndexPage
     {
         return [
             ID::make(),
-            BelongsTo::make('Блок', 'block', formatted: static fn (ContentBlock $block) => $block->title, resource: ContentBlockResource::class),
+            BelongsTo::make('Блок', 'block', formatted: static fn(ContentBlock $block) => $block->title, resource: ContentBlockResource::class),
             Text::make('Название', 'title'),
             Text::make('Группа', 'group_key'),
             Text::make('Ключ', 'key'),
@@ -35,13 +37,15 @@ final class ContentBlockItemIndexPage extends IndexPage
     protected function filters(): iterable
     {
         return [
-            BelongsTo::make('Блок', 'block', formatted: static fn (ContentBlock $block) => $block->title, resource: ContentBlockResource::class)->nullable(),
+            BelongsTo::make('Блок', 'block', formatted: static fn(ContentBlock $block) => $block->title, resource: ContentBlockResource::class)->nullable(),
             Select::make('Группа', 'group_key')->options($this->groupOptions())->nullable(),
             Switcher::make('Активен', 'is_active'),
         ];
     }
 
-    /** @return array<string, string> */
+    /** @return array<string, string>
+     * @throws BindingResolutionException
+     */
     private function groupOptions(): array
     {
         $options = [];
