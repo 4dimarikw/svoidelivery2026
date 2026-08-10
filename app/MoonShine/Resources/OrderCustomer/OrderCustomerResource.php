@@ -10,10 +10,16 @@ use App\MoonShine\Resources\OrderCustomer\Pages\OrderCustomerIndexPage;
 use Domain\Order\Models\OrderCustomer;
 use MoonShine\Contracts\Core\PageContract;
 use MoonShine\Laravel\Resources\ModelResource;
+use MoonShine\MenuManager\Attributes\Group;
+use MoonShine\MenuManager\Attributes\Order;
+use MoonShine\Support\Attributes\Icon;
 
 /**
  * @extends ModelResource<OrderCustomer, OrderCustomerIndexPage, OrderCustomerFormPage, OrderCustomerDetailPage>
  */
+#[Icon('user')]
+#[Group('moonshine.group.orders', 'shopping-cart', translatable: true)]
+#[Order(1)]
 class OrderCustomerResource extends ModelResource
 {
     protected string $model = OrderCustomer::class;

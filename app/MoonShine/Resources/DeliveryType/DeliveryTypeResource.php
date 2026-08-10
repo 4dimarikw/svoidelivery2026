@@ -10,10 +10,16 @@ use App\MoonShine\Resources\DeliveryType\Pages\DeliveryTypeIndexPage;
 use Domain\Order\Models\DeliveryType;
 use MoonShine\Contracts\Core\PageContract;
 use MoonShine\Laravel\Resources\ModelResource;
+use MoonShine\MenuManager\Attributes\Group;
+use MoonShine\MenuManager\Attributes\Order;
+use MoonShine\Support\Attributes\Icon;
 
 /**
  * @extends ModelResource<DeliveryType, DeliveryTypeIndexPage, DeliveryTypeFormPage, DeliveryTypeDetailPage>
  */
+#[Icon('truck')]
+#[Group('moonshine.group.orders', 'shopping-cart', translatable: true)]
+#[Order(3)]
 class DeliveryTypeResource extends ModelResource
 {
     protected string $model = DeliveryType::class;

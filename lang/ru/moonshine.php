@@ -9,6 +9,7 @@ return [
     'group' => [
         'catalog' => 'Каталог',
         'users' => 'Пользователи',
+        'orders' => 'Заказы',
     ],
 
     'product' => [

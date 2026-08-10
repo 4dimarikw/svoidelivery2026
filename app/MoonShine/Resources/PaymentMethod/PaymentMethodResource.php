@@ -10,10 +10,16 @@ use App\MoonShine\Resources\PaymentMethod\Pages\PaymentMethodIndexPage;
 use Domain\Order\Models\PaymentMethod;
 use MoonShine\Contracts\Core\PageContract;
 use MoonShine\Laravel\Resources\ModelResource;
+use MoonShine\MenuManager\Attributes\Group;
+use MoonShine\MenuManager\Attributes\Order;
+use MoonShine\Support\Attributes\Icon;
 
 /**
  * @extends ModelResource<PaymentMethod, PaymentMethodIndexPage, PaymentMethodFormPage, PaymentMethodDetailPage>
  */
+#[Icon('credit-card')]
+#[Group('moonshine.group.orders', 'shopping-cart', translatable: true)]
+#[Order(4)]
 class PaymentMethodResource extends ModelResource
 {
     protected string $model = PaymentMethod::class;
