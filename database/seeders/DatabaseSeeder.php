@@ -27,6 +27,7 @@ class DatabaseSeeder extends Seeder
             ContainerSeeder::class,
             PropertySeeder::class,
             SeoSeeder::class,
+            MoonshinePermissionSeeder::class,
         ]);
     }
 }
