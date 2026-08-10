@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\MoonShine\Pages;
 
-
 use Illuminate\Http\Request;
 use Infrastructure\Settings\SiteSettings;
 use MoonShine\Contracts\UI\ComponentContract;
@@ -18,6 +17,7 @@ use MoonShine\UI\Components\FormBuilder;
 use MoonShine\UI\Components\Layout\Box;
 use MoonShine\UI\Fields\Date;
 use MoonShine\UI\Fields\Number;
+use MoonShine\UI\Fields\Switcher;
 use MoonShine\UI\Fields\Text;
 use MoonShine\UI\Fields\Textarea;
 use Throwable;
@@ -55,6 +55,8 @@ final class SiteSettingsPage extends Page
                         Number::make('Ожидаемое число гостей', 'expected_visitors')->min(0),
                         Text::make('Благотворительный проект', 'charity_name'),
                         Text::make('Copyright', 'copyright'),
+                        Switcher::make('Автовход через Telegram Mini App', 'telegram_autologin')
+                            ->hint('Гость, открывший сайт внутри Telegram, входит автоматически, без нажатия кнопки.'),
                     ])
                     ->fill($settings->toArray())
                     ->asyncMethod('save')
@@ -80,11 +82,20 @@ final class SiteSettingsPage extends Page
             'expected_visitors' => ['nullable', 'integer', 'min:0'],
             'charity_name' => ['nullable', 'string', 'max:255'],
             'copyright' => ['nullable', 'string', 'max:255'],
+            'telegram_autologin' => ['nullable', 'boolean'],
         ]);
+
+        // Switcher не шлёт ключ вовсе, когда выключен — его нет в
+        // $validated, и общий цикл ниже его не тронет. Обрабатываем
+        // отдельно через $request->boolean(), иначе настройку нельзя
+        // было бы выключить обратно.
+        unset($validated['telegram_autologin']);
 
         foreach ($validated as $property => $value) {
             $settings->{$property} = $value ?? (in_array($property, ['event_starts_at', 'event_ends_at', 'market_deadline', 'expected_visitors'], true) ? null : '');
         }
+
+        $settings->telegram_autologin = $request->boolean('telegram_autologin');
 
         $settings->save();
 

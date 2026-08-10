@@ -21,4 +21,38 @@ document.addEventListener('alpine:init', () => {
             }
         },
     }));
+
+    /**
+     * Автовход для <x-ui.telegram-autologin> (смонтирован в
+     * components/layouts/app.blade.php, включается в MoonShine —
+     * SiteSettings::$telegram_autologin). Компонент — сам корневой <form>,
+     * поэтому $el и есть форма.
+     */
+    Alpine.data('telegramAutologin', () => ({
+        init() {
+            const webApp = window.Telegram && window.Telegram.WebApp;
+            const initData = webApp && webApp.initData;
+
+            if (typeof initData !== 'string' || initData.length === 0) {
+                return;
+            }
+
+            // Одна попытка на сессию Mini App. Без этого неудачный вход
+            // (протухший initData) даёт цикл: POST → редирект на /login →
+            // форма рендерится снова → POST… Если sessionStorage недоступен
+            // (приватный режим Safari) — лучше не входить вовсе, чем
+            // зациклиться; кнопка на /login остаётся запасным вариантом.
+            try {
+                if (window.sessionStorage.getItem('tg-autologin')) {
+                    return;
+                }
+                window.sessionStorage.setItem('tg-autologin', '1');
+            } catch (e) {
+                return;
+            }
+
+            this.$refs.initData.value = initData;
+            this.$el.submit();
+        },
+    }));
 });

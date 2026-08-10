@@ -8,6 +8,7 @@ use Domain\Telegram\Models\TelegramChat;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\RateLimiter;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
 /**
@@ -155,5 +156,44 @@ class TelegramWebAppLoginTest extends TestCase
         $this->post(route('auth.telegram.webapp'), ['init_data' => $initData]);
 
         $this->assertGuest();
+    }
+
+    // ---- redirect_to (автологин посреди обычной страницы) ------------
+
+    public function test_redirect_to_a_local_path_is_honoured(): void
+    {
+        Notification::fake();
+
+        $response = $this->post(route('auth.telegram.webapp'), [
+            'init_data' => $this->signedInitData(),
+            'redirect_to' => '/cart',
+        ]);
+
+        $response->assertRedirect('/cart');
+    }
+
+    /**
+     * @return array<string, array{string}>
+     */
+    public static function unsafeRedirectTargets(): array
+    {
+        return [
+            'absolute foreign url' => ['https://evil.com'],
+            'protocol-relative url' => ['//evil.com'],
+            'backslash variant' => ['/\\evil.com'],
+        ];
+    }
+
+    #[DataProvider('unsafeRedirectTargets')]
+    public function test_unsafe_redirect_to_falls_back_to_fortify_home(string $redirectTo): void
+    {
+        Notification::fake();
+
+        $response = $this->post(route('auth.telegram.webapp'), [
+            'init_data' => $this->signedInitData(),
+            'redirect_to' => $redirectTo,
+        ]);
+
+        $response->assertRedirect(config('fortify.home'));
     }
 }

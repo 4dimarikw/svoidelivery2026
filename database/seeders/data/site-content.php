@@ -3,6 +3,7 @@
 return [
     'settings' => [
         'site_name' => 'SvoiDelivery',
+        'telegram_autologin' => false,
     ],
     'sections' => [
         ['key' => 'home', 'title' => 'Каталог', 'route_name' => 'home', 'fragment' => '', 'sort_order' => 10],

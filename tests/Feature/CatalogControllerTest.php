@@ -808,8 +808,14 @@ class CatalogControllerTest extends TestCase
         DB::disableQueryLog();
 
         // Коррелированный подзапрос в ORDER BY не добавляет запрос на строку —
-        // тот же бюджет, что у обычного каталога без сортировки.
-        $this->assertLessThan(15, $queryCount, 'Сортировка по рейтингу не должна добавлять N+1.');
+        // тот же бюджет, что у обычного каталога без сортировки, плюс один
+        // фиксированный (не растущий с числом товаров) запрос за
+        // Infrastructure\Settings\SiteSettings: LoadPublicPage передаёт его
+        // в каждый public-page view уже давно, но ни один Blade-файл его не
+        // читал — свойство лениво грузится из БД при первом обращении, а
+        // первым обращением стал <x-ui.telegram-autologin> (смонтирован в
+        // components/layouts/app.blade.php на каждой странице).
+        $this->assertLessThan(16, $queryCount, 'Сортировка по рейтингу не должна добавлять N+1.');
     }
 
     public function test_partial_request_returns_only_cards_with_next_page_header(): void

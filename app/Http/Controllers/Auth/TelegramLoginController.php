@@ -97,7 +97,15 @@ class TelegramLoginController extends Controller
 
         $this->loginTelegramUser($request, $data->id, $data->displayName(), $bot);
 
-        return redirect()->intended(config('fortify.home'));
+        // redirect_to приходит от <x-ui.telegram-autologin> — юзер,
+        // залогиненный посреди обычной страницы, должен на неё и
+        // вернуться, а не на fortify.home. Кнопка на /login redirect_to не
+        // шлёт, так что для неё поведение не меняется.
+        $target = $this->safeRedirectTarget($request->input('redirect_to'));
+
+        return $target !== null
+            ? redirect()->to($target)
+            : redirect()->intended(config('fortify.home'));
     }
 
     /**
@@ -118,6 +126,22 @@ class TelegramLoginController extends Controller
         }
 
         return back()->with('status', 'telegram-unlinked');
+    }
+
+    /**
+     * Только локальный путь, начинающийся ровно с одного '/' — иначе это
+     * open redirect. '//evil.com' и '/\evil.com' браузер трактует как
+     * protocol-relative URL на чужой хост, оба отсекаются тем же regex.
+     * Любое отклонение от формата — null, тихий откат на fortify.home, не
+     * ошибка (значение приходит из скрытой формы, а не от пользователя).
+     */
+    private function safeRedirectTarget(mixed $redirectTo): ?string
+    {
+        if (! is_string($redirectTo) || $redirectTo === '' || mb_strlen($redirectTo) > 255) {
+            return null;
+        }
+
+        return preg_match('#^/[^/\\\\]#', $redirectTo) === 1 ? $redirectTo : null;
     }
 
     /**

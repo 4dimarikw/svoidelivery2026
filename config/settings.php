@@ -2,6 +2,7 @@
 
 use Infrastructure\Settings\CatalogImportSettings;
 use Infrastructure\Settings\GeneralSettings;
+use Infrastructure\Settings\SiteSettings;
 use Infrastructure\Settings\VKSyncSettings;
 use Spatie\LaravelSettings\SettingsCasts\DataCast;
 use Spatie\LaravelSettings\SettingsCasts\DateTimeInterfaceCast;
@@ -19,6 +20,12 @@ return [
         GeneralSettings::class,
         VKSyncSettings::class,
         CatalogImportSettings::class,
+        // Раньше отсутствовал в списке — каждый app(SiteSettings::class)
+        // резолвился заново (Container::scoped() ниже без этого не
+        // применяется), лишний запрос на каждый вызов сверх первого за
+        // запрос. Обнаружилось после того, как <x-ui.telegram-autologin>
+        // добавил второе чтение SiteSettings на странице каталога.
+        SiteSettings::class,
     ],
 
     /*
