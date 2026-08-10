@@ -265,7 +265,7 @@ return [
     ],
 
     'order_customer' => [
-        'title' => 'Клиенты заказов',
+        'title' => 'Получатели',
         'fields' => [
             'first_name' => 'Имя',
             'last_name' => 'Фамилия',

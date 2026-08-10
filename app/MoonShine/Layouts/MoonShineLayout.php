@@ -4,12 +4,39 @@ declare(strict_types=1);
 
 namespace App\MoonShine\Layouts;
 
-
+use App\MoonShine\Pages\CatalogImportSettingsPage;
+use App\MoonShine\Pages\SiteSettingsPage;
+use App\MoonShine\Resources\BeerStyle\BeerStyleResource;
+use App\MoonShine\Resources\Category\CategoryResource;
+use App\MoonShine\Resources\Container\ContainerResource;
+use App\MoonShine\Resources\ContentBlock\ContentBlockResource;
+use App\MoonShine\Resources\ContentBlockItem\ContentBlockItemResource;
+use App\MoonShine\Resources\DeliveryType\DeliveryTypeResource;
+use App\MoonShine\Resources\Favorite\FavoriteResource;
+use App\MoonShine\Resources\Manufacturer\ManufacturerResource;
+use App\MoonShine\Resources\MoonshinePermission\MoonshinePermissionResource;
+use App\MoonShine\Resources\MoonShineUser\MoonShineUserResource;
+use App\MoonShine\Resources\MoonShineUserRole\MoonShineUserRoleResource;
+use App\MoonShine\Resources\Order\OrderResource;
+use App\MoonShine\Resources\OrderCustomer\OrderCustomerResource;
+use App\MoonShine\Resources\OrderItem\OrderItemResource;
+use App\MoonShine\Resources\PaymentMethod\PaymentMethodResource;
+use App\MoonShine\Resources\Product\ProductResource;
+use App\MoonShine\Resources\Property\PropertyResource;
+use App\MoonShine\Resources\Seo\SeoResource;
+use App\MoonShine\Resources\SiteMenu\SiteMenuResource;
+use App\MoonShine\Resources\SiteMenuItem\SiteMenuItemResource;
+use App\MoonShine\Resources\SiteSection\SiteSectionResource;
+use App\MoonShine\Resources\UntappdBeer\UntappdBeerResource;
+use App\MoonShine\Resources\User\UserResource;
+use App\MoonShine\Resources\Volume\VolumeResource;
 use MoonShine\ColorManager\ColorManager;
 use MoonShine\ColorManager\Palettes\PurplePalette;
 use MoonShine\Contracts\ColorManager\ColorManagerContract;
 use MoonShine\Contracts\ColorManager\PaletteContract;
 use MoonShine\Laravel\Layouts\AppLayout;
+use MoonShine\MenuManager\MenuGroup;
+use MoonShine\MenuManager\MenuItem;
 
 final class MoonShineLayout extends AppLayout
 {
@@ -27,11 +54,57 @@ final class MoonShineLayout extends AppLayout
 
     protected function menu(): array
     {
-//        return [
-//            MenuItem::make(VolumeResource::class),
-//            ...parent::menu(),
-//        ];
-        return $this->autoloadMenu();
+        //      return $this->autoloadMenu();
+
+        $isAdmin = request()->user()->isSuperUser();
+
+        return [
+            MenuGroup::make(__('moonshine.group.orders'), [
+                MenuItem::make(OrderResource::class),
+                MenuItem::make(OrderCustomerResource::class),
+                MenuItem::make(DeliveryTypeResource::class)->canSee(fn() => $isAdmin),
+                MenuItem::make(PaymentMethodResource::class)->canSee(fn() => $isAdmin),
+                MenuItem::make(OrderItemResource::class)->canSee(fn() => $isAdmin),
+            ], 'shopping-cart'),
+
+            MenuGroup::make(__('moonshine.group.users'), [
+                MenuItem::make(UserResource::class),
+                MenuItem::make(FavoriteResource::class)->canSee(fn() => $isAdmin),
+
+            ], 'users'),
+
+            MenuGroup::make(__('moonshine.group.catalog'), [
+                MenuItem::make(CategoryResource::class),
+                MenuItem::make(ProductResource::class),
+                MenuItem::make(ManufacturerResource::class),
+                MenuItem::make(BeerStyleResource::class),
+                MenuItem::make(VolumeResource::class),
+                MenuItem::make(ContainerResource::class),
+                MenuItem::make(UntappdBeerResource::class),
+                MenuItem::make(PropertyResource::class)->canSee(fn() => $isAdmin),
+                MenuItem::make(CatalogImportSettingsPage::class)->canSee(fn() => $isAdmin),
+                MenuItem::make(SeoResource::class)->canSee(fn() => $isAdmin),
+
+            ], 'squares-2x2'),
+
+            MenuGroup::make('Контент', [
+                MenuItem::make(SiteMenuResource::class),
+                MenuItem::make(SiteMenuItemResource::class),
+                MenuItem::make(SiteSectionResource::class),
+                MenuItem::make(ContentBlockResource::class),
+                MenuItem::make(ContentBlockItemResource::class),
+                MenuItem::make(SiteSettingsPage::class),
+
+            ], 'document-text'),
+
+            MenuGroup::make('Система', [
+                MenuItem::make(MoonShineUserResource::class),
+                MenuItem::make(MoonShineUserRoleResource::class),
+                MenuItem::make(MoonshinePermissionResource::class),
+
+            ], 'users')->canSee(fn() => $isAdmin),
+
+        ];
     }
 
     /**

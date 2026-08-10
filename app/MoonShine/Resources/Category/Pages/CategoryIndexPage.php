@@ -23,15 +23,29 @@ final class CategoryIndexPage extends IndexPage
      */
     protected function fields(): iterable
     {
+        $isAdmin = request()->user()->isSuperUser();
         return [
             ID::make()->sortable(),
-            Text::make(__('moonshine.category.fields.code'), 'code')->sortable(),
+
+            Text::make(__('moonshine.category.fields.code'), 'code')
+                ->canSee(fn() => $isAdmin)
+                ->sortable(),
+
             Text::make(__('moonshine.category.fields.name'), 'name')->sortable(),
-            Text::make(__('moonshine.category.fields.slug'), 'slug'),
-            Switcher::make(__('moonshine.category.fields.is_active'), 'is_active'),
-            Switcher::make(__('moonshine.category.fields.expects_container'), 'expects_container'),
-            Switcher::make(__('moonshine.category.fields.expects_volume'), 'expects_volume'),
-            Number::make(__('moonshine.category.fields.match_rules_count'), 'match_rules_count')->badge(Color::PURPLE),
+
+            Text::make(__('moonshine.category.fields.slug'), 'slug')->canSee(fn() => $isAdmin),
+
+            Switcher::make(__('moonshine.category.fields.is_active'), 'is_active')->updateOnPreview(),
+
+            Switcher::make(__('moonshine.category.fields.expects_container'), 'expects_container')
+                ->canSee(fn() => $isAdmin),
+
+            Switcher::make(__('moonshine.category.fields.expects_volume'), 'expects_volume')
+                ->canSee(fn() => $isAdmin),
+
+            Number::make(__('moonshine.category.fields.match_rules_count'), 'match_rules_count')->badge(Color::PURPLE)
+                ->canSee(fn() => $isAdmin),
+
             Number::make(__('moonshine.category.fields.products_count'), 'products_count')->badge(Color::GRAY),
         ];
     }

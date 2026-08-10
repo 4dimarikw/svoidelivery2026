@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace App\MoonShine\Resources\MoonShineUserRole;
 
-use MoonShine\Laravel\Models\MoonshineUserRole;
-use MoonShine\Laravel\Resources\ModelResource;
 use App\MoonShine\Resources\MoonShineUserRole\Pages\MoonShineUserRoleFormPage;
 use App\MoonShine\Resources\MoonShineUserRole\Pages\MoonShineUserRoleIndexPage;
+use MoonShine\Laravel\Models\MoonshineUserRole;
+use MoonShine\Laravel\Resources\ModelResource;
 use MoonShine\MenuManager\Attributes\Group;
 use MoonShine\MenuManager\Attributes\Order;
 use MoonShine\Support\Attributes\Icon;
@@ -33,6 +33,11 @@ class MoonShineUserRoleResource extends ModelResource
     protected bool $editInModal = true;
 
     protected bool $cursorPaginate = true;
+
+    public function canSee(): bool
+    {
+        return request()->user()->isSuperUser();
+    }
 
     public function getTitle(): string
     {

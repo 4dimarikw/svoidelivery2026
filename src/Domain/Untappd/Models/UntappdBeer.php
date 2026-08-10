@@ -86,14 +86,6 @@ class UntappdBeer extends Model
         return $this->hasMany(BeerProductDetail::class);
     }
 
-    /**
-     * Столбец исторически хранит относительный путь ('/b/slug/bid' —
-     * ResolveBeerStyleStage писал так до этого фикса, старые засинканные
-     * записи остаются такими и без ре-импорта) — на чтении всегда отдаём
-     * абсолютный URL, независимо от того, что реально лежит в БД.
-     * Идемпотентно: уже абсолютные значения (в т.ч. из UntappdBeerFactory)
-     * возвращаются как есть, домен не задваивается.
-     */
     protected function url(): Attribute
     {
         return Attribute::get(function (?string $value): ?string {
@@ -103,7 +95,7 @@ class UntappdBeer extends Model
 
             return str_starts_with($value, 'http://') || str_starts_with($value, 'https://')
                 ? $value
-                : config('project.untappd_base_url').$value;
+                : config('project.untappd_base_url') . $value;
         });
     }
 }

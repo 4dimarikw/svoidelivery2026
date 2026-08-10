@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace App\MoonShine\Resources\MoonShineUser;
 
-use MoonShine\Laravel\Models\MoonshineUser;
-use MoonShine\Laravel\Resources\ModelResource;
 use App\MoonShine\Resources\MoonShineUser\Pages\MoonShineUserFormPage;
 use App\MoonShine\Resources\MoonShineUser\Pages\MoonShineUserIndexPage;
+use MoonShine\Laravel\Models\MoonshineUser;
+use MoonShine\Laravel\Resources\ModelResource;
 use MoonShine\MenuManager\Attributes\Group;
 use MoonShine\MenuManager\Attributes\Order;
 use MoonShine\Support\Attributes\Icon;
@@ -29,6 +29,11 @@ class MoonShineUserResource extends ModelResource
     protected array $with = ['moonshineUserRole'];
 
     protected bool $simplePaginate = true;
+
+    public function canSee(): bool
+    {
+        return request()->user()->isSuperUser();
+    }
 
     public function getTitle(): string
     {

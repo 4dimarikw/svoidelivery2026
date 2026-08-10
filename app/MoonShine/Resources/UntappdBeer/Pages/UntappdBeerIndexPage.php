@@ -10,7 +10,6 @@ use MoonShine\Contracts\UI\ComponentContract;
 use MoonShine\Contracts\UI\FieldContract;
 use MoonShine\Laravel\Pages\Crud\IndexPage;
 use MoonShine\Laravel\QueryTags\QueryTag;
-use MoonShine\Support\Enums\Color;
 use MoonShine\UI\Components\Table\TableBuilder;
 use MoonShine\UI\Components\Thumbnails;
 use MoonShine\UI\Fields\Date;
@@ -32,7 +31,7 @@ final class UntappdBeerIndexPage extends IndexPage
         return [
             ID::make()->sortable(),
             Image::make(__('moonshine.untappd_beer.fields.label'), 'label')
-                ->changePreview(fn ($value) => Thumbnails::make($value)),
+                ->changePreview(fn($value) => Thumbnails::make($value)),
             Number::make(__('moonshine.untappd_beer.fields.beer_id'), 'beer_id')->sortable(),
             Text::make(__('moonshine.untappd_beer.fields.name'), 'name')->sortable(),
             Text::make(__('moonshine.untappd_beer.fields.brewery'), 'brewery'),
@@ -40,7 +39,7 @@ final class UntappdBeerIndexPage extends IndexPage
             Number::make(__('moonshine.untappd_beer.fields.rating_score'), 'rating_score')->sortable(),
             Number::make(__('moonshine.untappd_beer.fields.rating_count'), 'rating_count'),
             Date::make(__('moonshine.untappd_beer.fields.synced_at'), 'synced_at')->format('d.m.Y H:i')->sortable(),
-            Number::make(__('moonshine.untappd_beer.fields.products_count'), 'beer_product_details_count')->badge(Color::GRAY),
+//            Number::make(__('moonshine.untappd_beer.fields.products_count'), 'beer_product_details_count')->badge(Color::GRAY),
         ];
     }
 
@@ -64,17 +63,17 @@ final class UntappdBeerIndexPage extends IndexPage
         return [
             QueryTag::make(
                 __('moonshine.untappd_beer.query_tags.not_synced'),
-                fn (Builder $query) => $query->whereNull('synced_at')
+                fn(Builder $query) => $query->whereNull('synced_at')
             ),
             QueryTag::make(
                 __('moonshine.untappd_beer.query_tags.no_products'),
-                fn (Builder $query) => $query->whereDoesntHave('beerProductDetails')
+                fn(Builder $query) => $query->whereDoesntHave('beerProductDetails')
             ),
         ];
     }
 
     /**
-     * @param  TableBuilder  $component
+     * @param TableBuilder $component
      * @return TableBuilder
      */
     protected function modifyListComponent(ComponentContract $component): ComponentContract

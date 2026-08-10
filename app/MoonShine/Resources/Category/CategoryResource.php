@@ -32,9 +32,6 @@ class CategoryResource extends ModelResource
 
     protected string $column = 'name';
 
-    // Форма с 4 вкладками (флаги импорта, репитер правил резолва, pivot
-    // свойств) слишком тесная для модалки — create/edit открываются полной
-    // страницей. Detail остаётся в модалке, там нечего показывать сложнее.
     protected bool $createInModal = false;
 
     protected bool $editInModal = false;

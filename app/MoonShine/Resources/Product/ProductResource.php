@@ -20,10 +20,11 @@ use MoonShine\Support\ListOf;
  * (PersistProductStage::__invoke()) при повторном запуске обновляет только
  * price/stock_quantity/in_stock у уже существующего товара — эти поля всегда
  * возвращаются к состоянию 1С на следующем синке, остальные (name/
- * description/классификация/status/media/пивные детали/штрихкоды)
+ * description/классификация/status/media/пивные детали/штрихкоды/flags)
  * принадлежат админке. `flags` заполняется импортом только при создании
- * товара (см. ResolveFlagsStage/PersistProductStage) и в этой форме не
- * редактируется — чисто backend-поле. Delete/MassDelete отключены: товар из
+ * товара (см. ResolveFlagsStage/PersistProductStage) — дальше значение
+ * редактируется здесь, в форме, и повторный импорт его не перезаписывает.
+ * Delete/MassDelete отключены: товар из
  * 1С нельзя удалить руками, для вывода из продажи есть status = archived.
  *
  * @extends ModelResource<Product, ProductIndexPage, ProductFormPage, ProductDetailPage>

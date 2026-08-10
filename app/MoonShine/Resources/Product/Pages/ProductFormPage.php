@@ -136,9 +136,19 @@ final class ProductFormPage extends FormPage
                         Number::make(__('moonshine.product.fields.package_units'), 'package_units'),
                         Text::make(__('moonshine.product.fields.packaging_raw'), 'packaging_raw'),
                         Number::make(__('moonshine.product.fields.shelf_life_days'), 'shelf_life_days'),
-                        Json::make(__('moonshine.product.fields.flags'), 'metadata')
+                        Json::make(__('moonshine.product.fields.flags'), 'flags')
                             ->fields(productVariationMetaData()->getMoonshineFields())
-                            ->object(),
+                            ->object()
+                            // Switcher внутри Json отдаёт 0/1 (int) — приводим к bool,
+                            // чтобы тип совпадал с тем, что пишет ResolveFlagsStage при импорте.
+                            ->onApply(static function (Product $item, mixed $value): Product {
+                                $item->flags = array_map(
+                                    static fn (mixed $v): bool => (bool) $v,
+                                    (array) $value,
+                                );
+
+                                return $item;
+                            }),
                     ])->icon('adjustments-horizontal'),
 
                     Tab::make(__('moonshine.product.tabs.image'), [
