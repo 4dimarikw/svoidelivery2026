@@ -72,6 +72,12 @@ class TelegramLoginController extends Controller
             $request,
             (int) $telegramUser->getId(),
             $telegramUser->getName() ?: $telegramUser->getNickname(),
+            // getNickname() тут не годится — Provider::mapUserToObject()
+            // фолбэчит его на first_name, когда у аккаунта нет @username.
+            // Сырой payload честный: ключа 'username' там просто нет.
+            // getRaw() не в Contracts\User — instanceof сужает до конкретного
+            // класса, который реально возвращает Socialite::driver('telegram').
+            $telegramUser instanceof \Laravel\Socialite\Two\User ? ($telegramUser->getRaw()['username'] ?? null) : null,
             $bot,
         );
 
@@ -95,7 +101,7 @@ class TelegramLoginController extends Controller
                 ->withErrors(['email' => __('account.telegram.failed')]);
         }
 
-        $this->loginTelegramUser($request, $data->id, $data->displayName(), $bot);
+        $this->loginTelegramUser($request, $data->id, $data->displayName(), $data->username, $bot);
 
         // redirect_to приходит от <x-ui.telegram-autologin> — юзер,
         // залогиненный посреди обычной страницы, должен на неё и
@@ -179,14 +185,14 @@ class TelegramLoginController extends Controller
      * Общий хвост обоих способов входа: находит/заводит telegraph_chats по
      * chat_id, логинит пользователя, поднимает сессию.
      */
-    private function loginTelegramUser(Request $request, int $chatId, string $name, TelegramBot $bot): void
+    private function loginTelegramUser(Request $request, int $chatId, string $name, ?string $username, TelegramBot $bot): void
     {
         $chat = TelegramChat::query()
             ->where('chat_id', $chatId)
             ->where('telegraph_bot_id', $bot->id)
             ->first();
 
-        $user = $chat?->user_id ? $chat->user : $this->register($chatId, $name, $bot, $chat);
+        $user = $chat?->user_id ? $chat->user : $this->register($chatId, $name, $username, $bot, $chat);
 
         Auth::login($user, true);
         $request->session()->regenerate();
@@ -196,7 +202,7 @@ class TelegramLoginController extends Controller
      * Создаёт аккаунт без email и пароля — Telegram их не отдаёт — и
      * привязывает (или заводит) telegraph_chats к нему.
      */
-    private function register(int $chatId, string $name, TelegramBot $bot, ?TelegramChat $chat): User
+    private function register(int $chatId, string $name, ?string $username, TelegramBot $bot, ?TelegramChat $chat): User
     {
         $user = User::create(['name' => $name]);
 
@@ -206,6 +212,15 @@ class TelegramLoginController extends Controller
         // SendEmailVerificationNotification на этом событии безопасен: см.
         // User::sendEmailVerificationNotification().
         event(new Registered($user));
+
+        // @username в Telegram не обязателен — без него ссылку строить не из
+        // чего, поле telegram_url остаётся пустым и редактируемым как раньше.
+        // Только при СОЗДАНИИ аккаунта: повторный вход (см. loginTelegramUser
+        // выше — тогда register() вообще не вызывается) не должен затирать
+        // то, что пользователь мог сам поменять в профиле.
+        if ($username !== null && $username !== '') {
+            $user->profile()->updateOrCreate([], ['telegram_url' => "https://t.me/{$username}"]);
+        }
 
         ($chat ?? new TelegramChat(['chat_id' => $chatId, 'telegraph_bot_id' => $bot->id]))
             ->fill(['user_id' => $user->id, 'name' => $name])

@@ -4,6 +4,7 @@ namespace Tests\Feature\Auth;
 
 use DefStudio\Telegraph\Facades\Telegraph;
 use Domain\Auth\Models\User;
+use Domain\Profile\Models\Profile;
 use Domain\Telegram\Models\TelegramBot;
 use Domain\Telegram\Models\TelegramChat;
 use Domain\Telegram\Support\TelegramLinkCode;
@@ -54,18 +55,26 @@ class TelegramLoginTest extends TestCase
      * Повторяет схему подписи из SocialiteProviders\Telegram\Provider::user():
      * hash_hmac по отсортированным "key=value", ключ — sha256 от токена бота.
      *
+     * $without удаляет ключи ДО подписи, не после — в отличие от unset()
+     * постфактум (см. test_missing_auth_date_is_rejected), это меняет сам
+     * hash, а не просто убирает поле из запроса с уже невалидной подписью.
+     * auth_date можно снимать постфактум, потому что его контроллер проверяет
+     * раньше вызова Socialite и обрывается сразу; для остальных полей это не
+     * так — Provider::user() хеширует все присланные ключи.
+     *
      * @param  array<string, mixed>  $overrides
+     * @param  list<string>  $without
      * @return array<string, mixed>
      */
-    private function signedPayload(array $overrides = [], string $token = self::BOT_TOKEN): array
+    private function signedPayload(array $overrides = [], string $token = self::BOT_TOKEN, array $without = []): array
     {
-        $data = array_merge([
+        $data = array_diff_key(array_merge([
             'id' => 987654321,
             'first_name' => 'Иван',
             'last_name' => 'Петров',
             'username' => 'ivan_petrov',
             'auth_date' => now()->timestamp,
-        ], $overrides);
+        ], $overrides), array_flip($without));
 
         $dataToHash = collect($data)
             ->transform(fn ($value, $key) => "$key=$value")
@@ -99,23 +108,46 @@ class TelegramLoginTest extends TestCase
 
         // App\Listeners\CreateUserProfile отработал на Registered.
         $this->assertNotNull($user->profile);
+        // signedPayload() кладёт username => 'ivan_petrov' — при регистрации
+        // через Telegram это должно сразу попасть в telegram_url профиля.
+        $this->assertSame('https://t.me/ivan_petrov', $user->profile->telegram_url);
 
         Notification::assertNothingSent();
+    }
+
+    public function test_registration_without_a_username_leaves_telegram_url_empty(): void
+    {
+        Notification::fake();
+
+        $payload = $this->signedPayload(without: ['username']);
+
+        $response = $this->get(route('auth.telegram.callback', $payload));
+
+        $response->assertRedirect(config('fortify.home'));
+
+        $user = User::query()->whereHas('telegramChat', fn ($q) => $q->where('chat_id', 987654321))->sole();
+
+        $this->assertNull($user->profile->telegram_url);
     }
 
     public function test_repeat_login_reuses_the_same_user(): void
     {
         $existing = User::factory()->telegram()->create();
+        $profile = Profile::factory()->for($existing)->create(['telegram_url' => null]);
         TelegramChat::create([
             'chat_id' => '987654321',
             'telegraph_bot_id' => $this->bot->id,
             'user_id' => $existing->id,
         ]);
 
+        // signedPayload() шлёт username => 'ivan_petrov' — повторный вход не
+        // должен затирать telegram_url существующего профиля (register() на
+        // этом пути вообще не вызывается).
         $this->get(route('auth.telegram.callback', $this->signedPayload()));
 
         $this->assertAuthenticatedAs($existing);
         $this->assertSame(1, User::query()->count());
+        $this->assertNull($profile->fresh()->telegram_url);
     }
 
     public function test_tampered_hash_is_rejected(): void
