@@ -34,11 +34,12 @@ return [
         // Domain\Catalog\Models\Product::description (Support\Casts\PurifiedHtml) —
         // без img/div/span[style]: для товарного описания это лишняя площадь
         // атаки (произвольные картинки с любого домена, инлайн-стили), базового
-        // форматирования текста достаточно.
+        // форматирования текста достаточно. AutoParagraph выключен намеренно —
+        // иначе даже голый plain text из 1С/Untappd оборачивается в <p>; переносы
+        // строк рисует whitespace-pre-line на витрине (resources/views/pages/product.blade.php).
         'product_description' => [
             'HTML.Doctype' => 'HTML 4.01 Transitional',
             'HTML.Allowed' => 'b,strong,i,em,u,br,p,ul,ol,li,a[href|title]',
-            'AutoFormat.AutoParagraph' => true,
             'AutoFormat.RemoveEmpty' => true,
         ],
         'test' => [

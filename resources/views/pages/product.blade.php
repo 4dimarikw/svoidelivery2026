@@ -104,8 +104,10 @@
                         <h2 class="font-mono text-label uppercase tracking-label text-ink-500">{{ __('catalog.product.description') }}</h2>
                         {{-- {!! !!}, не {{ }}: $product->description уже прошло
                              Support\Casts\PurifiedHtml (профиль product_description)
-                             и на записи, и на чтении — безопасно рендерить как HTML. --}}
-                        <p class="mt-2 whitespace-pre-line text-body-m text-ink-700">{!! $product->description !!}</p>
+                             и на записи, и на чтении — безопасно рендерить как HTML.
+                             div, не p: описание само может содержать <p> (разрешён
+                             профилем), вложенный <p> в <p> невалиден и ломает разметку. --}}
+                        <div class="mt-2 whitespace-pre-line text-body-m text-ink-700">{!! $product->description !!}</div>
                     </div>
                 @endif
 
