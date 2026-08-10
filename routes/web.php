@@ -27,6 +27,14 @@ Route::get('auth/telegram/callback', [TelegramLoginController::class, 'callback'
     ->middleware('throttle:10,1')
     ->name('auth.telegram.callback');
 
+// То же вход/регистрация гостя, но для Telegram Mini App: сайт открыт
+// внутри Telegram и Login Widget выше не рендерится/не работает (см.
+// TelegramLoginController). initData подписан отдельным алгоритмом —
+// Domain\Telegram\Support\WebAppInitData.
+Route::post('auth/telegram/webapp', [TelegramLoginController::class, 'webapp'])
+    ->middleware('throttle:10,1')
+    ->name('auth.telegram.webapp');
+
 Route::middleware(['auth', 'verified'])->prefix('account')->name('account.')->group(function () {
     Route::get('profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::put('profile', [ProfileController::class, 'update'])->name('profile.update');

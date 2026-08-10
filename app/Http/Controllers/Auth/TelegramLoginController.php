@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Domain\Auth\Models\User;
 use Domain\Telegram\Models\TelegramBot;
 use Domain\Telegram\Models\TelegramChat;
+use Domain\Telegram\Support\WebAppInitData;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -15,15 +16,23 @@ use Laravel\Socialite\Contracts\User as SocialiteUser;
 use Laravel\Socialite\Facades\Socialite;
 
 /**
- * Вход гостя через Telegram Login Widget.
+ * Вход гостя через Telegram — два независимых способа получить те же
+ * поля (id/имя): Login Widget (обычный браузер) и Mini App initData
+ * (сайт открыт внутри Telegram Web App, где виджет не работает — он
+ * рендерится в iframe от oauth.telegram.org и требует redirect на домен из
+ * BotFather /setdomain, что внутри webview Telegram либо блокируется, либо
+ * ломает сессию Mini App). См. <x-ui.telegram-login-button> /
+ * <x-ui.telegram-webapp-button> — auth/login.blade.php показывает только
+ * подходящий вариант через Alpine (telegramAuth, resources/js/telegram.js).
  *
- * Только вход/регистрация — привязка Telegram к уже авторизованному аккаунту
- * идёт другим путём: через диплинк t.me/<bot>?start=<code> и
- * App\Telegraph\WebhookHandler::start() (см. Domain\Telegram\Support\TelegramLinkCode,
- * /account/profile). Причина раздвоения: боту нужен реальный разговор с
- * пользователем, чтобы потом слать ему сообщения — диплинк это гарантирует
- * всегда, виджет только если пользователь разрешил data-request-access="write".
- * Гостю диплинк не подходит: он не даёт немедленного редиректа с сессией.
+ * Оба способа — только вход/регистрация — привязка Telegram к уже
+ * авторизованному аккаунту идёт третьим, отдельным путём: через диплинк
+ * t.me/<bot>?start=<code> и App\Telegraph\WebhookHandler::start() (см.
+ * Domain\Telegram\Support\TelegramLinkCode, /account/profile). Причина
+ * раздвоения: боту нужен реальный разговор с пользователем, чтобы потом
+ * слать ему сообщения — диплинк это гарантирует всегда, виджет только если
+ * пользователь разрешил data-request-access="write". Гостю диплинк не
+ * подходит: он не даёт немедленного редиректа с сессией.
  *
  * Виджет — не OAuth: он редиректит браузер прямо сюда обычным GET с
  * параметрами id/first_name/last_name/username/photo_url/auth_date/hash, а
@@ -59,15 +68,34 @@ class TelegramLoginController extends Controller
                 ->withErrors(['email' => __('account.telegram.failed')]);
         }
 
-        $chat = TelegramChat::query()
-            ->where('chat_id', $telegramUser->getId())
-            ->where('telegraph_bot_id', $bot->id)
-            ->first();
+        $this->loginTelegramUser(
+            $request,
+            (int) $telegramUser->getId(),
+            $telegramUser->getName() ?: $telegramUser->getNickname(),
+            $bot,
+        );
 
-        $user = $chat?->user_id ? $chat->user : $this->register($telegramUser, $bot, $chat);
+        return redirect()->intended(config('fortify.home'));
+    }
 
-        Auth::login($user, true);
-        $request->session()->regenerate();
+    /**
+     * Вход через Mini App: initData вместо GET-параметров виджета, другой
+     * алгоритм подписи (см. Domain\Telegram\Support\WebAppInitData).
+     */
+    public function webapp(Request $request): RedirectResponse
+    {
+        $bot = TelegramBot::current();
+
+        $data = $bot ? WebAppInitData::verify((string) $request->input('init_data'), $bot->token) : null;
+
+        if ($data === null) {
+            // Тот же ключ ошибки, что у callback() — тот же <x-ui.error> на
+            // форме входа его покажет.
+            return redirect()->route('login')
+                ->withErrors(['email' => __('account.telegram.failed')]);
+        }
+
+        $this->loginTelegramUser($request, $data->id, $data->displayName(), $bot);
 
         return redirect()->intended(config('fortify.home'));
     }
@@ -124,14 +152,29 @@ class TelegramLoginController extends Controller
     }
 
     /**
+     * Общий хвост обоих способов входа: находит/заводит telegraph_chats по
+     * chat_id, логинит пользователя, поднимает сессию.
+     */
+    private function loginTelegramUser(Request $request, int $chatId, string $name, TelegramBot $bot): void
+    {
+        $chat = TelegramChat::query()
+            ->where('chat_id', $chatId)
+            ->where('telegraph_bot_id', $bot->id)
+            ->first();
+
+        $user = $chat?->user_id ? $chat->user : $this->register($chatId, $name, $bot, $chat);
+
+        Auth::login($user, true);
+        $request->session()->regenerate();
+    }
+
+    /**
      * Создаёт аккаунт без email и пароля — Telegram их не отдаёт — и
      * привязывает (или заводит) telegraph_chats к нему.
      */
-    private function register(SocialiteUser $telegramUser, TelegramBot $bot, ?TelegramChat $chat): User
+    private function register(int $chatId, string $name, TelegramBot $bot, ?TelegramChat $chat): User
     {
-        $user = User::create([
-            'name' => $telegramUser->getName() ?: $telegramUser->getNickname(),
-        ]);
+        $user = User::create(['name' => $name]);
 
         // App\Listeners\CreateUserProfile — единственное место, которое знает,
         // что происходит после регистрации; заводить профиль здесь руками
@@ -140,8 +183,8 @@ class TelegramLoginController extends Controller
         // User::sendEmailVerificationNotification().
         event(new Registered($user));
 
-        ($chat ?? new TelegramChat(['chat_id' => $telegramUser->getId(), 'telegraph_bot_id' => $bot->id]))
-            ->fill(['user_id' => $user->id, 'name' => $telegramUser->getName() ?: $telegramUser->getNickname()])
+        ($chat ?? new TelegramChat(['chat_id' => $chatId, 'telegraph_bot_id' => $bot->id]))
+            ->fill(['user_id' => $user->id, 'name' => $name])
             ->save();
 
         return $user;

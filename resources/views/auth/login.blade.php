@@ -37,11 +37,25 @@
         {{-- Виджет ничего не рендерит, пока бот не заведён (см.
              <x-ui.telegram-login-button>), поэтому разделитель тоже под тем
              же условием — иначе на локали осталась бы висеть «или» без
-             второй половины. --}}
-        @if (\Domain\Telegram\Models\TelegramBot::current()?->username)
-            <x-ui.divider class="my-6">{{ __('account.login.or') }}</x-ui.divider>
+             второй половины.
 
-            <x-ui.telegram-login-button />
+             Внутри Telegram Mini App виджет не работает (см. докблок
+             TelegramLoginController) — telegramAuth (resources/js/telegram.js)
+             переключает видимость по window.Telegram.WebApp.initData.
+             x-show, не <template x-if>: виджет — это <script async>,
+             склонированный из template script не выполняется. --}}
+        @if (\Domain\Telegram\Models\TelegramBot::current()?->username)
+            <div x-data="telegramAuth" x-cloak>
+                <x-ui.divider class="my-6">{{ __('account.login.or') }}</x-ui.divider>
+
+                <div x-show="!inWebApp">
+                    <x-ui.telegram-login-button />
+                </div>
+
+                <div x-show="inWebApp">
+                    <x-ui.telegram-webapp-button />
+                </div>
+            </div>
         @endif
 
         <x-slot:footer>

@@ -46,6 +46,7 @@ return [
         'failed' => 'Не удалось войти через Telegram. Попробуйте ещё раз.',
         'linked' => 'Telegram привязан.',
         'unlinked' => 'Telegram отвязан.',
+        'webapp_login' => 'Войти через Telegram',
     ],
 
     'register' => [

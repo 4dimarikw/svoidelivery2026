@@ -46,6 +46,7 @@ return [
         'failed' => 'Could not sign in with Telegram. Please try again.',
         'linked' => 'Telegram linked.',
         'unlinked' => 'Telegram unlinked.',
+        'webapp_login' => 'Sign in with Telegram',
     ],
 
     'register' => [

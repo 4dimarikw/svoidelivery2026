@@ -166,12 +166,20 @@ class TelegramLoginTest extends TestCase
 
     public function test_login_page_shows_the_widget_only_when_a_bot_is_configured(): void
     {
-        $this->get(route('login'))->assertSee('data-telegram-login="svoi_test_bot"', false);
+        $response = $this->get(route('login'));
+
+        $response->assertSee('data-telegram-login="svoi_test_bot"', false);
+        // telegramAuth (resources/js/telegram.js) переключает виджет и
+        // Mini App-кнопку — обе точки входа рендерятся под одним корнем.
+        $response->assertSee('x-data="telegramAuth"', false);
+        $response->assertSee(route('auth.telegram.webapp'), false);
 
         TelegramBot::query()->delete();
         TelegramBot::flushCache();
 
-        $this->get(route('login'))->assertDontSee('telegram-widget.js', false);
+        $response = $this->get(route('login'));
+        $response->assertDontSee('telegram-widget.js', false);
+        $response->assertDontSee('x-data="telegramAuth"', false);
     }
 
     // ---- Диплинк /start (привязка авторизованного аккаунта) ----------

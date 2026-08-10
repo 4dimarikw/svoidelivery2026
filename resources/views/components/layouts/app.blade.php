@@ -21,6 +21,12 @@
         {!! $seoText !!}
     @endif
 
+    {{-- SDK Telegram Mini App: даёт window.Telegram.WebApp.initData. Грузится
+         синхронно и до @vite — resources/js/telegram.js читает его сразу на
+         alpine:init, скрипт должен успеть отработать раньше. Безвредно вне
+         Mini App: объект создаётся, initData там просто пустая строка. --}}
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body class="h-full bg-cream-100 text-ink-900 antialiased">
