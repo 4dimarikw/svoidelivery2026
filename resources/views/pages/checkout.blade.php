@@ -58,10 +58,7 @@
                                         :checked="(string) $selectedAddressId === (string) $address->id"
                                         class="items-start rounded-sm border border-hairline p-3.5"
                                     >
-                                        {{ $address->city }}, {{ $address->street }}, {{ $address->house }}
-                                        @if ($address->apartment)
-                                            &middot; {{ __('account.address.apartment') }} {{ $address->apartment }}
-                                        @endif
+                                        {{ $address->city }}, {{ $address->address }}
                                     </x-ui.radio>
                                 @endforeach
                             </div>

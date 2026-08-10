@@ -22,12 +22,7 @@ class AddressFactory extends Factory
             'user_id' => UserFactory::new(),
             'label' => fake()->optional()->word(),
             'city' => fake()->city(),
-            'street' => fake()->streetName(),
-            'house' => (string) fake()->buildingNumber(),
-            'apartment' => fake()->optional()->numerify('##'),
-            'entrance' => fake()->optional()->numerify('#'),
-            'floor' => fake()->optional()->numerify('#'),
-            'intercom' => fake()->optional()->numerify('####'),
+            'address' => fake()->streetAddress(),
             'comment' => fake()->optional()->sentence(),
             'is_default' => false,
         ];

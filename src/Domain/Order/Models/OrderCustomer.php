@@ -24,12 +24,7 @@ class OrderCustomer extends Model
         'last_name',
         'phone',
         'city',
-        'street',
-        'house',
-        'apartment',
-        'entrance',
-        'floor',
-        'intercom',
+        'address',
         'comment',
     ];
 

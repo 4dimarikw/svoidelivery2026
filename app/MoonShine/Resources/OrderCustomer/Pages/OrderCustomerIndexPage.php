@@ -42,7 +42,7 @@ class OrderCustomerIndexPage extends IndexPage
 
             Text::make(__('moonshine.order_customer.fields.city'), 'city'),
 
-            Text::make(__('moonshine.order_customer.fields.street'), 'street'),
+            Text::make(__('moonshine.order_customer.fields.address'), 'address'),
         ];
     }
 

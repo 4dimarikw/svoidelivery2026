@@ -40,15 +40,8 @@ class OrderCustomerFormPage extends FormPage
                     Box::make('Адрес доставки', [
                         Flex::make([
                             Text::make(__('moonshine.order_customer.fields.city'), 'city')->nullable(),
-                            Text::make(__('moonshine.order_customer.fields.street'), 'street')->nullable(),
+                            Text::make(__('moonshine.order_customer.fields.address'), 'address')->nullable(),
                         ]),
-                        Flex::make([
-                            Text::make(__('moonshine.order_customer.fields.house'), 'house')->nullable(),
-                            Text::make(__('moonshine.order_customer.fields.apartment'), 'apartment')->nullable(),
-                            Text::make(__('moonshine.order_customer.fields.entrance'), 'entrance')->nullable(),
-                            Text::make(__('moonshine.order_customer.fields.floor'), 'floor')->nullable(),
-                        ]),
-                        Text::make(__('moonshine.order_customer.fields.intercom'), 'intercom')->nullable(),
                         Text::make(__('moonshine.order_customer.fields.comment'), 'comment')->nullable(),
                     ]),
                 ], 8, 8),
@@ -74,12 +67,7 @@ class OrderCustomerFormPage extends FormPage
             'last_name' => ['string', 'required'],
             'phone' => ['string', 'required'],
             'city' => $addressRule,
-            'street' => $addressRule,
-            'house' => ['nullable', 'string'],
-            'apartment' => ['nullable', 'string'],
-            'entrance' => ['nullable', 'string'],
-            'floor' => ['nullable', 'string'],
-            'intercom' => ['nullable', 'string'],
+            'address' => $addressRule,
             'comment' => ['nullable', 'string'],
         ];
     }

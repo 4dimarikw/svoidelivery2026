@@ -31,18 +31,8 @@
                             @endif
                         </div>
                         <p class="mt-2 text-body-m text-ink-900">
-                            {{ $address->city }}, {{ $address->street }}, {{ $address->house }}
-                            @if ($address->apartment)
-                                &middot; {{ __('account.address.apartment') }} {{ $address->apartment }}
-                            @endif
+                            {{ $address->city }}, {{ $address->address }}
                         </p>
-                        @if ($address->entrance || $address->floor || $address->intercom)
-                            <p class="mt-1 text-micro text-ink-500">
-                                @if ($address->entrance) {{ __('account.address.entrance') }} {{ $address->entrance }} @endif
-                                @if ($address->floor) &middot; {{ __('account.address.floor') }} {{ $address->floor }} @endif
-                                @if ($address->intercom) &middot; {{ __('account.address.intercom') }} {{ $address->intercom }} @endif
-                            </p>
-                        @endif
                         @if ($address->comment)
                             <p class="mt-1 text-micro text-ink-500">{{ $address->comment }}</p>
                         @endif

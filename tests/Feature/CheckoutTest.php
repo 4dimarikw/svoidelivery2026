@@ -112,8 +112,7 @@ class CheckoutTest extends TestCase
             'last_name' => 'Иванов',
             'phone' => '9991234567',
             'city' => $address->city,
-            'street' => $address->street,
-            'house' => $address->house,
+            'address' => $address->address,
         ]);
 
         // OrderItemObserver → UpdateAmountOrder — сумма не проставляется

@@ -12,9 +12,7 @@
     $customer = $order->orderCustomer;
     $addressLine = $customer ? collect([
         $customer->city,
-        $customer->street,
-        $customer->house ? 'д. '.$customer->house : null,
-        $customer->apartment ? 'кв. '.$customer->apartment : null,
+        $customer->address,
     ])->filter()->implode(', ') : null;
 @endphp
 

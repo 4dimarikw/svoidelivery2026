@@ -38,17 +38,7 @@ class OrderCustomerDetailPage extends DetailPage
 
             Text::make(__('moonshine.order_customer.fields.city'), 'city'),
 
-            Text::make(__('moonshine.order_customer.fields.street'), 'street'),
-
-            Text::make(__('moonshine.order_customer.fields.house'), 'house'),
-
-            Text::make(__('moonshine.order_customer.fields.apartment'), 'apartment'),
-
-            Text::make(__('moonshine.order_customer.fields.entrance'), 'entrance'),
-
-            Text::make(__('moonshine.order_customer.fields.floor'), 'floor'),
-
-            Text::make(__('moonshine.order_customer.fields.intercom'), 'intercom'),
+            Text::make(__('moonshine.order_customer.fields.address'), 'address'),
 
             Text::make(__('moonshine.order_customer.fields.comment'), 'comment'),
         ];

@@ -25,9 +25,7 @@ final class AddressIndexPage extends IndexPage
             ID::make(),
             Text::make(__('moonshine.address.fields.label'), 'label'),
             Text::make(__('moonshine.address.fields.city'), 'city'),
-            Text::make(__('moonshine.address.fields.street'), 'street'),
-            Text::make(__('moonshine.address.fields.house'), 'house'),
-            Text::make(__('moonshine.address.fields.apartment'), 'apartment'),
+            Text::make(__('moonshine.address.fields.address'), 'address'),
             Switcher::make(__('moonshine.address.fields.is_default'), 'is_default'),
         ];
     }

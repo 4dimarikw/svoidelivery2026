@@ -43,6 +43,6 @@ class OrderResource extends ModelResource
 
     public function search(): array
     {
-        return ['id', 'number', 'comment', 'amount', 'user.name', 'orderCustomer.city', 'orderCustomer.street'];
+        return ['id', 'number', 'comment', 'amount', 'user.name', 'orderCustomer.city', 'orderCustomer.address'];
     }
 }

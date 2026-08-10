@@ -143,32 +143,12 @@ class UploadOrderToFTP
 
         if ($order->deliveryType->with_address) {
             $comment .= 'Город: '.$order->orderCustomer?->city."\r\n";
-            $comment .= 'Адрес: '.$this->formatAddress($order->orderCustomer);
+            $comment .= 'Адрес: '.($order->orderCustomer?->address ?? '');
         } else {
             $comment .= 'Самовывоз';
         }
 
         return $comment;
-    }
-
-    /**
-     * "Улица, дом, кв. N, подъезд N, этаж N" — только заполненные части,
-     * зеркалит структуру Domain\Profile\Models\Address (см. OrderCustomer,
-     * снимок адреса на момент заказа).
-     */
-    private function formatAddress(?OrderCustomer $customer): string
-    {
-        if (! $customer) {
-            return '';
-        }
-
-        return collect([
-            $customer->street,
-            $customer->house ? 'д. '.$customer->house : null,
-            $customer->apartment ? 'кв. '.$customer->apartment : null,
-            $customer->entrance ? 'подъезд '.$customer->entrance : null,
-            $customer->floor ? 'этаж '.$customer->floor : null,
-        ])->filter()->implode(', ');
     }
 
     /**

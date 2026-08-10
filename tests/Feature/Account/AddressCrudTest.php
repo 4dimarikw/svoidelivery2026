@@ -14,9 +14,10 @@ class AddressCrudTest extends TestCase
     private function payload(array $overrides = []): array
     {
         return array_merge([
+            'label' => 'Дом',
             'city' => 'Москва',
-            'street' => 'Тверская',
-            'house' => '1',
+            'address' => 'Тверская, д. 1',
+            'comment' => 'Позвонить за час',
         ], $overrides);
     }
 
@@ -41,10 +42,16 @@ class AddressCrudTest extends TestCase
         $this->actingAs($user)->post(route('account.addresses.store'), $this->payload());
 
         $this->assertSame(1, $user->addresses()->count());
-        $this->assertDatabaseHas('addresses', ['city' => 'Москва', 'user_id' => $user->id]);
+        $this->assertDatabaseHas('addresses', [
+            'city' => 'Москва',
+            'user_id' => $user->id,
+            'label' => 'Дом',
+            'address' => 'Тверская, д. 1',
+            'comment' => 'Позвонить за час',
+        ]);
     }
 
-    public function test_store_requires_city_street_and_house(): void
+    public function test_store_requires_city_and_address(): void
     {
         $user = User::factory()->create();
 
@@ -52,7 +59,7 @@ class AddressCrudTest extends TestCase
             ->from(route('account.addresses.create'))
             ->post(route('account.addresses.store'), []);
 
-        $response->assertSessionHasErrors(['city', 'street', 'house']);
+        $response->assertSessionHasErrors(['city', 'address']);
     }
 
     public function test_ajax_store_redirects_via_x_redirect_header(): void

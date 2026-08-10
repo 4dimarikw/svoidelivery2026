@@ -85,12 +85,7 @@ class AddressController extends Controller
         return $request->validate([
             'label' => ['nullable', 'string', 'max:255'],
             'city' => ['required', 'string', 'max:255'],
-            'street' => ['required', 'string', 'max:255'],
-            'house' => ['required', 'string', 'max:32'],
-            'apartment' => ['nullable', 'string', 'max:32'],
-            'entrance' => ['nullable', 'string', 'max:32'],
-            'floor' => ['nullable', 'string', 'max:32'],
-            'intercom' => ['nullable', 'string', 'max:32'],
+            'address' => ['required', 'string', 'max:255'],
             'comment' => ['nullable', 'string', 'max:1000'],
             'is_default' => ['nullable', 'boolean'],
         ]);

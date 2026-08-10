@@ -14,15 +14,7 @@
     <div class="grid gap-3.5">
         <x-ui.input-field name="label" :label="__('account.address.label')" :value="$address?->label" />
         <x-ui.input-field name="city" :label="__('account.address.city')" :value="$address?->city" required />
-        <x-ui.input-field name="street" :label="__('account.address.street')" :value="$address?->street" required />
-        <x-ui.input-field name="house" :label="__('account.address.house')" :value="$address?->house" required />
-
-        <div class="grid grid-cols-2 gap-4">
-            <x-ui.input-field name="apartment" :label="__('account.address.apartment')" :value="$address?->apartment" />
-            <x-ui.input-field name="entrance" :label="__('account.address.entrance')" :value="$address?->entrance" />
-            <x-ui.input-field name="floor" :label="__('account.address.floor')" :value="$address?->floor" />
-            <x-ui.input-field name="intercom" :label="__('account.address.intercom')" :value="$address?->intercom" />
-        </div>
+        <x-ui.input-field name="address" :label="__('account.address.address')" :value="$address?->address" required />
 
         <x-ui.textarea-field name="comment" :label="__('account.address.comment')" :value="$address?->comment" />
 

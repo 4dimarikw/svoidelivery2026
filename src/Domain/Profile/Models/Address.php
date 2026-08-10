@@ -14,20 +14,16 @@ class Address extends Model
     use HasFactory;
 
     protected $fillable = [
-        // Mass-assignable so factories/tests can create() with an explicit
-        // owner. No controller ever request-validates this key (see
-        // AddressController::validated()) — the request-driven paths always
-        // go through $user->addresses()->create(), which sets the FK itself
-        // regardless of $fillable — so this doesn't open a mass-assignment hole.
+        // Mass-assignable, чтобы фабрики/тесты могли create() с явным
+        // владельцем. Ни один контроллер не валидирует этот ключ через
+        // request (см. AddressController::validated()) — запросные пути
+        // всегда идут через $user->addresses()->create(), который сам
+        // выставляет FK независимо от $fillable, так что дыры
+        // mass-assignment здесь нет.
         'user_id',
         'label',
         'city',
-        'street',
-        'house',
-        'apartment',
-        'entrance',
-        'floor',
-        'intercom',
+        'address',
         'comment',
         'is_default',
     ];
@@ -50,10 +46,11 @@ class Address extends Model
     }
 
     /**
-     * Only one address per user may be the default — enforced here rather
-     * than a DB constraint (a partial unique index is more portability
-     * trouble than it's worth for this). Saving an address as default
-     * unsets it on every other address belonging to the same user.
+     * Только один адрес пользователя может быть адресом по умолчанию —
+     * проверяется здесь, а не constraint'ом БД (частичный unique-индекс
+     * себя не окупает ради этого случая). Сохранение адреса как
+     * дефолтного снимает флаг со всех остальных адресов того же
+     * пользователя.
      */
     protected static function booted(): void
     {

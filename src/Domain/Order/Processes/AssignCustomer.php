@@ -28,12 +28,7 @@ final class AssignCustomer implements OrderProcessContract
     {
         $addressData = [
             'city' => null,
-            'street' => null,
-            'house' => null,
-            'apartment' => null,
-            'entrance' => null,
-            'floor' => null,
-            'intercom' => null,
+            'address' => null,
             'comment' => null,
         ];
 
@@ -44,12 +39,7 @@ final class AssignCustomer implements OrderProcessContract
 
             $addressData = [
                 'city' => $address->city,
-                'street' => $address->street,
-                'house' => $address->house,
-                'apartment' => $address->apartment,
-                'entrance' => $address->entrance,
-                'floor' => $address->floor,
-                'intercom' => $address->intercom,
+                'address' => $address->address,
                 'comment' => $address->comment,
             ];
         }

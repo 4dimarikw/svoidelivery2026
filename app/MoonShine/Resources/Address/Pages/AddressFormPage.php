@@ -32,12 +32,7 @@ final class AddressFormPage extends FormPage
 
                 Text::make(__('moonshine.address.fields.label'), 'label'),
                 Text::make(__('moonshine.address.fields.city'), 'city')->required(),
-                Text::make(__('moonshine.address.fields.street'), 'street')->required(),
-                Text::make(__('moonshine.address.fields.house'), 'house')->required(),
-                Text::make(__('moonshine.address.fields.apartment'), 'apartment'),
-                Text::make(__('moonshine.address.fields.entrance'), 'entrance'),
-                Text::make(__('moonshine.address.fields.floor'), 'floor'),
-                Text::make(__('moonshine.address.fields.intercom'), 'intercom'),
+                Text::make(__('moonshine.address.fields.address'), 'address')->required(),
                 Textarea::make(__('moonshine.address.fields.comment'), 'comment'),
 
                 Switcher::make(__('moonshine.address.fields.is_default'), 'is_default')
@@ -53,12 +48,7 @@ final class AddressFormPage extends FormPage
         return [
             'label' => ['nullable', 'string', 'max:255'],
             'city' => ['required', 'string', 'max:255'],
-            'street' => ['required', 'string', 'max:255'],
-            'house' => ['required', 'string', 'max:32'],
-            'apartment' => ['nullable', 'string', 'max:32'],
-            'entrance' => ['nullable', 'string', 'max:32'],
-            'floor' => ['nullable', 'string', 'max:32'],
-            'intercom' => ['nullable', 'string', 'max:32'],
+            'address' => ['required', 'string', 'max:255'],
             'comment' => ['nullable', 'string', 'max:1000'],
             'is_default' => ['nullable', 'boolean'],
         ];

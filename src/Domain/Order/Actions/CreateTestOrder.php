@@ -53,12 +53,7 @@ final class CreateTestOrder
                 'last_name' => $profile?->last_name ?? 'Тестов',
                 'phone' => $profile?->phone ?? '79990000000',
                 'city' => $address?->city,
-                'street' => $address?->street,
-                'house' => $address?->house,
-                'apartment' => $address?->apartment,
-                'entrance' => $address?->entrance,
-                'floor' => $address?->floor,
-                'intercom' => $address?->intercom,
+                'address' => $address?->address,
                 'comment' => $address?->comment,
             ]);
 
