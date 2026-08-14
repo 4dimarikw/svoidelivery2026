@@ -11,7 +11,9 @@ use MoonShine\Contracts\UI\ComponentContract;
 use MoonShine\Contracts\UI\FieldContract;
 use MoonShine\Laravel\Pages\Crud\FormPage;
 use MoonShine\UI\Components\Layout\Box;
+use MoonShine\UI\Fields\Date;
 use MoonShine\UI\Fields\ID;
+use MoonShine\UI\Fields\Switcher;
 use MoonShine\UI\Fields\Text;
 use MoonShine\UI\Fields\Textarea;
 
@@ -36,6 +38,12 @@ final class ProfileFormPage extends FormPage
                 Text::make(__('moonshine.profile.fields.vk_url'), 'vk_url'),
                 Text::make(__('moonshine.profile.fields.telegram_url'), 'telegram_url'),
                 Textarea::make(__('moonshine.profile.fields.default_order_comment'), 'default_order_comment'),
+
+                // Только чтение — заполняются CheckTelegramBotAvailabilityAction
+                // (php artisan telegram:check-activity), не редактируются вручную.
+                Switcher::make(__('moonshine.profile.fields.is_bot_active'), 'is_bot_active')->readonly(),
+                Text::make(__('moonshine.profile.fields.last_bot_error'), 'last_bot_error')->readonly(),
+                Date::make(__('moonshine.profile.fields.bot_checked_at'), 'bot_checked_at')->format('d.m.Y H:i')->readonly(),
             ]),
         ];
     }

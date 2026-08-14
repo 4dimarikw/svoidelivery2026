@@ -212,6 +212,9 @@ return [
             'vk_url' => 'VK link',
             'telegram_url' => 'Telegram link',
             'default_order_comment' => 'Default order comment',
+            'is_bot_active' => 'Bot active',
+            'last_bot_error' => 'Last bot error',
+            'bot_checked_at' => 'Checked at',
         ],
     ],
 

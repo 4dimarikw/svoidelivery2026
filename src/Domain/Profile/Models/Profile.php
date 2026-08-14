@@ -28,7 +28,21 @@ class Profile extends Model
         'vk_url',
         'telegram_url',
         'default_order_comment',
+        // Пишутся только Domain\Telegram\Actions\CheckTelegramBotAvailabilityAction,
+        // не через пользовательские формы (ProfileController/ProfileFormPage их
+        // не валидируют и не показывают редактируемыми).
+        'is_bot_active',
+        'last_bot_error',
+        'bot_checked_at',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'is_bot_active' => 'boolean',
+            'bot_checked_at' => 'datetime',
+        ];
+    }
 
     protected static function newFactory(): Factory
     {

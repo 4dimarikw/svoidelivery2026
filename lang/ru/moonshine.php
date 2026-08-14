@@ -212,6 +212,9 @@ return [
             'vk_url' => 'Ссылка VK',
             'telegram_url' => 'Ссылка Telegram',
             'default_order_comment' => 'Комментарий к заказу по умолчанию',
+            'is_bot_active' => 'Бот активен',
+            'last_bot_error' => 'Последняя ошибка бота',
+            'bot_checked_at' => 'Проверен',
         ],
     ],
 
