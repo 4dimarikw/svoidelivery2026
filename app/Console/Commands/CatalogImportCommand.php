@@ -5,6 +5,8 @@ namespace App\Console\Commands;
 use Domain\Catalog\Models\Category;
 use Illuminate\Console\Command;
 use Infrastructure\Ftp\Catalog1cFtpClient;
+use Infrastructure\Jobs\ZeroOutStaleProductsJob;
+use Infrastructure\Settings\CatalogImportSettings;
 use Services\CatalogImport\CsvParserService;
 use Services\CatalogImport\Dto\ImportOptions;
 use Services\CatalogImport\Dto\ImportReport;
@@ -24,7 +26,7 @@ class CatalogImportCommand extends Command
     /** Откуда взят CSV — только для шапки файла отчёта. Заполняется resolveImportPath(). */
     private string $sourceLabel = 'неизвестен';
 
-    public function handle(CsvParserService $service, Catalog1cFtpClient $ftp, ImportReportLogger $logger): int
+    public function handle(CsvParserService $service, Catalog1cFtpClient $ftp, ImportReportLogger $logger, CatalogImportSettings $catalogImportSettings): int
     {
         // Реестр категорий редактируется из MoonShine — префлайт ловит
         // нарушения инвариантов (дубли alcohol/when, пустые value и т.п.),
@@ -81,6 +83,14 @@ class CatalogImportCommand extends Command
         }
 
         $this->printReport($report);
+
+        // seenCodesTracked уже кодирует "не dry-run и без --categories" —
+        // повторно эти условия здесь не проверяем, см. CsvParserService::import().
+        if ($report->seenCodesTracked && $catalogImportSettings->zero_out_missing) {
+            ZeroOutStaleProductsJob::dispatch();
+            $this->info('Задача обнуления пропавших товаров поставлена в очередь.');
+        }
+
         $this->writeReportLog(fn () => $logger->writeSuccess($params, $report, $isDryRun));
 
         return self::SUCCESS;
@@ -96,6 +106,7 @@ class CatalogImportCommand extends Command
     {
         $transactionMode = (string) config('catalog_import.transaction_mode', 'row');
         $chunkSize = (int) config('catalog_import.chunk_size', 500);
+        $zeroOutMissing = app(CatalogImportSettings::class)->zero_out_missing;
 
         return [
             // storage_path() отдаёт разделитель ОС, а download_dir — прямые слэши.
@@ -106,6 +117,11 @@ class CatalogImportCommand extends Command
             'Транзакции' => $transactionMode === 'chunk'
                 ? "chunk (chunk_size {$chunkSize})"
                 : $transactionMode,
+            'Обнуление пропавших товаров' => match (true) {
+                $isDryRun, $categoryFilter !== [] => 'не применяется (dry-run или фильтр категорий)',
+                $zeroOutMissing => 'включено',
+                default => 'выключено в настройках',
+            },
         ];
     }
 

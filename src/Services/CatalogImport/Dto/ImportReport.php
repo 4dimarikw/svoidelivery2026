@@ -22,6 +22,14 @@ class ImportReport
 
     public int $imagesAttached = 0;
 
+    /**
+     * true, если CsvParserService вёл catalog_import_seen_codes для этого
+     * прогона (не dry-run и без --categories) — CatalogImportCommand решает
+     * по этому флагу, можно ли ставить ZeroOutStaleProductsJob в очередь.
+     * См. Services\CatalogImport\SeenCodeCollector.
+     */
+    public bool $seenCodesTracked = false;
+
     /** Длительность импорта, мс. Заполняется CsvParserService, в т.ч. в dry-run. */
     public int $durationMs = 0;
 

@@ -16,6 +16,7 @@ readonly class CsvParserService
     public function __construct(
         private CsvReader $reader,
         private Pipeline $pipeline,
+        private SeenCodeCollector $seenCodes,
     ) {}
 
     /**
@@ -36,8 +37,19 @@ readonly class CsvParserService
         $transactionMode = $options->transactionMode ?? config('catalog_import.transaction_mode', 'row');
         $chunkSize = $options->chunkSize ?? (int) config('catalog_import.chunk_size', 500);
 
+        // Обнуление пропавших товаров (ZeroOutStaleProductsAction) не должно
+        // видеть ни dry-run прогон (ничего реально не импортировано), ни
+        // частичный по --categories (иначе catalog:import --categories=beer
+        // обнулил бы весь остальной каталог) — см. SeenCodeCollector.
+        $trackSeenCodes = ! $options->dryRun && $options->categoryFilter === [];
+        $report->seenCodesTracked = $trackSeenCodes;
+
         try {
             $lookups = new LookupCache;
+
+            if ($trackSeenCodes) {
+                $this->seenCodes->reset();
+            }
 
             // dry-run: внешняя транзакция-обёртка откатит всё в finally
             if ($options->dryRun) {
@@ -46,9 +58,13 @@ readonly class CsvParserService
 
             try {
                 if ($transactionMode === 'chunk') {
-                    $this->importChunked($path, $encoding, $delimiter, $stages, $postCommitStages, $lookups, $report, $options, $warningLimit, $chunkSize);
+                    $this->importChunked($path, $encoding, $delimiter, $stages, $postCommitStages, $lookups, $report, $options, $warningLimit, $chunkSize, $trackSeenCodes);
                 } else {
-                    $this->importRows($path, $encoding, $delimiter, $stages, $postCommitStages, $lookups, $report, $options, $warningLimit, $transactionMode);
+                    $this->importRows($path, $encoding, $delimiter, $stages, $postCommitStages, $lookups, $report, $options, $warningLimit, $transactionMode, $trackSeenCodes);
+                }
+
+                if ($trackSeenCodes) {
+                    $this->seenCodes->flush();
                 }
 
                 // Пишется в отчёт до dry-run-проверки: событие при dry-run не диспатчится,
@@ -108,9 +124,17 @@ readonly class CsvParserService
         ImportOptions $options,
         int $warningLimit,
         string $transactionMode,
+        bool $trackSeenCodes,
     ): void {
         foreach ($this->reader->read($path, $encoding, $delimiter, fn () => $report->malformedRows++) as $row) {
             $report->processed++;
+
+            // До пайплайна, вне транзакции строки — присутствие в CSV
+            // фиксируется независимо от того, дойдёт ли строка до
+            // PersistProductStage (см. SeenCodeCollector).
+            if ($trackSeenCodes) {
+                $this->seenCodes->add($row);
+            }
 
             $ctx = new ImportContext($row, $lookups, $options->dryRun, $options->categoryFilter);
 
@@ -147,6 +171,7 @@ readonly class CsvParserService
         ImportOptions $options,
         int $warningLimit,
         int $chunkSize,
+        bool $trackSeenCodes,
     ): void {
         $buffer = [];
 
@@ -169,6 +194,12 @@ readonly class CsvParserService
 
         foreach ($this->reader->read($path, $encoding, $delimiter, fn () => $report->malformedRows++) as $row) {
             $report->processed++;
+
+            // Вне DB::transaction чанка — та же причина, что в importRows().
+            if ($trackSeenCodes) {
+                $this->seenCodes->add($row);
+            }
+
             $buffer[] = $row;
 
             if (count($buffer) >= $chunkSize) {

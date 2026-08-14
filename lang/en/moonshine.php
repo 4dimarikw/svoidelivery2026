@@ -113,6 +113,8 @@ return [
             'accessory_marker' => 'Accessory marker',
             'advent_marker' => 'Advent marker',
             'fallback_slug' => 'Fallback category',
+            'zero_out_missing' => 'Zero out stock for products missing from the feed',
+            'zero_out_max_percent' => 'Zero-out threshold, %',
         ],
     ],
 

@@ -14,7 +14,9 @@ use MoonShine\MenuManager\Attributes\Order;
 use MoonShine\Support\Attributes\AsyncMethod;
 use MoonShine\Support\Attributes\Icon;
 use MoonShine\UI\Components\FormBuilder;
+use MoonShine\UI\Fields\Number;
 use MoonShine\UI\Fields\Select;
+use MoonShine\UI\Fields\Switcher;
 use MoonShine\UI\Fields\Text;
 use Services\CatalogImport\CategoryRegistry;
 
@@ -75,6 +77,15 @@ class CatalogImportSettingsPage extends Page
                     ->options(static fn (): array => Category::query()->orderBy('name')->pluck('name', 'slug')->all())
                     ->required()
                     ->hint('Категория, в которую попадают товары, не подошедшие ни под одно правило резолва.'),
+
+                Switcher::make(__('moonshine.catalog_import_settings.fields.zero_out_missing'), 'zero_out_missing')
+                    ->hint('После успешного импорта (не dry-run, без фильтра категорий) обнулять остаток у товаров, отсутствующих в выгрузке.'),
+
+                Number::make(__('moonshine.catalog_import_settings.fields.zero_out_max_percent'), 'zero_out_max_percent')
+                    ->min(1)
+                    ->max(100)
+                    ->required()
+                    ->hint('Предохранитель: если доля пропавших товаров превышает этот процент от числа товаров в наличии — обнуление отменяется целиком (признак битого/обрезанного CSV).'),
             ])
             ->submit(__('moonshine::ui.save'));
     }
@@ -87,6 +98,8 @@ class CatalogImportSettingsPage extends Page
             'accessory_marker' => ['required', 'string', 'max:255'],
             'advent_marker' => ['required', 'string', 'max:255'],
             'fallback_slug' => ['required', 'string', 'exists:categories,slug'],
+            'zero_out_missing' => ['boolean'],
+            'zero_out_max_percent' => ['required', 'integer', 'min:1', 'max:100'],
         ]);
 
         $settings = app(CatalogImportSettings::class);
@@ -94,6 +107,8 @@ class CatalogImportSettingsPage extends Page
         $settings->accessory_marker = $data['accessory_marker'];
         $settings->advent_marker = $data['advent_marker'];
         $settings->fallback_slug = $data['fallback_slug'];
+        $settings->zero_out_missing = (bool) ($data['zero_out_missing'] ?? false);
+        $settings->zero_out_max_percent = $data['zero_out_max_percent'];
 
         $settings->save();
 
