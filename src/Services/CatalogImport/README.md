@@ -228,7 +228,7 @@ app/Console/Commands/CatalogImportCommand.php    Artisan-команда
 | `EBC` | `beer_product_details.ebc` | `ResolveEbcStage` |
 | `UntappdRef` | синхронизация `untappd_beers` (вкл. `description`, в приоритете над CSV `Описание`) → `beer_product_details.untappd_beer_id` | `ResolveBeerStyleStage` |
 | `СрокГодности` | `products.shelf_life_days` | `ResolveShelfLifeStage` |
-| `РейтингПродаж` | `products.flags` (json, вместе с `GeneralSettings::$product_flags`; только при создании) | `ResolveFlagsStage` |
+| `РейтингПродаж` | `products.flags` (json, вместе с `CatalogImportSettings::$product_flags`; только при создании) | `ResolveFlagsStage` |
 | `КодТовара` | `products.external_code` (ключ идемпотентности) | `ResolveExternalIdsStage` |
 | `Артикул` | `products.article` (источник slug) | `ResolveExternalIdsStage` |
 | `Цена` | `products.price` | `ResolvePriceStage` |

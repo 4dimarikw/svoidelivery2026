@@ -111,7 +111,7 @@ Composer autoloads four extra namespaces out of `src/` (see `composer.json`):
 
 - `Domain\` → `src/Domain/` — domain models (see "Domain layer" above)
 - `Services\` → `src/Services/` — service classes: `Services\CatalogImport` (1С CSV import pipeline, see its own README), `Services\Untappd` (Untappd API client/DTOs/repositories)
-- `Infrastructure\` → `src/Infrastructure/` — cross-cutting infra: `Infrastructure\Settings\*` (`spatie/laravel-settings` classes, e.g. `CatalogImportSettings`, `GeneralSettings`), `Infrastructure\Ftp\Catalog1cFtpClient`, `Infrastructure\Jobs`, `Infrastructure\Rules` (custom validation rules)
+- `Infrastructure\` → `src/Infrastructure/` — cross-cutting infra: `Infrastructure\Settings\*` (`spatie/laravel-settings` classes, e.g. `CatalogImportSettings`, `SiteSettings`), `Infrastructure\Ftp\Catalog1cFtpClient`, `Infrastructure\Jobs`, `Infrastructure\Rules` (custom validation rules)
 - `Support\` → `src/Support/` — helpers (`src/Support/helpers.php` autoloaded globally via composer `files`) and `Support\Logging\Events` (typed events logged for observability, e.g. `CatalogImportCompleted`/`Failed`)
 
 Standard Laravel dirs (`app/Http`, `app/Providers`) hold framework glue only; `app/Models` is empty (`User` lives in `Domain\Auth\Models` — see "Domain layer" above). `app/MoonShine/` holds MoonShine-specific classes:

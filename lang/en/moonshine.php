@@ -118,6 +118,7 @@ return [
             'product_status' => 'Status for new products',
             'new_days' => 'Product counts as new for, days',
             'cache' => 'Cache',
+            'extra_charge' => 'Extra charge',
             'flag_wu' => 'No Untappd match',
             'flag_fil' => 'First in list',
             'flag_mss' => 'Manual stock status',

@@ -63,6 +63,9 @@ class CatalogImportSettings extends Settings
     /** Не используется ни одним читателем кода — перенесено из GeneralSettings как есть. */
     public bool $cache = false;
 
+    /** Наценка. Не используется ни одним читателем кода — перенесено из GeneralSettings как есть. */
+    public int $extra_charge = 0;
+
     public static function group(): string
     {
         return 'catalog_import';

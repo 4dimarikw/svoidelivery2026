@@ -15,11 +15,9 @@ use MoonShine\Support\Attributes\AsyncMethod;
 use MoonShine\Support\Attributes\Icon;
 use MoonShine\UI\Components\FormBuilder;
 use MoonShine\UI\Components\Layout\Box;
-use MoonShine\UI\Fields\Date;
 use MoonShine\UI\Fields\Number;
 use MoonShine\UI\Fields\Switcher;
 use MoonShine\UI\Fields\Text;
-use MoonShine\UI\Fields\Textarea;
 use Throwable;
 
 #[Icon('cog-6-tooth')]
@@ -44,19 +42,12 @@ final class SiteSettingsPage extends Page
                 FormBuilder::make()
                     ->fields([
                         Text::make('Название сайта', 'site_name')->required(),
-                        Text::make('Слоган', 'tagline'),
-                        Textarea::make('Описание', 'description'),
-                        Date::make('Начало события', 'event_starts_at')->withTime(),
-                        Date::make('Окончание события', 'event_ends_at')->withTime(),
-                        Text::make('Место', 'location_name'),
-                        Text::make('Организатор', 'organizer_name'),
-                        Text::make('Telegram (имя без ссылки)', 'telegram_handle'),
-                        Date::make('Дедлайн маркета', 'market_deadline')->withTime(),
-                        Number::make('Ожидаемое число гостей', 'expected_visitors')->min(0),
-                        Text::make('Благотворительный проект', 'charity_name'),
-                        Text::make('Copyright', 'copyright'),
                         Switcher::make('Автовход через Telegram Mini App', 'telegram_autologin')
                             ->hint('Гость, открывший сайт внутри Telegram, входит автоматически, без нажатия кнопки.'),
+                        Text::make('Email тестового пользователя', 'test_user_email')
+                            ->hint('Используется кнопкой «Тестовый заказ» в списке заказов — должен совпадать с email существующего пользователя.'),
+                        Text::make('Email для уведомлений', 'notify_email'),
+                        Number::make('Лимит обновлений Untappd', 'untappd_update_limit')->min(0),
                     ])
                     ->fill($settings->toArray())
                     ->asyncMethod('save')
@@ -71,30 +62,21 @@ final class SiteSettingsPage extends Page
     {
         $validated = $request->validate([
             'site_name' => ['required', 'string', 'max:255'],
-            'tagline' => ['nullable', 'string', 'max:255'],
-            'description' => ['nullable', 'string'],
-            'event_starts_at' => ['nullable', 'date'],
-            'event_ends_at' => ['nullable', 'date', 'after_or_equal:event_starts_at'],
-            'location_name' => ['nullable', 'string', 'max:255'],
-            'organizer_name' => ['nullable', 'string', 'max:255'],
-            'telegram_handle' => ['nullable', 'string', 'max:100', 'regex:/^@?[A-Za-z0-9_]+$/'],
-            'market_deadline' => ['nullable', 'date'],
-            'expected_visitors' => ['nullable', 'integer', 'min:0'],
-            'charity_name' => ['nullable', 'string', 'max:255'],
-            'copyright' => ['nullable', 'string', 'max:255'],
+            'test_user_email' => ['nullable', 'email', 'exists:users,email'],
+            'notify_email' => ['nullable', 'email', 'max:255'],
+            'untappd_update_limit' => ['required', 'integer', 'min:0'],
             'telegram_autologin' => ['nullable', 'boolean'],
         ]);
 
+        $settings->site_name = $validated['site_name'];
+        $settings->test_user_email = $validated['test_user_email'] ?? null;
+        $settings->notify_email = $validated['notify_email'] ?? null;
+        $settings->untappd_update_limit = (int) $validated['untappd_update_limit'];
+
         // Switcher не шлёт ключ вовсе, когда выключен — его нет в
-        // $validated, и общий цикл ниже его не тронет. Обрабатываем
+        // $validated, и присваивание выше его не тронуло бы. Обрабатываем
         // отдельно через $request->boolean(), иначе настройку нельзя
         // было бы выключить обратно.
-        unset($validated['telegram_autologin']);
-
-        foreach ($validated as $property => $value) {
-            $settings->{$property} = $value ?? (in_array($property, ['event_starts_at', 'event_ends_at', 'market_deadline', 'expected_visitors'], true) ? null : '');
-        }
-
         $settings->telegram_autologin = $request->boolean('telegram_autologin');
 
         $settings->save();

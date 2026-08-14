@@ -15,7 +15,7 @@ use Domain\Auth\Models\User;
 use Domain\Order\Actions\CreateTestOrder;
 use Domain\Order\Actions\UploadOrderToFTP;
 use Domain\Order\Enums\OrderStatuses;
-use Infrastructure\Settings\GeneralSettings;
+use Infrastructure\Settings\SiteSettings;
 use MoonShine\Contracts\UI\ActionButtonContract;
 use MoonShine\Contracts\UI\ComponentContract;
 use MoonShine\Contracts\UI\FieldContract;
@@ -174,7 +174,7 @@ class OrderIndexPage extends IndexPage
     public function createTestOrder()
     {
         try {
-            $testUserEmail = app(GeneralSettings::class)->test_user_email;
+            $testUserEmail = app(SiteSettings::class)->test_user_email;
 
             $user = User::query()->where('email', $testUserEmail)->firstOrFail();
 

@@ -4,6 +4,9 @@ return [
     'settings' => [
         'site_name' => 'SvoiDelivery',
         'telegram_autologin' => false,
+        'test_user_email' => null,
+        'notify_email' => null,
+        'untappd_update_limit' => 0,
     ],
     'sections' => [
         ['key' => 'home', 'title' => 'Каталог', 'route_name' => 'home', 'fragment' => '', 'sort_order' => 10],

@@ -113,6 +113,10 @@ class CatalogImportSettingsPage extends Page
 
                 Switcher::make(__('moonshine.catalog_import_settings.fields.cache'), 'cache'),
 
+                Number::make(__('moonshine.catalog_import_settings.fields.extra_charge'), 'extra_charge')
+                    ->min(0)
+                    ->required(),
+
                 Switcher::make(__('moonshine.catalog_import_settings.fields.flag_wu'), 'flag_wu'),
                 Switcher::make(__('moonshine.catalog_import_settings.fields.flag_fil'), 'flag_fil'),
                 Switcher::make(__('moonshine.catalog_import_settings.fields.flag_mss'), 'flag_mss'),
@@ -136,6 +140,7 @@ class CatalogImportSettingsPage extends Page
             'product_status' => ['required', 'string', Rule::enum(ProductStatus::class)],
             'new_days' => ['required', 'integer', 'min:1'],
             'cache' => ['boolean'],
+            'extra_charge' => ['required', 'integer', 'min:0'],
             'flag_wu' => ['boolean'],
             'flag_fil' => ['boolean'],
             'flag_mss' => ['boolean'],
@@ -152,6 +157,7 @@ class CatalogImportSettingsPage extends Page
         $settings->product_status = $data['product_status'];
         $settings->new_days = $data['new_days'];
         $settings->cache = (bool) ($data['cache'] ?? false);
+        $settings->extra_charge = $data['extra_charge'];
         $settings->product_flags = [
             'wu' => (bool) ($data['flag_wu'] ?? false),
             'fil' => (bool) ($data['flag_fil'] ?? false),

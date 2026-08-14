@@ -1,7 +1,6 @@
 <?php
 
 use Infrastructure\Settings\CatalogImportSettings;
-use Infrastructure\Settings\GeneralSettings;
 use Infrastructure\Settings\SiteSettings;
 use Infrastructure\Settings\VKSyncSettings;
 use Spatie\LaravelSettings\SettingsCasts\DataCast;
@@ -17,7 +16,6 @@ return [
      * put them (manually) here.
      */
     'settings' => [
-        GeneralSettings::class,
         VKSyncSettings::class,
         CatalogImportSettings::class,
         // Раньше отсутствовал в списке — каждый app(SiteSettings::class)
