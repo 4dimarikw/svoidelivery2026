@@ -2,7 +2,7 @@
 
 namespace Services;
 
-use Infrastructure\Settings\GeneralSettings;
+use Infrastructure\Settings\CatalogImportSettings;
 use MoonShine\UI\Fields\Number;
 use MoonShine\UI\Fields\Switcher;
 use MoonShine\UI\Fields\Text;
@@ -20,7 +20,7 @@ final class ProductFlagsManager
 
     public function getMoonshineFields(): array
     {
-        return collect(app(GeneralSettings::class)->product_flags)->map(function ($value, $key) {
+        return collect(app(CatalogImportSettings::class)->product_flags)->map(function ($value, $key) {
             return match (gettype($value)) {
                 'boolean' => $this->getBoolField($key),
                 'string' => $this->getTextOrBoolField($key),

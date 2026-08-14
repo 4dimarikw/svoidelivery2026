@@ -3,7 +3,7 @@
 namespace Services\CatalogImport\Stages;
 
 use Closure;
-use Infrastructure\Settings\GeneralSettings;
+use Infrastructure\Settings\CatalogImportSettings;
 use Services\CatalogImport\Contracts\ImportStage;
 use Services\CatalogImport\Dto\ImportContext;
 
@@ -12,7 +12,7 @@ use Services\CatalogImport\Dto\ImportContext;
  * контекста импорта.
  *
  * Логика:
- * Стартует с GeneralSettings::$product_flags как seed, затем переопределяет:
+ * Стартует с CatalogImportSettings::$product_flags как seed, затем переопределяет:
  * `wu` — true, если товар не сматчен с Untappd ($ctx->untappdBeer === null);
  * `mss` — всегда false (нет источника данных для этого флага в текущем пайплайне);
  * `promo` — РейтингПродаж равен `catalog_import.flags.promo_marker` ('Акция').
@@ -26,7 +26,7 @@ final class ResolveFlagsStage implements ImportStage
     {
         $flag = $ctx->row->get(config('catalog_import.columns.sales_rating'));
 
-        $ctx->attributes['flags'] = app(GeneralSettings::class)->product_flags ?: [];
+        $ctx->attributes['flags'] = app(CatalogImportSettings::class)->product_flags ?: [];
 
         $ctx->attributes['flags']['wu'] = $ctx->untappdBeer == null;
 

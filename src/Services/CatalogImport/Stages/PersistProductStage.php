@@ -4,7 +4,7 @@ namespace Services\CatalogImport\Stages;
 
 use Closure;
 use Domain\Catalog\Models\Product;
-use Infrastructure\Settings\GeneralSettings;
+use Infrastructure\Settings\CatalogImportSettings;
 use Services\CatalogImport\Contracts\ImportStage;
 use Services\CatalogImport\Dto\ImportContext;
 
@@ -30,7 +30,7 @@ use Services\CatalogImport\Dto\ImportContext;
  */
 final class PersistProductStage implements ImportStage
 {
-    public function __construct(private readonly GeneralSettings $settings) {}
+    public function __construct(private readonly CatalogImportSettings $settings) {}
 
     public function __invoke(ImportContext $ctx, Closure $next): ImportContext
     {

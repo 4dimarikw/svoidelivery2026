@@ -17,7 +17,7 @@ use Domain\Catalog\Models\Product;
 use Domain\Catalog\Models\Volume;
 use Illuminate\Contracts\Database\Eloquent\Builder;
 use Illuminate\Support\Carbon;
-use Infrastructure\Settings\GeneralSettings;
+use Infrastructure\Settings\CatalogImportSettings;
 use MoonShine\Contracts\UI\ComponentContract;
 use MoonShine\Contracts\UI\FieldContract;
 use MoonShine\Laravel\Fields\Relationships\BelongsTo;
@@ -134,11 +134,11 @@ final class ProductIndexPage extends IndexPage
             ),
             QueryTag::make(
                 'Новинки',
-                fn (Builder $query) => $query->where('created_at', '<=', Carbon::now()->subDays(app(GeneralSettings::class)->new_days))
+                fn (Builder $query) => $query->where('created_at', '<=', Carbon::now()->subDays(app(CatalogImportSettings::class)->new_days))
             ),
             QueryTag::make(
                 'Не новинки',
-                fn (Builder $query) => $query->where('created_at', '>=', Carbon::now()->subDays(app(GeneralSettings::class)->new_days))
+                fn (Builder $query) => $query->where('created_at', '>=', Carbon::now()->subDays(app(CatalogImportSettings::class)->new_days))
             ),
             QueryTag::make(
                 'Без UntappdID',

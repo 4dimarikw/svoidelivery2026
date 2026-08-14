@@ -15,7 +15,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
-use Infrastructure\Settings\GeneralSettings;
+use Infrastructure\Settings\CatalogImportSettings;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use Spatie\MediaLibrary\MediaCollections\File;
@@ -294,7 +294,7 @@ class Product extends Model implements HasMedia
     {
         return Attribute::get(
             fn (): bool => $this->created_at !== null
-                && $this->created_at->gt(now()->subDays(app(GeneralSettings::class)->new_days))
+                && $this->created_at->gt(now()->subDays(app(CatalogImportSettings::class)->new_days))
         );
     }
 }
