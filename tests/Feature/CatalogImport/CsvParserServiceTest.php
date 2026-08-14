@@ -49,16 +49,21 @@ class CsvParserServiceTest extends TestCase
         $this->assertSame(2, Product::query()->count());
     }
 
-    public function test_reimport_updates_only_sync_fields_not_admin_edited_ones(): void
+    public function test_reimport_updates_sync_fields_including_name_but_not_description(): void
     {
         $code = 'CODE-IDEMPOTENT';
         $path = $this->writeCatalogCsv([$this->validCatalogRow(['product_code' => $code, 'price' => '100', 'stock' => '10'])]);
         $this->import($path);
 
         $product = Product::query()->firstWhere('external_code', $code);
-        $product->update(['name' => 'Название, изменённое админом']);
+        // description — по-прежнему create-only, повторный импорт не должен
+        // его трогать, в отличие от name (см. ниже).
+        $product->update(['description' => 'Описание, изменённое админом']);
 
-        // Повторный импорт: цена/остаток другие в CSV.
+        // Повторный импорт: цена/остаток другие в CSV, name_full тот же (из
+        // fixture) — если бы админ поправил name вручную, следующий импорт
+        // всё равно вернул бы значение из CSV (осознанный трейд-офф ради
+        // синхронизации объёма, см. PersistProductStage).
         $path2 = $this->writeCatalogCsv([$this->validCatalogRow(['product_code' => $code, 'price' => '250', 'stock' => '0'])]);
         $report = $this->import($path2);
 
@@ -70,8 +75,10 @@ class CsvParserServiceTest extends TestCase
         $this->assertSame(250.0, $product->price->major());
         $this->assertSame(0, $product->stock_quantity);
         $this->assertFalse($product->in_stock);
-        // name — create-only поле, повторный импорт не должен его затирать.
-        $this->assertSame('Название, изменённое админом', $product->name);
+        // name — теперь sync-поле, повторный импорт освежает его из CSV.
+        $this->assertSame('Пиво светлое тестовое', $product->name);
+        // description — create-only, правка админа сохранена.
+        $this->assertSame('Описание, изменённое админом', $product->description);
     }
 
     public function test_dry_run_rolls_back_everything(): void

@@ -7,6 +7,7 @@ use Domain\Catalog\Models\Volume;
 use Services\CatalogImport\CategoryRegistry;
 use Services\CatalogImport\Contracts\ImportStage;
 use Services\CatalogImport\Dto\ImportContext;
+use Services\CatalogImport\Support\VolumeText;
 
 /**
  * Объём товара: резолвит Volume из колонки Упаковка, заполняет $ctx->volume.
@@ -36,7 +37,7 @@ final class ResolveVolumeStage implements ImportStage
         $package = $ctx->row->get(config('catalog_import.columns.package'));
         $product_code = $ctx->row->get(config('catalog_import.columns.product_code'));
 
-        [$volumeMl, $label] = $this->parse($package);
+        ['ml' => $volumeMl, 'raw' => $label] = VolumeText::parse($package);
 
         if ($volumeMl === null) {
             if ($this->categoryExpects($ctx)) {
@@ -57,23 +58,5 @@ final class ResolveVolumeStage implements ImportStage
         $slug = $ctx->category?->slug;
 
         return $slug !== null && $this->categories->expectsVolume($slug);
-    }
-
-    /** @return array{int|null, string|null} */
-    private function parse(string $package): array
-    {
-        // Pattern: digits (optional comma/dot digits) followed by "л"
-        // Prefer the last match after "х12х0,45л" picks "0,45"
-        if (preg_match_all('/(\d+[,\.]?\d*)\s*л/', $package, $matches)) {
-            $values = $matches[1];
-            $raw = end($values);
-            $label = str_replace(',', '.', $raw).' л';
-            $liters = (float) $label;
-            $volumeMl = (int) round($liters * 1000);
-
-            return [$volumeMl > 0 ? $volumeMl : null, $label];
-        }
-
-        return [null, null];
     }
 }

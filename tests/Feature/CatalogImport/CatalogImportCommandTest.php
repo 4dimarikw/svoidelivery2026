@@ -2,12 +2,14 @@
 
 namespace Tests\Feature\CatalogImport;
 
+use App\Events\CatalogVolumeDiscrepanciesDetected;
 use Domain\Catalog\Enums\CategoryMatchType;
 use Domain\Catalog\Enums\CategoryMatchWhen;
 use Domain\Catalog\Models\Category;
 use Domain\Catalog\Models\CategoryMatchRule;
 use Domain\Catalog\Models\Product;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Event;
 use Tests\Support\BuildsCatalogCsv;
 use Tests\TestCase;
 
@@ -96,5 +98,42 @@ class CatalogImportCommandTest extends TestCase
     {
         $this->artisan('catalog:import', ['path' => sys_get_temp_dir().'/does-not-exist-'.uniqid().'.csv'])
             ->assertExitCode(1);
+    }
+
+    public function test_volume_mismatch_between_package_and_name_fires_event(): void
+    {
+        Event::fake([CatalogVolumeDiscrepanciesDetected::class]);
+
+        $path = $this->writeCatalogCsv([$this->validCatalogRow([
+            'product_code' => 'CODE-MISMATCH',
+            'package' => 'кор. 12х0,5л ж/б',
+            'name_full' => 'Ортодокс "Тест" ж/б 0,45л',
+        ])]);
+
+        $this->artisan('catalog:import', ['path' => $path])->assertExitCode(0);
+
+        Event::assertDispatched(CatalogVolumeDiscrepanciesDetected::class, function (CatalogVolumeDiscrepanciesDetected $event): bool {
+            $this->assertCount(1, $event->discrepancies);
+            $this->assertSame('CODE-MISMATCH', $event->discrepancies[0]['external_code']);
+            $this->assertSame('name', $event->discrepancies[0]['source']);
+            $this->assertSame(500, $event->discrepancies[0]['package_ml']);
+            $this->assertSame(450, $event->discrepancies[0]['text_ml']);
+
+            return true;
+        });
+    }
+
+    public function test_dry_run_does_not_fire_volume_discrepancy_event(): void
+    {
+        Event::fake([CatalogVolumeDiscrepanciesDetected::class]);
+
+        $path = $this->writeCatalogCsv([$this->validCatalogRow([
+            'package' => 'кор. 12х0,5л ж/б',
+            'name_full' => 'Ортодокс "Тест" ж/б 0,45л',
+        ])]);
+
+        $this->artisan('catalog:import', ['path' => $path, '--dry-run' => true])->assertExitCode(0);
+
+        Event::assertNotDispatched(CatalogVolumeDiscrepanciesDetected::class);
     }
 }

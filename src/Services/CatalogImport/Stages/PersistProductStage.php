@@ -7,6 +7,7 @@ use Domain\Catalog\Models\Product;
 use Infrastructure\Settings\CatalogImportSettings;
 use Services\CatalogImport\Contracts\ImportStage;
 use Services\CatalogImport\Dto\ImportContext;
+use Services\CatalogImport\Support\VolumeText;
 
 /**
  * Сохранение Product: создаёт новую плоскую запись в таблице products
@@ -20,9 +21,17 @@ use Services\CatalogImport\Dto\ImportContext;
  * Товар теперь редактируется из админки (ProductResource), поэтому повторный
  * импорт больше не переписывает карточку целиком — иначе правки admin'а
  * терялись бы на следующем catalog:import. Для уже существующего товара
- * обновляются только оперативные поля ($syncData: price/stock_quantity/
- * in_stock); name/description/category/status/flags и т.д. трогает только
- * create-ветка (первый импорт) или сама админка.
+ * обновляются оперативные поля ($syncData): price/stock_quantity/in_stock,
+ * весь объёмный блок (volume_id/container_id/package_units/packaging_raw —
+ * 1С иногда изначально присылает неверный объём тары и правит его в
+ * последующих выгрузках), а также name/article — но БЕЗ упоминания объёма
+ * (VolumeText::strip(), см. DetectVolumeMismatchStage, которая параллельно
+ * фиксирует расхождение объёма между Упаковкой и Наименованием/Артикулом).
+ * ВАЖНО: это значит, что правка name/article из админки может быть
+ * переписана следующим catalog:import, если 1С прислал другой текст —
+ * осознанный трейд-офф ради синхронизации объёма. description/category_id/
+ * status/flags/brand по-прежнему трогает только create-ветка (первый
+ * импорт) или сама админка.
  * `flags` берётся из $ctx->attributes['flags'] (см. ResolveFlagsStage) и,
  * как и остальные создаваемые-один-раз поля, не пересчитывается повторным
  * импортом — если нужно освежить flags у существующего товара, это делает
@@ -52,10 +61,21 @@ final class PersistProductStage implements ImportStage
 
         $stock = (int) ($attrs['stock'] ?? 0);
 
+        [$packageUnits, $packagingRaw] = $this->parsePackaging($attrs['pack_info'] ?? null);
+
+        $name = $attrs['title'] ?? $attrs['name'];
+        $article = $attrs['article'] ?? null;
+
         $syncData = [
             'price' => $attrs['price'] ?? 0,
             'stock_quantity' => $stock,
             'in_stock' => $stock > 0,
+            'volume_id' => $ctx->volume?->id,
+            'container_id' => $ctx->container?->id,
+            'package_units' => $packageUnits,
+            'packaging_raw' => $packagingRaw,
+            'name' => $this->stripOrFallback($name),
+            'article' => $article !== null ? $this->stripOrFallback($article) : null,
         ];
 
         $product = Product::query()->firstWhere('external_code', $externalCode);
@@ -63,19 +83,11 @@ final class PersistProductStage implements ImportStage
         if ($product !== null) {
             $product->update($syncData);
         } else {
-            [$packageUnits, $packagingRaw] = $this->parsePackaging($attrs['pack_info'] ?? null);
-
             $product = Product::create([
                 'external_code' => $externalCode,
-                'article' => $attrs['article'] ?? null,
-                'name' => $attrs['title'] ?? $attrs['name'],
                 'description' => $this->resolveDescription($ctx),
                 'category_id' => $ctx->category->id,
                 'manufacturer_id' => $ctx->brand->id,
-                'volume_id' => $ctx->volume?->id,
-                'container_id' => $ctx->container?->id,
-                'package_units' => $packageUnits,
-                'packaging_raw' => $packagingRaw,
                 'source_category_path' => $attrs['category_path'] ?? null,
                 'shelf_life_days' => $attrs['shelf_life_days'] ?? null,
                 'brand' => $attrs['name'] ?? null,
@@ -88,6 +100,19 @@ final class PersistProductStage implements ImportStage
         $ctx->product = $product;
 
         return $next($ctx);
+    }
+
+    /**
+     * VolumeText::strip() убирает упоминание объёма из свободного текста
+     * (Наименование/Артикул); если после вырезания ничего не осталось
+     * (гипотетически — весь текст состоял только из объёма), используется
+     * исходный текст как есть: products.name NOT NULL, пустое имя недопустимо.
+     */
+    private function stripOrFallback(string $text): string
+    {
+        $stripped = VolumeText::strip($text);
+
+        return $stripped !== '' ? $stripped : $text;
     }
 
     /**

@@ -1,5 +1,6 @@
 <?php
 
+use Services\CatalogImport\Stages\DetectVolumeMismatchStage;
 use Services\CatalogImport\Stages\FilterCategoryStage;
 use Services\CatalogImport\Stages\NormalizeRowStage;
 use Services\CatalogImport\Stages\PersistBeerDetailsStage;
@@ -63,6 +64,7 @@ return [
         ResolveBeerStyleStage::class,
         ResolveContainerStage::class,
         ResolveVolumeStage::class,
+        DetectVolumeMismatchStage::class,
         ResolveProductIdentityStage::class,
         ResolveAbvStage::class,
         ResolveIbuStage::class,

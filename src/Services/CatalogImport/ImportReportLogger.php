@@ -41,6 +41,7 @@ final class ImportReportLogger
             'Товаров без изменений' => $report->productsUnchanged,
             'Изображений загружено' => $report->imagesAttached,
             'Предупреждений' => $report->warningsTotal,
+            'Расхождений объёма' => count($report->volumeDiscrepancies),
             'Длительность' => self::formatDuration($report->durationMs),
         ];
     }
@@ -59,6 +60,8 @@ final class ImportReportLogger
             ...$this->metricLines($report),
             '',
             ...$this->warningLines($report),
+            '',
+            ...$this->volumeDiscrepancyLines($report),
         ];
 
         return $this->write($lines, $dryRun ? '-dry-run' : '');
@@ -129,6 +132,18 @@ final class ImportReportLogger
 
         if ($hidden > 0) {
             $lines[] = "... ещё {$hidden} не сохранено (лимит catalog_import.warning_limit)";
+        }
+
+        return $lines;
+    }
+
+    /** @return list<string> */
+    private function volumeDiscrepancyLines(ImportReport $report): array
+    {
+        $lines = ['--- Расхождения объёма ('.count($report->volumeDiscrepancies).') ---'];
+
+        foreach ($report->volumeDiscrepancies as $d) {
+            $lines[] = "строка {$d['line']} код={$d['external_code']} Упаковка={$d['package_ml']} мл, {$d['source']}={$d['text_ml']} мл";
         }
 
         return $lines;

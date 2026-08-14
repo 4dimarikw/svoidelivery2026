@@ -94,6 +94,8 @@ ImportContext      ← mutable-контекст, передаётся по вс�
     ├── ResolveBeerStyleStage      СтильПива → BeerStyle; синхронизация Untappd по UntappdRef
     ├── ResolveContainerStage      Упаковка/категория → Container (только для categories.*.container)
     ├── ResolveVolumeStage         Упаковка → Volume (только для categories.*.volume)
+    ├── DetectVolumeMismatchStage  сверяет объём в Наименование/Артикул с Упаковкой — расхождение
+    │                              фиксируется, не блокирует импорт (см. ниже)
     ├── ResolveProductIdentityStage Марка → name, Наименование/Товар → title
     ├── ResolveAbvStage            ABV (Excel-формат "04.фев" → 4.2)
     ├── ResolveIbuStage            IBU
@@ -104,8 +106,10 @@ ImportContext      ← mutable-контекст, передаётся по вс�
     ├── ResolveExternalIdsStage    КодТовара → external_code, Артикул → article
     ├── ResolveFlagsStage          РейтингПродаж + product_flags → products.flags (json, только create)
     ├── ResolveDescriptionStage    Описание → description
-    ├── PersistProductStage        firstWhere по [external_code]: обновляет price/stock_quantity/
-    │                              in_stock у существующего товара, иначе полное create
+    ├── PersistProductStage        firstWhere по [external_code]: у существующего товара обновляет
+    │                              price/stock_quantity/in_stock, объёмный блок (volume_id/
+    │                              container_id/package_units/packaging_raw) и name/article (без
+    │                              упоминания объёма — VolumeText::strip()), иначе полное create
     └── PersistBeerDetailsStage    firstOrCreate BeerProductDetail (только если есть пивные атрибуты)
     │
     ▼ (post-commit, вне транзакции строки/чанка)
@@ -220,7 +224,7 @@ app/Console/Commands/CatalogImportCommand.php    Artisan-команда
 | `Производитель` | `manufacturers.name`/`normalized_name` | `ResolveBrandStage` |
 | `СтильПива` | `beer_styles.name`/`normalized_name` | `ResolveBeerStyleStage` |
 | `Марка` | `products.brand` | `ResolveProductIdentityStage` |
-| `Наименование` (резерв `Товар`) | `products.name` + авто-`slug` (из `article`) | `ResolveProductIdentityStage` |
+| `Наименование` (резерв `Товар`) | `products.name` (без упоминания объёма, см. ниже) + авто-`slug` (из `article`) | `ResolveProductIdentityStage`, `PersistProductStage` |
 | `Описание` | `products.description` (fallback, если нет Untappd-описания) | `ResolveDescriptionStage` |
 | `ABV` | `beer_product_details.abv` | `ResolveAbvStage` |
 | `IBU` | `beer_product_details.ibu` | `ResolveIbuStage` |
@@ -230,7 +234,7 @@ app/Console/Commands/CatalogImportCommand.php    Artisan-команда
 | `СрокГодности` | `products.shelf_life_days` | `ResolveShelfLifeStage` |
 | `РейтингПродаж` | `products.flags` (json, вместе с `CatalogImportSettings::$product_flags`; только при создании) | `ResolveFlagsStage` |
 | `КодТовара` | `products.external_code` (ключ идемпотентности) | `ResolveExternalIdsStage` |
-| `Артикул` | `products.article` (источник slug) | `ResolveExternalIdsStage` |
+| `Артикул` | `products.article` (источник slug, без упоминания объёма, см. ниже) | `ResolveExternalIdsStage`, `PersistProductStage` |
 | `Цена` | `products.price` | `ResolvePriceStage` |
 | `Остаток` | `products.stock_quantity` + `in_stock` | `ResolvePriceStage` / `PersistProductStage` |
 | `Упаковка` | `products.packaging_raw`, `package_units` | `ResolveExternalIdsStage`, `PersistProductStage` |
@@ -239,6 +243,32 @@ app/Console/Commands/CatalogImportCommand.php    Artisan-команда
 | `Категория` (сырая) | `products.source_category_path` | `ResolveCategoryStage` |
 | `Категория` | верхний сегмент → ветвь алгоритма категоризации (`categories.*`) | `ResolveCategoryStage` |
 | `Тип` | не используется | — |
+
+---
+
+## Объём тары: синхронизация и детектор расхождений
+
+1С иногда изначально присылает неверный объём тары и правит его в
+последующих выгрузках. `Упаковка` — единственный источник, который
+парсится в структурированное поле (`ResolveVolumeStage` → `products.volume_id`),
+но объём как текст встречается и в `Наименование`/`Товар`/`Артикул`
+(`"...ж/б 0,45л"`).
+
+- **`PersistProductStage`** при повторном импорте существующего товара
+  теперь обновляет весь объёмный блок (`volume_id`/`container_id`/
+  `package_units`/`packaging_raw`) и `name`/`article` — но из `name`/`article`
+  перед сохранением вырезается упоминание объёма (`Services\CatalogImport\Support\VolumeText::strip()`),
+  само поле `packaging_raw` остаётся вербатимной копией `Упаковка`.
+  Побочный эффект: правка `name`/`article` из админки может быть переписана
+  следующим `catalog:import`, если 1С прислал другой текст — осознанный
+  трейд-офф ради синхронизации объёма.
+- **`DetectVolumeMismatchStage`** сравнивает объём, распознанный в
+  `Наименование`/`Артикул` (`VolumeText::parse()`), с `Упаковкой`
+  (авторитетный источник). Расхождение не блокирует импорт — только
+  фиксируется в `ImportReport::$volumeDiscrepancies`, печатается в отчёте
+  команды и файле лога, и в конце прогона (не в `--dry-run`) уходит одним
+  событием `App\Events\CatalogVolumeDiscrepanciesDetected` (`LoggableEvent`,
+  автоматически попадает в `event_logs` через `App\Listeners\PersistEventLog`).
 
 ---
 

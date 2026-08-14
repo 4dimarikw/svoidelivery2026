@@ -4,6 +4,7 @@ namespace Services\CatalogImport;
 
 use App\Events\CatalogImportCompleted;
 use App\Events\CatalogImportFailed;
+use App\Events\CatalogVolumeDiscrepanciesDetected;
 use Illuminate\Pipeline\Pipeline;
 use Illuminate\Support\Facades\DB;
 use Services\CatalogImport\Dto\ImportContext;
@@ -89,6 +90,10 @@ readonly class CsvParserService
                         warnings: $report->warnings,
                         durationMs: $report->durationMs,
                     ));
+
+                    if ($report->volumeDiscrepancies !== []) {
+                        event(new CatalogVolumeDiscrepanciesDetected($path, $report->volumeDiscrepancies));
+                    }
                 }
 
                 return $report;
@@ -243,6 +248,7 @@ readonly class CsvParserService
     private function applyCounters(ImportReport $report, ImportContext $ctx, int $warningLimit): void
     {
         $report->addWarnings($ctx->row->lineNumber, $ctx->warnings, $warningLimit);
+        $report->addVolumeDiscrepancies($ctx->row->lineNumber, $ctx->attributes['volume_discrepancies'] ?? []);
 
         if ($ctx->skip) {
             $report->skipped++;

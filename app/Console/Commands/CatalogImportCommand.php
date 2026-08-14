@@ -160,6 +160,14 @@ class CatalogImportCommand extends Command
                 $this->line('  ... и ещё '.($report->warningsTotal - 50).' (полный список — в файле отчёта)');
             }
         }
+
+        if ($report->volumeDiscrepancies !== []) {
+            $this->newLine();
+            $this->warn('Расхождения объёма:');
+            foreach ($report->volumeDiscrepancies as $d) {
+                $this->line("  строка {$d['line']} код={$d['external_code']} Упаковка={$d['package_ml']} мл, {$d['source']}={$d['text_ml']} мл");
+            }
+        }
     }
 
     /**

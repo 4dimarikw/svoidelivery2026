@@ -40,6 +40,15 @@ class ImportReport
     public array $warnings = [];
 
     /**
+     * Расхождения объёма между Упаковкой (авторитетный источник) и
+     * Наименованием/Артикулом — см. DetectVolumeMismatchStage. Штучные
+     * находки, не тысячи, как $warnings — отдельный limit-механизм не нужен.
+     *
+     * @var list<array{line: int, external_code: string, source: string, package_raw: string, package_ml: int, text_raw: string, text_ml: int}>
+     */
+    public array $volumeDiscrepancies = [];
+
+    /**
      * @param  list<array{stage: string, message: string, value: string}>  $contextWarnings
      * @param  int|null  $limit  Если задан — хранить не более N записей в $warnings; warningsTotal растёт всегда.
      */
@@ -50,6 +59,16 @@ class ImportReport
             if ($limit === null || count($this->warnings) < $limit) {
                 $this->warnings[] = ['line' => $line, ...$w];
             }
+        }
+    }
+
+    /**
+     * @param  list<array{external_code: string, source: string, package_raw: string, package_ml: int, text_raw: string, text_ml: int}>  $contextDiscrepancies
+     */
+    public function addVolumeDiscrepancies(int $line, array $contextDiscrepancies): void
+    {
+        foreach ($contextDiscrepancies as $d) {
+            $this->volumeDiscrepancies[] = ['line' => $line, ...$d];
         }
     }
 }
