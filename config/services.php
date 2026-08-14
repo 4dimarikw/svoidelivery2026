@@ -73,4 +73,10 @@ return [
         'password' => env('DB_1C_FTP_PASSWORD'),
     ],
 
+    'vk' => [
+        'access_token' => env('VK_ACCESS_TOKEN'),
+        'api_version' => env('VK_API_VERSION', '5.199'),
+        'image_hosts' => ['userapi.com', 'vk.com', 'vk-cdn.net', 'vkuserphoto.ru'],
+    ],
+
 ];

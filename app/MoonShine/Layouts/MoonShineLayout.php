@@ -6,6 +6,7 @@ namespace App\MoonShine\Layouts;
 
 use App\MoonShine\Pages\CatalogImportSettingsPage;
 use App\MoonShine\Pages\SiteSettingsPage;
+use App\MoonShine\Pages\VkSyncSettingsPage;
 use App\MoonShine\Resources\BeerStyle\BeerStyleResource;
 use App\MoonShine\Resources\Category\CategoryResource;
 use App\MoonShine\Resources\Container\ContainerResource;
@@ -29,6 +30,7 @@ use App\MoonShine\Resources\SiteMenuItem\SiteMenuItemResource;
 use App\MoonShine\Resources\SiteSection\SiteSectionResource;
 use App\MoonShine\Resources\UntappdBeer\UntappdBeerResource;
 use App\MoonShine\Resources\User\UserResource;
+use App\MoonShine\Resources\VkPost\VkPostResource;
 use App\MoonShine\Resources\Volume\VolumeResource;
 use MoonShine\ColorManager\ColorManager;
 use MoonShine\ColorManager\Palettes\PurplePalette;
@@ -62,14 +64,14 @@ final class MoonShineLayout extends AppLayout
             MenuGroup::make(__('moonshine.group.orders'), [
                 MenuItem::make(OrderResource::class),
                 MenuItem::make(OrderCustomerResource::class),
-                MenuItem::make(DeliveryTypeResource::class)->canSee(fn() => $isAdmin),
-                MenuItem::make(PaymentMethodResource::class)->canSee(fn() => $isAdmin),
-                MenuItem::make(OrderItemResource::class)->canSee(fn() => $isAdmin),
+                MenuItem::make(DeliveryTypeResource::class)->canSee(fn () => $isAdmin),
+                MenuItem::make(PaymentMethodResource::class)->canSee(fn () => $isAdmin),
+                MenuItem::make(OrderItemResource::class)->canSee(fn () => $isAdmin),
             ], 'shopping-cart'),
 
             MenuGroup::make(__('moonshine.group.users'), [
                 MenuItem::make(UserResource::class),
-                MenuItem::make(FavoriteResource::class)->canSee(fn() => $isAdmin),
+                MenuItem::make(FavoriteResource::class)->canSee(fn () => $isAdmin),
 
             ], 'users'),
 
@@ -81,9 +83,9 @@ final class MoonShineLayout extends AppLayout
                 MenuItem::make(VolumeResource::class),
                 MenuItem::make(ContainerResource::class),
                 MenuItem::make(UntappdBeerResource::class),
-                MenuItem::make(PropertyResource::class)->canSee(fn() => $isAdmin),
-                MenuItem::make(CatalogImportSettingsPage::class)->canSee(fn() => $isAdmin),
-                MenuItem::make(SeoResource::class)->canSee(fn() => $isAdmin),
+                MenuItem::make(PropertyResource::class)->canSee(fn () => $isAdmin),
+                MenuItem::make(CatalogImportSettingsPage::class)->canSee(fn () => $isAdmin),
+                MenuItem::make(SeoResource::class)->canSee(fn () => $isAdmin),
 
             ], 'squares-2x2'),
 
@@ -94,6 +96,8 @@ final class MoonShineLayout extends AppLayout
                 MenuItem::make(ContentBlockResource::class),
                 MenuItem::make(ContentBlockItemResource::class),
                 MenuItem::make(SiteSettingsPage::class),
+                MenuItem::make(VkPostResource::class),
+                MenuItem::make(VkSyncSettingsPage::class)->canSee(fn () => $isAdmin),
 
             ], 'document-text'),
 
@@ -102,13 +106,13 @@ final class MoonShineLayout extends AppLayout
                 MenuItem::make(MoonShineUserRoleResource::class),
                 MenuItem::make(MoonshinePermissionResource::class),
 
-            ], 'users')->canSee(fn() => $isAdmin),
+            ], 'users')->canSee(fn () => $isAdmin),
 
         ];
     }
 
     /**
-     * @param ColorManager $colorManager
+     * @param  ColorManager  $colorManager
      */
     protected function colors(ColorManagerContract $colorManager): void
     {
