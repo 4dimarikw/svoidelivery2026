@@ -14,9 +14,13 @@ return new class extends Migration
         Schema::create('users', function (Blueprint $table) {
             $table->id();
             $table->string('name');
-            $table->string('email')->unique();
+            // Аккаунт, созданный через Telegram (см. TelegramLoginController),
+            // не имеет ни email, ни пароля — Telegram их не отдаёт. Уникальный
+            // индекс на email остаётся: MySQL разрешает сколько угодно NULL
+            // под unique.
+            $table->string('email')->nullable()->unique();
             $table->timestamp('email_verified_at')->nullable();
-            $table->string('password');
+            $table->string('password')->nullable();
             $table->rememberToken();
             $table->timestamps();
         });

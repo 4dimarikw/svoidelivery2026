@@ -16,12 +16,7 @@ return new class extends Migration
             $table->foreignId('user_id')->constrained()->cascadeOnDelete();
             $table->string('label')->nullable();
             $table->string('city');
-            $table->string('street');
-            $table->string('house');
-            $table->string('apartment')->nullable();
-            $table->string('entrance')->nullable();
-            $table->string('floor')->nullable();
-            $table->string('intercom')->nullable();
+            $table->string('address');
             $table->text('comment')->nullable();
             $table->boolean('is_default')->default(false);
             $table->timestamps();

@@ -37,22 +37,7 @@ return new class extends Migration
                 ->nullable()
                 ->index();
 
-            $table->string('street')
-                ->nullable();
-
-            $table->string('house')
-                ->nullable();
-
-            $table->string('apartment')
-                ->nullable();
-
-            $table->string('entrance')
-                ->nullable();
-
-            $table->string('floor')
-                ->nullable();
-
-            $table->string('intercom')
+            $table->string('address')
                 ->nullable();
 
             $table->text('comment')

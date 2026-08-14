@@ -10,6 +10,13 @@ return new class extends Migration
     {
         Schema::create('telegraph_chats', function (Blueprint $table) {
             $table->id();
+
+            // Связь с users — идентичность телеграм-пользователя живёт здесь,
+            // а не в отдельной колонке на users (см. Domain\Telegram\Models).
+            // nullOnDelete, не cascade: удаление пользователя не обязано
+            // стирать сам чат, тот может ещё пригодиться боту.
+            $table->foreignId('user_id')->nullable()->constrained()->nullOnDelete();
+
             $table->string('chat_id');
             $table->string('name')->nullable();
 
@@ -17,6 +24,9 @@ return new class extends Migration
             $table->timestamps();
 
             $table->unique(['chat_id', 'telegraph_bot_id']);
+            // Тот же принцип, что unique(['chat_id', 'telegraph_bot_id']) —
+            // один привязанный чат на пользователя на бота.
+            $table->unique(['user_id', 'telegraph_bot_id']);
         });
     }
 

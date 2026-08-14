@@ -113,7 +113,7 @@ inStockTotal = Product::query()->where('in_stock', true)->count()
 | Файл | Назначение |
 |---|---|
 | `database/migrations/2026_08_13_120000_create_catalog_import_seen_codes_table.php` | Таблица `catalog_import_seen_codes` (`external_code` — primary key) |
-| `database/settings/2026_08_13_120100_add_zero_out_to_catalog_import_settings.php` | Добавляет `zero_out_missing`/`zero_out_max_percent` в группу настроек `catalog_import` |
+| `database/settings/2026_08_03_100300_create_catalog_import_settings.php` | Группа настроек `catalog_import`, в т.ч. `zero_out_missing`/`zero_out_max_percent` |
 | `src/Services/CatalogImport/SeenCodeCollector.php` | Буферизованная запись кодов строк CSV (`reset`/`add`/`flush`) |
 | `src/Services/CatalogImport/CsvParserService.php` | Подключение коллектора: `reset()` в начале, `add()` на каждой строке (вне транзакции строки/чанка), `flush()` в конце; вычисляет `trackSeenCodes` |
 | `src/Services/CatalogImport/Dto/ImportReport.php` | Новое поле `$seenCodesTracked` |

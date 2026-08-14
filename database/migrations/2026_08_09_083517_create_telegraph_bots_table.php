@@ -12,6 +12,11 @@ return new class extends Migration
             $table->id();
             $table->string('token')->unique();
             $table->string('name')->nullable();
+            // Не часть схемы пакета defstudio/telegraph — у него только
+            // token/name. username нужен для data-telegram-login виджета
+            // входа и заполняется автоматически (см.
+            // Domain\Telegram\Models\TelegramBot::booted()).
+            $table->string('username')->nullable();
 
             $table->timestamps();
         });

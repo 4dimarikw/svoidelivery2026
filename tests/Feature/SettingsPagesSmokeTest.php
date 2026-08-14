@@ -13,10 +13,10 @@ use Tests\TestCase;
 
 /**
  * Регресс на ликвидацию GeneralSettings: часть её свойств переехала в
- * CatalogImportSettings, часть — в SiteSettings (см. settings-миграции
- * 2026_08_14_120000 / 2026_08_14_130000). Spatie бросает MissingSettings,
- * если у объявленного свойства нет строки в репозитории — этот тест ловит
- * рассинхрон между классом настроек и его settings-миграциями/fixture.
+ * CatalogImportSettings, часть — в SiteSettings (см. database/settings/
+ * create_catalog_import_settings и create_site_settings). Spatie бросает
+ * MissingSettings, если у объявленного свойства нет строки в репозитории —
+ * этот тест ловит рассинхрон между классом настроек и его settings-миграциями.
  */
 class SettingsPagesSmokeTest extends TestCase
 {

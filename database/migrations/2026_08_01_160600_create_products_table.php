@@ -1,5 +1,6 @@
 <?php
 
+use Domain\Catalog\Enums\ProductStatus;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -13,7 +14,6 @@ return new class extends Migration
     {
         Schema::create('products', function (Blueprint $table) {
             $table->id();
-            $table->uuid('source_uuid')->unique();
             $table->string('external_code', 64)->unique();
             $table->string('article')->nullable();
             $table->string('name', 512);
@@ -31,9 +31,8 @@ return new class extends Migration
             $table->string('source_category_path', 512)->nullable();
             $table->unsignedSmallInteger('shelf_life_days')->nullable();
             $table->string('brand')->nullable();
-            $table->string('sales_rating', 64)->nullable();
-            $table->boolean('is_active')->default(true);
-            $table->timestamp('synced_at')->nullable();
+            $table->string('status', 32)->default(ProductStatus::DRAFT->value);
+            $table->json('flags')->nullable();
             $table->timestamps();
 
             $table->index(['category_id', 'manufacturer_id', 'price'], 'products_category_manufacturer_price_idx');
@@ -42,7 +41,7 @@ return new class extends Migration
             $table->index('price', 'products_price_idx');
             $table->index(['volume_id', 'container_id'], 'products_volume_container_idx');
             $table->index('container_id', 'products_container_idx');
-            $table->index(['is_active', 'in_stock', 'id'], 'products_active_stock_id_idx');
+            $table->index(['status', 'in_stock', 'id'], 'products_status_stock_id_idx');
         });
     }
 
