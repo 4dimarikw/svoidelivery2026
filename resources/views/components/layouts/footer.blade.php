@@ -1,3 +1,4 @@
+@php use Infrastructure\Settings\SiteSettings; @endphp
 <footer class="border-t border-hairline bg-cream-50">
     <div
         class="mx-auto flex max-w-page flex-col items-center space-y-4 px-6 py-10 text-center sm:flex-row sm:items-center sm:justify-between sm:space-y-0 sm:text-left">
