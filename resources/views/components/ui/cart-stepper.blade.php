@@ -41,8 +41,9 @@
     >
         @csrf
         @if ($showBuyButton)
-            <x-ui.btn type="submit" variant="primary" size="md" block class="h-full px-2 xl:px-[22px]" :disabled="! $product->in_stock">
-                {{ $product->in_stock ? __('catalog.buy') : __('catalog.notify') }}
+            <x-ui.btn type="submit" variant="primary" size="md" block class="h-full px-2 xl:px-[22px]"
+                      :disabled="! $product->in_stock">
+                {{ __('catalog.buy') }}
             </x-ui.btn>
         @endif
     </form>
@@ -70,7 +71,8 @@
              ширину и там, и там, а flex-1 всё равно дотягивает ячейку шире на
              карточке каталога (.card .actions .qty span{flex:1}), где строка
              растянута. --}}
-        <span class="grid min-w-[26px] flex-1 place-items-center font-mono text-caption xl:min-w-[34px]" x-text="quantity"></span>
+        <span class="grid min-w-[26px] flex-1 place-items-center font-mono text-caption xl:min-w-[34px]"
+              x-text="quantity"></span>
         <button
             type="submit"
             form="{{ $increaseId }}"
