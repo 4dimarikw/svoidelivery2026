@@ -3,6 +3,8 @@
 declare(strict_types=1);
 
 use App\MoonShine\Layouts\MoonShineLayout;
+use App\MoonShine\Pages\Dashboard;
+use App\MoonShine\Pages\ProfilePage;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Middleware\ConvertEmptyStringsToNull;
@@ -20,7 +22,6 @@ use MoonShine\Laravel\Http\Middleware\ChangeLocale;
 use MoonShine\Laravel\Models\MoonshineUser;
 use MoonShine\Laravel\Pages\ErrorPage;
 use MoonShine\Laravel\Pages\LoginPage;
-use MoonShine\Laravel\Pages\ProfilePage;
 
 return [
     'title' => env('MOONSHINE_TITLE', 'MoonShine'),
@@ -98,7 +99,7 @@ return [
     ],
 
     'pages' => [
-        'dashboard' => App\MoonShine\Pages\Dashboard::class,
+        'dashboard' => Dashboard::class,
         'profile' => ProfilePage::class,
         'login' => LoginPage::class,
         'error' => ErrorPage::class,

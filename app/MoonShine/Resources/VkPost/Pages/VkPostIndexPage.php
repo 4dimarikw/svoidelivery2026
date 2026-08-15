@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\MoonShine\Resources\VkPost\Pages;
 
 use App\MoonShine\Resources\VkPost\VkPostResource;
+use App\MoonShine\Support\MoonshineTelegramLink;
 use Domain\Auth\Models\User;
 use Domain\Telegram\Models\TelegramBot;
 use Domain\Vk\Actions\SendVkPostToChatAction;
@@ -13,7 +14,6 @@ use Domain\Vk\Models\VkPost;
 use Illuminate\Contracts\Database\Eloquent\Builder;
 use Illuminate\Support\Str;
 use Infrastructure\Jobs\BroadcastVkPostJob;
-use Infrastructure\Settings\SiteSettings;
 use MoonShine\Contracts\Core\DependencyInjection\CrudRequestContract;
 use MoonShine\Contracts\UI\FieldContract;
 use MoonShine\Crud\JsonResponse;
@@ -91,7 +91,7 @@ final class VkPostIndexPage extends IndexPage
                 ->async(HttpMethod::POST, events: $events)
                 ->withConfirm(
                     title: 'Отправить себе',
-                    content: 'Тестовое сообщение уйдёт пользователю из настройки «Email тестового пользователя».',
+                    content: 'Тестовое сообщение уйдёт в ваш Telegram, привязанный на странице профиля.',
                     button: 'Отправить',
                 ),
             ActionButton::make('Разослать всем')
@@ -138,15 +138,14 @@ final class VkPostIndexPage extends IndexPage
             return JsonResponse::make()->toast('У поста нет текста для отправки.', ToastType::ERROR);
         }
 
-        $email = app(SiteSettings::class)->test_user_email;
-        $user = $email ? User::query()->where('email', $email)->with('telegramChat')->first() : null;
+        $chat = MoonshineTelegramLink::chatFor((int) request()->user()->id);
 
-        if ($user === null || $user->telegramChat === null) {
-            return JsonResponse::make()->toast('Тестовый пользователь не найден или не привязал Telegram.', ToastType::ERROR);
+        if ($chat === null) {
+            return JsonResponse::make()->toast('Привяжите Telegram на странице профиля.', ToastType::ERROR);
         }
 
         try {
-            $response = $send($post, $user->telegramChat);
+            $response = $send($post, $chat);
         } catch (Throwable $e) {
             return JsonResponse::make()->toast("Ошибка отправки: {$e->getMessage()}", ToastType::ERROR);
         }
