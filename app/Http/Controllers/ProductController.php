@@ -36,11 +36,18 @@ class ProductController extends Controller
     {
         abort_unless($product->status === ProductStatus::PUBLISHED, 404);
 
-        $product->load(self::EAGER_LOAD);
+        $product->load('beerDetails');
+
+        $similar = $this->similar($product);
+
+        // Общая догрузка связей для product + similar одним проходом —
+        // пересекающиеся id (category, beer_style) уходят одним запросом
+        // вместо двух (отдельно для product, отдельно для similar).
+        Collection::make([$product])->merge($similar)->loadMissing(self::EAGER_LOAD);
 
         return view('pages.product', [
             'product' => $product,
-            'similar' => $this->similar($product),
+            'similar' => $similar,
         ]);
     }
 
@@ -61,7 +68,6 @@ class ProductController extends Controller
                 fn ($query) => $query->inCategories([$product->category_id]),
             )
             ->whereKeyNot($product->getKey())
-            ->with(self::EAGER_LOAD)
             ->inRandomOrder()
             ->limit(5)
             ->get();
