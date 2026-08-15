@@ -2,9 +2,11 @@
 
 namespace Domain\Order\Models;
 
+use Database\Factories\Order\OrderFactory;
 use Domain\Auth\Models\User;
 use Domain\Order\Enums\OrderStatuses;
 use Illuminate\Database\Eloquent\Casts\Attribute;
+use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -19,7 +21,7 @@ class Order extends Model
     protected static function booted(): void
     {
         static::creating(function (Order $order) {
-            $order->number = 'ORD-'.date('Ymd').'-'.strtoupper(substr(md5(uniqid()), 0, 6));
+            $order->number = 'SD-'.date('Ymd').'-'.strtoupper(substr(md5(uniqid()), 0, 6));
         });
     }
 
@@ -71,5 +73,15 @@ class Order extends Model
     public function orderItems(): HasMany
     {
         return $this->hasMany(OrderItem::class);
+    }
+
+    /**
+     * Модель живёт вне `App\Models` (см. CLAUDE.md, "Domain layer") —
+     * дефолтная конвенция фабрик её не резолвит, та же ловушка, что уже
+     * задокументирована в Domain\Auth\Models\User::newFactory().
+     */
+    protected static function newFactory(): Factory
+    {
+        return OrderFactory::new();
     }
 }

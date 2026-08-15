@@ -2,8 +2,11 @@
 
 namespace Domain\Vk\Models;
 
+use Database\Factories\Vk\VkPostFactory;
 use Domain\Vk\Enums\VkPostStatus;
 use Illuminate\Database\Eloquent\Casts\Attribute;
+use Illuminate\Database\Eloquent\Factories\Factory;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
@@ -14,6 +17,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  */
 class VkPost extends Model
 {
+    use HasFactory;
+
     protected $fillable = [
         'owner_id',
         'vk_post_id',
@@ -55,5 +60,15 @@ class VkPost extends Model
     protected function broadcastText(): Attribute
     {
         return Attribute::get(fn (): string => (string) ($this->message_text ?: $this->text));
+    }
+
+    /**
+     * Модель живёт вне `App\Models` (см. CLAUDE.md, "Domain layer") —
+     * дефолтная конвенция фабрик её не резолвит, та же ловушка, что уже
+     * задокументирована в Domain\Auth\Models\User::newFactory().
+     */
+    protected static function newFactory(): Factory
+    {
+        return VkPostFactory::new();
     }
 }

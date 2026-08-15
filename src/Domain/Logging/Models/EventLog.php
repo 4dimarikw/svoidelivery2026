@@ -2,7 +2,9 @@
 
 namespace Domain\Logging\Models;
 
+use Database\Factories\Logging\EventLogFactory;
 use Domain\Auth\Models\User;
+use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -54,5 +56,15 @@ class EventLog extends Model
     public function causer(): BelongsTo
     {
         return $this->belongsTo(User::class, 'caused_by_user_id');
+    }
+
+    /**
+     * Модель живёт вне `App\Models` (см. CLAUDE.md, "Domain layer") —
+     * дефолтная конвенция фабрик её не резолвит, та же ловушка, что уже
+     * задокументирована в Domain\Auth\Models\User::newFactory().
+     */
+    protected static function newFactory(): Factory
+    {
+        return EventLogFactory::new();
     }
 }

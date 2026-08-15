@@ -2,6 +2,8 @@
 
 namespace Domain\Order\Models;
 
+use Database\Factories\Order\OrderCustomerFactory;
+use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -31,5 +33,15 @@ class OrderCustomer extends Model
     public function order(): BelongsTo
     {
         return $this->belongsTo(Order::class);
+    }
+
+    /**
+     * Модель живёт вне `App\Models` (см. CLAUDE.md, "Domain layer") —
+     * дефолтная конвенция фабрик её не резолвит, та же ловушка, что уже
+     * задокументирована в Domain\Auth\Models\User::newFactory().
+     */
+    protected static function newFactory(): Factory
+    {
+        return OrderCustomerFactory::new();
     }
 }
