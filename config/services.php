@@ -60,10 +60,10 @@ return [
      * MissingConfigException), самим драйвером не используются.
      */
     'telegram' => [
+        'bot' => null,
         'client_id' => null,
         'client_secret' => null,
         'redirect' => null,
-        'bot' => null,
     ],
 
     'catalog_1c_ftp' => [

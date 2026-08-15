@@ -6,6 +6,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
+    <link rel="icon" href="/favicon.ico">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+
     <title>{{ (seo()->meta()->title() ?? $title  ?: config('app.name')) }}</title>
 
     @if ($seoDescription = seo()->meta()->description())
@@ -37,7 +40,7 @@
 
 {{-- На всех страницах (не только /login), чтобы гость, открывший Mini App
      на каталоге/товаре/корзине, входил без перехода на форму входа. --}}
-<x-ui.telegram-autologin />
+<x-ui.telegram-autologin/>
 
 {{ $slot }}
 </body>
