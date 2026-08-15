@@ -8,12 +8,15 @@ use Domain\Auth\Models\User;
 use Domain\Cart\Models\Cart;
 use Domain\Cart\Models\CartItem;
 use Domain\Catalog\Models\Product;
+use Domain\Order\Mail\NewOrderCreated;
 use Domain\Order\Models\DeliveryType;
 use Domain\Order\Models\Order;
 use Domain\Order\Models\PaymentMethod;
 use Domain\Profile\Models\Address;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
+use Infrastructure\Settings\SiteSettings;
 use Tests\TestCase;
 
 /**
@@ -76,6 +79,12 @@ class CheckoutTest extends TestCase
 
     public function test_happy_path_creates_order_with_saved_address(): void
     {
+        Mail::fake();
+
+        $settings = app(SiteSettings::class);
+        $settings->notify_email = 'admin@example.test';
+        $settings->save();
+
         $user = User::factory()->create();
         $address = Address::factory()->for($user)->create();
         $product = Product::factory()->create(['price' => 12000, 'stock_quantity' => 5, 'in_stock' => true]);
@@ -126,6 +135,10 @@ class CheckoutTest extends TestCase
         // OrderCreated → App\Listeners\Order\HandleOrderCreated →
         // UploadOrderToFTP — проверяем, что цепочка не разорвана.
         $this->assertCount(1, Storage::disk('ftp')->allFiles(config('order.ftp_upload.dir')));
+
+        // Та же цепочка → notifyAdmin() — письмо ставится в очередь, не
+        // отправляется синхронно (см. HandleOrderCreated::notifyAdmin()).
+        Mail::assertQueued(NewOrderCreated::class, fn (NewOrderCreated $mail) => $mail->order->id === $order->id);
     }
 
     public function test_store_ignores_client_supplied_delivery_and_payment(): void

@@ -3,7 +3,13 @@
 namespace App\Listeners\Order;
 
 use App\Events\Order\OrderCreated;
+use App\Events\Order\OrderNotificationEmailFailed;
 use Domain\Order\Actions\UploadOrderToFTP;
+use Domain\Order\Mail\NewOrderCreated;
+use Domain\Order\Models\Order;
+use Illuminate\Support\Facades\Mail;
+use Infrastructure\Settings\SiteSettings;
+use Throwable;
 
 /**
  * Единственное место, которое владеет «что происходит после оформления
@@ -27,5 +33,38 @@ class HandleOrderCreated
         // catch (Throwable)) — сбой выгрузки не должен ронять уже
         // оформленный заказ.
         app(UploadOrderToFTP::class)->execute($event->order->id);
+
+        $this->notifyAdmin($event->order);
+    }
+
+    /**
+     * Письмо-уведомление админу о новом заказе. Сбой (SMTP недоступен,
+     * ошибка рендера шаблона) не должен ронять уже оформленный заказ —
+     * тот же принцип, что у UploadOrderToFTP::execute() (см. её
+     * catch (Throwable)); попадает в event_logs через OrderNotificationEmailFailed.
+     */
+    private function notifyAdmin(Order $order): void
+    {
+        $email = app(SiteSettings::class)->notify_email;
+
+        if ($email === null) {
+            return;
+        }
+
+        try {
+            // orderCustomer/orderItems.product/deliveryType используются в
+            // emails.new-order — грузим явно, не по одному лениво (та же
+            // причина, что у Order::with() в UploadOrderToFTP::execute()).
+            $order->loadMissing(['orderCustomer', 'orderItems.product', 'deliveryType']);
+
+            Mail::to($email)->queue(new NewOrderCreated($order));
+        } catch (Throwable $e) {
+            report($e);
+            event(new OrderNotificationEmailFailed(
+                orderId: $order->id,
+                exceptionClass: $e::class,
+                errorMessage: $e->getMessage(),
+            ));
+        }
     }
 }
