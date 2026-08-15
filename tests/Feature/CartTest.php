@@ -175,6 +175,24 @@ class CartTest extends TestCase
         $this->assertSame(1, CartItem::query()->where('cart_id', $otherCart->id)->count());
     }
 
+    /**
+     * Регрессия: без no-store браузер по RFC 9111 §4.2.4 вправе показать
+     * закешированную /cart при навигации кнопкой «Назад», даже если
+     * Cache-Control: no-cache (то, что Laravel отдаёт по умолчанию) —
+     * пользователь видел старое количество после ajax-изменения в корзине.
+     */
+    public function test_index_response_is_not_stored(): void
+    {
+        $user = User::factory()->create();
+
+        $response = $this->actingAs($user)->get(route('cart.index'));
+
+        $response->assertOk();
+        // Symfony дописывает ", private" сам (сессионная кука в ответе) —
+        // проверяем наличие no-store, не точное совпадение всей строки.
+        $this->assertStringContainsString('no-store', $response->headers->get('Cache-Control'));
+    }
+
     public function test_index_with_items_shows_summary_and_continue_shopping_cta(): void
     {
         $user = User::factory()->create();

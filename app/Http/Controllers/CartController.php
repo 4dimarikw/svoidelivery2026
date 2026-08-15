@@ -10,11 +10,11 @@ use Domain\Catalog\Models\Product;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\View\View;
+use Illuminate\Http\Response;
 
 class CartController extends Controller
 {
-    public function index(CartManager $cart): View
+    public function index(CartManager $cart): Response
     {
         // CartManager::cartItems() — тот же мемоизированный на HTTP-запрос
         // $items, что читают $cart->count()/->amount() ниже и шапка
@@ -36,11 +36,24 @@ class CartController extends Controller
             'product.beerDetails.beerStyle',
         ]);
 
-        return view('pages.cart', [
-            'cartItems' => $cartItems,
-            'cart' => $cart,
-            'amount' => $cart->amount(),
-        ]);
+        // no-store — не про XSS/приватность, про историю навигации: браузер
+        // по спецификации (RFC 9111 §4.2.4) вправе переиспользовать
+        // сохранённый ответ при переходе кнопками «Назад»/«Вперёд» ДАЖЕ
+        // если Cache-Control: no-cache (то, что Laravel отдаёт по
+        // умолчанию для обычного view()) — тот же no-cache не спасает от
+        // устаревшего количества после ajax-изменений в корзине
+        // (cart-stepper.blade.php), которые эту историю-в-памяти не
+        // затрагивают. no-store — единственная директива, закрывающая
+        // именно этот кейс; на bfcache (другой механизм — там participates
+        // JS/DOM целиком) она не всегда влияет, для него отдельно
+        // pageshow/persisted в resources/js/app.js.
+        return response()
+            ->view('pages.cart', [
+                'cartItems' => $cartItems,
+                'cart' => $cart,
+                'amount' => $cart->amount(),
+            ])
+            ->header('Cache-Control', 'no-store');
     }
 
     public function increase(Request $request, Product $product, CartManager $cart): RedirectResponse|JsonResponse
