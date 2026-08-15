@@ -25,6 +25,7 @@ return [
         'min_amount' => 'Order amount is below the minimum for delivery with an address.',
         'min_amount_1' => 'The cart is empty or the order amount is too low.',
         'out_of_stock' => 'Product ":title" is out of stock.',
+        'pack_multiplicity' => 'The quantity of Beer, Mead, Cider and Non-alcoholic items (:quantity pcs.) must be a multiple of 12 or 20.',
     ],
 
     'history' => [
