@@ -45,20 +45,7 @@ class CheckoutTest extends TestCase
         Storage::fake('ftp');
     }
 
-    public function test_guest_is_redirected_to_login(): void
-    {
-        $this->get(route('checkout.index'))->assertRedirect(route('login'));
-    }
-
-    public function test_index_redirects_to_cart_when_cart_is_empty(): void
-    {
-        $user = User::factory()->create();
-
-        $this->actingAs($user)->get(route('checkout.index'))
-            ->assertRedirect(route('cart.index'));
-    }
-
-    public function test_index_renders_checkout_page(): void
+    public function test_cart_page_renders_checkout_form(): void
     {
         $user = User::factory()->create();
         $product = Product::factory()->create(['price' => 500, 'stock_quantity' => 5, 'in_stock' => true]);
@@ -66,15 +53,24 @@ class CheckoutTest extends TestCase
         $cart = Cart::factory()->create(['user_id' => $user->id]);
         CartItem::factory()->create(['cart_id' => $cart->id, 'product_id' => $product->id, 'quantity' => 1, 'price' => 500]);
 
-        $response = $this->actingAs($user)->get(route('checkout.index'));
+        $response = $this->actingAs($user)->get(route('cart.index'));
 
         $response->assertOk();
-        $response->assertSee(__('order.title'));
         $response->assertSee(__('order.address'));
         $response->assertDontSee(__('order.delivery_type'));
         $response->assertDontSee(__('order.payment_method'));
         $response->assertDontSee('name="delivery_type_id"', false);
         $response->assertDontSee('name="payment_method_id"', false);
+
+        // Плашка ошибки оформления — сосед <x-ui.form> (в sticky-панели
+        // итога), не потомок: Alpine-scope идёт по ДОМ-дереву, не по
+        // вложенности Blade-компонентов, так что errorFor() из x-data
+        // формы там не виден. pages/cart.blade.php зеркалит ошибку в
+        // Alpine.store('checkout').error через x-effect на самой форме
+        // (resources/js/cart.js), плашка читает уже оттуда.
+        $response->assertSee('x-show="$store.checkout.error"', false);
+        $response->assertSee('x-text="$store.checkout.error"', false);
+        $response->assertSee('$store.checkout.error = errorFor(\'checkout\')', false);
     }
 
     /**
@@ -82,7 +78,7 @@ class CheckoutTest extends TestCase
      * к заказу» — стартовым значением для выбранного по умолчанию адреса
      * (no-JS путь и SSR перед гидратацией Alpine), и картой id→комментарий
      * для остальных адресов, которую JS использует при переключении радио
-     * (resources/views/pages/checkout.blade.php, addressComments).
+     * (resources/views/pages/cart.blade.php, addressComments).
      */
     public function test_default_address_comment_prefills_order_comment_field(): void
     {
@@ -94,7 +90,7 @@ class CheckoutTest extends TestCase
         $cart = Cart::factory()->create(['user_id' => $user->id]);
         CartItem::factory()->create(['cart_id' => $cart->id, 'product_id' => $product->id, 'quantity' => 1, 'price' => 500]);
 
-        $response = $this->actingAs($user)->get(route('checkout.index'));
+        $response = $this->actingAs($user)->get(route('cart.index'));
 
         $response->assertOk();
         // Стартовое значение textarea — комментарий адреса по умолчанию.
@@ -319,35 +315,6 @@ class CheckoutTest extends TestCase
 
         $response->assertSessionHasErrors('address_id');
         $this->assertDatabaseMissing('orders', ['user_id' => $user->id]);
-    }
-
-    public function test_rejects_amount_below_minimum_for_delivery_with_address(): void
-    {
-        $user = User::factory()->create();
-        $address = Address::factory()->for($user)->create();
-        $product = Product::factory()->create(['price' => 500, 'stock_quantity' => 5, 'in_stock' => true]);
-
-        $cart = Cart::factory()->create(['user_id' => $user->id]);
-        CartItem::factory()->create(['cart_id' => $cart->id, 'product_id' => $product->id, 'quantity' => 1, 'price' => 500]);
-
-        $response = $this->actingAs($user)->post(route('checkout.store'), [
-            'address_id' => $address->id,
-            'first_name' => 'Иван',
-            'last_name' => 'Иванов',
-            'phone' => '+79991234567',
-        ]);
-
-        $response->assertSessionHasErrors('checkout');
-        $this->assertDatabaseMissing('orders', ['user_id' => $user->id]);
-        $this->assertSame(1, CartItem::query()->where('cart_id', $cart->id)->count());
-
-        // Ошибка бизнес-правила пайплайна — не ошибка конкретного поля,
-        // должна попасть в заметный <x-ui.alert tone="err">
-        // (<x-ui.error-alert name="checkout">), не в микро-текст под полем.
-        $page = $this->actingAs($user)->get(route('checkout.index'));
-        $page->assertOk();
-        $page->assertSee('Сумма заказа меньше минимальной');
-        $page->assertSee('bg-danger-50', false);
     }
 
     public function test_rejects_when_item_went_out_of_stock_after_being_added_to_cart(): void

@@ -106,7 +106,7 @@ class PackMultiplicityTest extends TestCase
         $response = $this->checkout($user);
 
         // Проверяем именно текст правила про кратность, а не то, что заказ
-        // упал на min_amount (у которого тоже 'checkout' — ключ ошибки).
+        // упал на min_amount_1 (у которого тоже 'checkout' — ключ ошибки).
         $response->assertSessionHasErrors(['checkout' => __('order.errors.pack_multiplicity', ['quantity' => 7])]);
         $this->assertDatabaseMissing('orders', ['user_id' => $user->id]);
     }

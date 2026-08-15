@@ -14,7 +14,7 @@ use Illuminate\Http\Response;
 
 class CartController extends Controller
 {
-    public function index(CartManager $cart): Response
+    public function index(Request $request, CartManager $cart): Response
     {
         // CartManager::cartItems() — тот же мемоизированный на HTTP-запрос
         // $items, что читают $cart->count()/->amount() ниже и шапка
@@ -47,11 +47,27 @@ class CartController extends Controller
         // именно этот кейс; на bfcache (другой механизм — там participates
         // JS/DOM целиком) она не всегда влияет, для него отдельно
         // pageshow/persisted в resources/js/app.js.
+        // Адреса/профиль — для формы оформления, встроенной прямо в эту
+        // страницу (см. pages/cart.blade.php). Грузим их всегда, даже на
+        // пустой корзине — форма и пустое состояние рендерятся серверно
+        // параллельно (x-show/x-cloak), не по ветке PHP-условия.
+        $addresses = $request->user()->addresses()->latest()->get();
+
+        // Уже посчитали коллекцию — отдаём то же число в addressesCount()
+        // (account-nav.blade.php, user-menu.blade.php), чтобы она не делала
+        // свой отдельный count()-запрос по той же таблице.
+        $request->user()->setAttribute('addresses_count', $addresses->count());
+
         return response()
             ->view('pages.cart', [
                 'cartItems' => $cartItems,
                 'cart' => $cart,
                 'amount' => $cart->amount(),
+                'addresses' => $addresses,
+                // profile передаём явно, а не читаем в шаблоне
+                // (auth()->user()->profile) — тот же паттерн, что
+                // ProfileController::edit(), иначе шаблон бьёт в БД сам.
+                'profile' => $request->user()->profile,
             ])
             ->header('Cache-Control', 'no-store');
     }

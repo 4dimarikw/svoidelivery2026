@@ -205,8 +205,13 @@ class CartTest extends TestCase
         $response->assertOk();
         $response->assertSee(__('account.cart.items'));
         $response->assertSee(__('account.cart.total_label'));
-        $response->assertSee(__('account.cart.checkout'));
-        $response->assertSee(route('checkout.index'), false);
+        $response->assertSee(__('order.submit'));
+        // Submit-кнопка живёт в sticky-панели итога, вне <form> — привязана
+        // к форме оформления HTML5-атрибутом form="checkout-form"
+        // (см. pages/cart.blade.php).
+        $response->assertSee('id="checkout-form"', false);
+        $response->assertSee('form="checkout-form"', false);
+        $response->assertSee(route('checkout.store'), false);
         $response->assertSee(__('account.cart.continue'));
         $response->assertSee(route('home'), false);
     }

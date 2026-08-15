@@ -17,6 +17,27 @@ document.addEventListener('alpine:init', () => {
     });
 
     /**
+     * Отдельный стор под submit-кнопку и плашку ошибки формы оформления
+     * (pages/cart.blade.php) — обе физически лежат в sticky-панели итога,
+     * вне <form> (кнопка привязана HTML5-атрибутом form="checkout-form",
+     * тот же приём, что кнопка "+" в cart-stepper.blade.php). `submitting`/
+     * ошибка 'checkout' — состояние uiForm (resources/js/ui.js), которое
+     * живёт в x-data самой формы; Alpine-scope наследуется по ДОМ-дереву, а
+     * не по вложенности Blade-компонентов (в отличие от @aware), так что
+     * дочерний относительно <x-ui.form> в разметке — не то же самое, что
+     * дочерний в реальном ДОМ: раз панель итога — сосед формы, элементы
+     * внутри нее не видят её errorFor()/submitting напрямую (обращение к
+     * errorFor() кинуло бы ReferenceError). Форма зеркалит оба значения
+     * сюда через x-effect, кнопка/алерт читают уже отсюда.
+     * Alpine.$data(document.getElementById(...)) сюда не годится — зависит
+     * от того, успела ли форма гидратироваться раньше кнопки/алерта.
+     */
+    Alpine.store('checkout', {
+        submitting: false,
+        error: null,
+    });
+
+    /**
      * Степпер одной карточки/строки. `quantity` сидируется с сервера
      * (CartManager::quantityOf() в product-card.blade.php либо уже
      * загруженный CartItem::quantity в cart-line.blade.php) — первый рендер

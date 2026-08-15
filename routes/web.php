@@ -65,10 +65,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::delete('cart/{product}', [CartController::class, 'destroy'])->name('cart.destroy');
     Route::delete('cart', [CartController::class, 'clear'])->name('cart.clear');
 
-    // Оформление — тот же принцип, что корзина: не часть личного кабинета
-    // (Domain\Order), поэтому вне prefix('account'). История уже оформленных
-    // заказов — account.orders.* выше.
-    Route::get('checkout', [OrderController::class, 'index'])->name('checkout.index');
+    // Оформление больше не отдельная страница — только POST-эндпоинт формы,
+    // встроенной в /cart (CartController::index(), pages/cart.blade.php).
+    // GET-роута (и OrderController::index()) больше нет. История уже
+    // оформленных заказов — account.orders.* выше.
     Route::post('checkout', [OrderController::class, 'store'])->name('checkout.store');
 });
 

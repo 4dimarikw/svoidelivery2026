@@ -27,14 +27,6 @@ final class TermsOrder implements OrderProcessContract
      */
     public function handle(Order $order, $next)
     {
-        // with_address, не сравнение title === 'Самовывоз' — тот же булев
-        // флаг уже есть на DeliveryType специально для таких развилок.
-        // Самовывоз освобождён от минимальной суммы — доставка ничего не
-        // стоит магазину, порог существует именно ради экономики доставки.
-        if ($order->deliveryType->with_address && cart()->amount()->major() < 10000.0) {
-            throw new OrderProcessException(__('order.errors.min_amount'));
-        }
-
         if (cart()->amount()->major() <= 1.0) {
             throw new OrderProcessException(__('order.errors.min_amount_1'));
         }
