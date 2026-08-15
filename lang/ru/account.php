@@ -17,6 +17,7 @@ return [
         'last_name' => 'Фамилия',
         'patronymic' => 'Отчество',
         'phone' => 'Телефон',
+        'phone_help' => 'Российский номер с +7 или 8: +7 (999) 123-45-67, 8 999 123 45 67',
         'vk_url' => 'Ссылка на VK',
         'telegram_url' => 'Ссылка на Telegram',
         'default_order_comment' => 'Комментарий к заказу по умолчанию',

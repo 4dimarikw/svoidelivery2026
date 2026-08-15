@@ -168,6 +168,7 @@
             <x-ui.auth-card title="Войти">
                 <x-ui.form action="{{ route('ui-kit.submit') }}" mode="ajax">
                     <div class="grid gap-3.5" x-show="status !== 'ok'">
+                        <x-ui.error-alert name="email" class="mb-1" />
                         <x-ui.input-field name="email" label="E-mail" type="email" placeholder="you@mail.ru" required />
                         <x-ui.password-field name="password" label="Пароль" required />
                         <x-ui.checkbox-field name="agree" label="Мне есть 18 лет, принимаю условия сервиса" />

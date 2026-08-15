@@ -27,7 +27,9 @@ final class CustomerDTO
     public static function fromArray(array $data): self
     {
         return new self(
-            addressId: $data['address_id'] ?? null,
+            // Данные могут прийти строками (например, из формы) —
+            // конструктор строго типизирован (?int + strict_types=1).
+            addressId: isset($data['address_id']) ? (int) $data['address_id'] : null,
             firstName: $data['first_name'],
             lastName: $data['last_name'],
             phone: $data['phone'],
@@ -37,7 +39,12 @@ final class CustomerDTO
     public static function fromRequest(OrderRequest $request): self
     {
         return new self(
-            addressId: $request->input('address_id') ?? null,
+            // input() отдаёт address_id строкой ('1') — форма шлёт всё
+            // строками, а конструктор строго типизирован (?int +
+            // strict_types=1). Пустое значение — не адрес 0, а «доставка
+            // адреса не требует» → null (filled(), не integer(): последний
+            // вернул бы 0 при отсутствии ключа, а 0 — валидный, но чужой id).
+            addressId: $request->filled('address_id') ? $request->integer('address_id') : null,
             firstName: $request->input('first_name'),
             lastName: $request->input('last_name'),
             phone: $request->input('phone'),

@@ -19,6 +19,19 @@ class OrderRequest extends FormRequest
     }
 
     /**
+     * Приводим телефон к единому виду (+7XXXXXXXXXX) до валидации — иначе
+     * order_customers.phone хранит то написание, что набрал конкретный
+     * пользователь (с пробелами/скобками/через 8), и поиск/выгрузка в 1С
+     * (Domain\Order\Actions\UploadOrderToFTP) получают разнобой.
+     */
+    protected function prepareForValidation(): void
+    {
+        if (is_string($this->input('phone'))) {
+            $this->merge(['phone' => RussianPhoneNumber::normalize($this->input('phone'))]);
+        }
+    }
+
+    /**
      * Get the validation rules that apply to the request.
      *
      * @return array<string, ValidationRule|array|string>

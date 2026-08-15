@@ -11,19 +11,31 @@
      mode="ajax" — общий паттерн форм проекта (CLAUDE.md, "Private account
      area"), 422-ошибка бизнес-правил пайплайна (мин. сумма/нет в наличии)
      приходит от OrderController::store() как {errors:{checkout:[...]}} —
-     искусственное поле 'checkout' для <x-ui.error name="checkout">. --}}
+     искусственное поле 'checkout' для <x-ui.error-alert name="checkout">
+     (заметная плашка, не микро-текст под полем — сообщение относится ко
+     всей форме, не к конкретному инпуту). Плашка стоит под кнопкой
+     «Оформить заказ» (низ правой sticky-колонки), не наверху страницы —
+     вне тёмной teal-панели итога: светлый фон алерта на тёмном плохо
+     смотрится и не по дизайн-системе. --}}
 @php
     $defaultAddress = $addresses->firstWhere('is_default', true) ?? $addresses->first();
     $selectedAddressId = old('address_id', $defaultAddress?->id);
+    // Комментарий уже выбранного адреса (например «домофон 45») — стартовое
+    // значение поля «Комментарий к заказу»; при переключении радио-кнопки
+    // ниже подменяется на лету через Alpine (addressComments).
+    $selectedAddress = $addresses->firstWhere('id', (int) $selectedAddressId);
 @endphp
 
 <x-layouts.site :title="__('order.title')">
     <div class="mx-auto max-w-page px-6 py-10">
         <h1 class="mb-6 font-display text-heading-m uppercase text-ink-900">{{ __('order.title') }}</h1>
 
-        <x-ui.form :action="route('checkout.store')" method="POST" mode="ajax">
-            <x-ui.error name="checkout" class="mb-4 block" />
-
+        <x-ui.form
+            :action="route('checkout.store')"
+            method="POST"
+            mode="ajax"
+            :state="['comment' => old('comment', $selectedAddress?->comment)]"
+        >
             <div class="grid grid-cols-1 gap-8 lg:grid-cols-12">
                 <div class="grid gap-6 lg:col-span-8">
                     <x-ui.surface tone="paper-2" class="rounded-sm border border-hairline p-6">
@@ -50,12 +62,20 @@
                         @if ($addresses->isEmpty())
                             <p class="text-body-m text-ink-500">{{ __('order.address_none') }}</p>
                         @else
-                            <div class="grid gap-3">
+                            {{-- addressComments — карта id адреса → его комментарий
+                                 (например «домофон 45»), один раз на весь список;
+                                 x-on:change ниже подставляет его в общий
+                                 state.comment формы (уходит выше по цепочке Alpine-
+                                 scope до <x-ui.form>), полностью заменяя то, что
+                                 было в поле — так решил продукт: без защиты от
+                                 затирания ручного ввода. --}}
+                            <div class="grid gap-3" x-data="{ addressComments: @js($addresses->pluck('comment', 'id')) }">
                                 @foreach ($addresses as $address)
                                     <x-ui.radio
                                         name="address_id"
                                         :value="$address->id"
                                         :checked="(string) $selectedAddressId === (string) $address->id"
+                                        x-on:change="state.comment = addressComments[$el.value] ?? ''"
                                         class="items-start rounded-sm border border-hairline p-3.5"
                                     >
                                         {{ $address->city }}, {{ $address->address }}
@@ -68,12 +88,36 @@
 
                     <x-ui.surface tone="paper-2" class="rounded-sm border border-hairline p-6">
                         <h2 class="mb-4 font-display text-heading-s uppercase text-ink-900">{{ __('account.profile.details_title') }}</h2>
-                        <div class="grid gap-3.5 sm:grid-cols-2">
-                            <x-ui.input-field name="first_name" :label="__('account.field.first_name')" :value="old('first_name', $profile?->first_name)" required />
-                            <x-ui.input-field name="last_name" :label="__('account.field.last_name')" :value="old('last_name', $profile?->last_name)" required />
+                        {{-- Один внешний grid gap-3.5 на все поля — тот же паттерн,
+                             что account/profile.blade.php. Точечный class="mt-3.5"
+                             на *-field здесь не годится: *-field форвардит $attributes
+                             в сам контрол (input/textarea), а не в обёртку
+                             <x-ui.field>, так что margin-top оседал бы ВНУТРИ поля
+                             (между лейблом и инпутом), а не между полями. --}}
+                        <div class="grid gap-3.5">
+                            <div class="grid gap-3.5 sm:grid-cols-2">
+                                <x-ui.input-field name="first_name" :label="__('account.field.first_name')" :value="old('first_name', $profile?->first_name)" required />
+                                <x-ui.input-field name="last_name" :label="__('account.field.last_name')" :value="old('last_name', $profile?->last_name)" required />
+                            </div>
+                            <x-ui.input-field
+                                name="phone"
+                                type="tel"
+                                inputmode="tel"
+                                autocomplete="tel"
+                                x-data="phoneMask"
+                                placeholder="+7 (999) 123-45-67"
+                                :label="__('account.field.phone')"
+                                :help="__('account.field.phone_help')"
+                                :value="old('phone', $profile?->phone)"
+                                required
+                            />
+                            <x-ui.textarea-field
+                                name="comment"
+                                :label="__('order.comment')"
+                                :value="old('comment', $selectedAddress?->comment)"
+                                x-model="state.comment"
+                            />
                         </div>
-                        <x-ui.input-field name="phone" :label="__('account.field.phone')" :value="old('phone', $profile?->phone)" required class="mt-3.5" />
-                        <x-ui.textarea-field name="comment" :label="__('order.comment')" :value="old('comment')" class="mt-3.5" />
                     </x-ui.surface>
                 </div>
 
@@ -96,6 +140,8 @@
                             </span>
                         </x-ui.btn>
                     </div>
+
+                    <x-ui.error-alert name="checkout" class="mt-4" />
                 </div>
             </div>
         </x-ui.form>

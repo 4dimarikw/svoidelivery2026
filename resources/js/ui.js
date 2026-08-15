@@ -135,6 +135,60 @@ document.addEventListener('alpine:init', () => {
     }));
 
     /**
+     * Маска телефона для <x-ui.input-field name="phone" type="tel" x-data="phoneMask">
+     * (форма заказа, профиль). Форматирует по ходу набора и переживает вставку
+     * из буфера — оба случая идут через один и тот же 'input'-обработчик,
+     * который форматирует из цифр, а не патчит строку по кусочкам.
+     *
+     * Своего x-model не вводит и работает через $el напрямую — иначе спорил бы
+     * с value-контрактом <x-ui.input> (три способа получить значение, см.
+     * шапку input.blade.php). Правило Support\Rules\RussianPhoneNumber
+     * разрешает и +7, и голую 8/7 — маска не навязывает один из них, просто
+     * группирует то, что уже набрано. Без JS поле остаётся обычным
+     * type="tel" с placeholder/help — вся валидация всё равно на сервере.
+     */
+    Alpine.data('phoneMask', () => ({
+        init() {
+            this.$el.value = this.formatted(this.$el.value);
+            this.$el.addEventListener('input', () => {
+                const caretAtEnd = this.$el.selectionEnd === this.$el.value.length;
+                this.$el.value = this.formatted(this.$el.value);
+                if (caretAtEnd) {
+                    this.$el.setSelectionRange(this.$el.value.length, this.$el.value.length);
+                }
+            });
+        },
+
+        formatted(raw) {
+            const hasPlus = raw.trim().startsWith('+');
+            let digits = raw.replace(/\D/g, '').slice(0, 11);
+
+            if (digits.length === 0) {
+                return '';
+            }
+
+            // Без ведущей 7/8 не форматируем — это невалидный по правилу
+            // ввод (нужен код страны), маска не должна делать вид, что он
+            // подходит под шаблон.
+            if (digits[0] !== '7' && digits[0] !== '8') {
+                return raw;
+            }
+
+            const prefix = hasPlus ? '+7' : digits[0];
+            digits = digits.slice(1);
+
+            let out = prefix;
+            if (digits.length > 0) out += ' (' + digits.slice(0, 3);
+            if (digits.length >= 3) out += ')';
+            if (digits.length > 3) out += ' ' + digits.slice(3, 6);
+            if (digits.length > 6) out += '-' + digits.slice(6, 8);
+            if (digits.length > 8) out += '-' + digits.slice(8, 10);
+
+            return out;
+        },
+    }));
+
+    /**
      * Действие "скопировать всё" для <x-ui.code-list>.
      * Clipboard API требует HTTPS (это нормально — Safari 13.1+ поддерживает его);
      * если navigator.clipboard недоступен, используется запасной вариант через execCommand.

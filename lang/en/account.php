@@ -17,6 +17,7 @@ return [
         'last_name' => 'Last name',
         'patronymic' => 'Patronymic',
         'phone' => 'Phone',
+        'phone_help' => 'Russian number with +7 or 8: +7 (999) 123-45-67, 8 999 123 45 67',
         'vk_url' => 'VK link',
         'telegram_url' => 'Telegram link',
         'default_order_comment' => 'Default order comment',

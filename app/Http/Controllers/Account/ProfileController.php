@@ -9,6 +9,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
+use Support\Rules\RussianPhoneNumber;
 
 class ProfileController extends Controller
 {
@@ -33,11 +34,20 @@ class ProfileController extends Controller
 
     public function update(Request $request): RedirectResponse|JsonResponse
     {
+        // Телефон из формы заказа (checkout.blade.php) подставляется отсюда
+        // же (old('phone', $profile?->phone)) — приводим к тому же
+        // каноническому +7XXXXXXXXXX, что и Domain\Order\Requests\
+        // OrderRequest, ещё до validate(), у простого $request->validate()
+        // нет своего prepareForValidation().
+        if (is_string($request->input('phone'))) {
+            $request->merge(['phone' => RussianPhoneNumber::normalize($request->input('phone'))]);
+        }
+
         $validated = $request->validate([
             'first_name' => ['nullable', 'string', 'max:255'],
             'last_name' => ['nullable', 'string', 'max:255'],
             'patronymic' => ['nullable', 'string', 'max:255'],
-            'phone' => ['nullable', 'string', 'max:32'],
+            'phone' => ['nullable', 'string', new RussianPhoneNumber],
             'vk_url' => ['nullable', 'url', 'max:255'],
             'telegram_url' => ['nullable', 'url', 'max:255'],
             'default_order_comment' => ['nullable', 'string', 'max:1000'],

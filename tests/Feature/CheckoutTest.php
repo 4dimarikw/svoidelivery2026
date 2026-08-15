@@ -77,6 +77,44 @@ class CheckoutTest extends TestCase
         $response->assertDontSee('name="payment_method_id"', false);
     }
 
+    /**
+     * Комментарий адреса («домофон 45») подставляется в поле «Комментарий
+     * к заказу» — стартовым значением для выбранного по умолчанию адреса
+     * (no-JS путь и SSR перед гидратацией Alpine), и картой id→комментарий
+     * для остальных адресов, которую JS использует при переключении радио
+     * (resources/views/pages/checkout.blade.php, addressComments).
+     */
+    public function test_default_address_comment_prefills_order_comment_field(): void
+    {
+        $user = User::factory()->create();
+        $defaultAddress = Address::factory()->for($user)->create(['is_default' => true, 'comment' => 'домофон 45']);
+        $otherAddress = Address::factory()->for($user)->create(['is_default' => false, 'comment' => 'код 12']);
+        $product = Product::factory()->create(['price' => 500, 'stock_quantity' => 5, 'in_stock' => true]);
+
+        $cart = Cart::factory()->create(['user_id' => $user->id]);
+        CartItem::factory()->create(['cart_id' => $cart->id, 'product_id' => $product->id, 'quantity' => 1, 'price' => 500]);
+
+        $response = $this->actingAs($user)->get(route('checkout.index'));
+
+        $response->assertOk();
+        // Стартовое значение textarea — комментарий адреса по умолчанию.
+        $response->assertSee('>домофон 45<', false);
+
+        // Карта id→комментарий (addressComments) — на неё переключается JS
+        // при выборе другого адреса, не дожидаясь round-trip на сервер.
+        // @js() юникод-экранирует и заворачивает в JSON.parse('...') —
+        // разбирать это вручную в тесте хрупко (двойное экранирование
+        // кавычек/бэкслэшей под HTML-атрибут), достаточно убедиться, что
+        // оба адреса присутствуют как ключи объекта.
+        $html = $response->getContent();
+        $this->assertStringContainsString('addressComments', $html);
+        // @js() экранирует кавычки как escape-последовательность ",
+        // не пишет их буквально (иначе они разорвали бы HTML-атрибут
+        // x-data="...") — ключ в исходном HTML выглядит как "1":.
+        $this->assertStringContainsString("\\u0022{$defaultAddress->id}\\u0022:\\u0022", $html);
+        $this->assertStringContainsString("\\u0022{$otherAddress->id}\\u0022:\\u0022", $html);
+    }
+
     public function test_happy_path_creates_order_with_saved_address(): void
     {
         Mail::fake();
@@ -96,7 +134,7 @@ class CheckoutTest extends TestCase
             'address_id' => $address->id,
             'first_name' => 'Иван',
             'last_name' => 'Иванов',
-            'phone' => '9991234567',
+            'phone' => '+79991234567',
             'comment' => 'Позвоните за час',
         ]);
 
@@ -119,7 +157,7 @@ class CheckoutTest extends TestCase
             'order_id' => $order->id,
             'first_name' => 'Иван',
             'last_name' => 'Иванов',
-            'phone' => '9991234567',
+            'phone' => '+79991234567',
             'city' => $address->city,
             'address' => $address->address,
         ]);
@@ -141,6 +179,81 @@ class CheckoutTest extends TestCase
         Mail::assertQueued(NewOrderCreated::class, fn (NewOrderCreated $mail) => $mail->order->id === $order->id);
     }
 
+    /**
+     * Регрессия: HTML-форма шлёт все значения строками, включая числовой
+     * address_id ('1', не 1) — CustomerDTO::fromRequest() раньше падал
+     * TypeError'ом на строгой типизации (?int + strict_types=1), потому
+     * что не приводил его к int. Телефон тоже проверяем в «сыром» виде
+     * с пробелами/скобками — prepareForValidation() должен привести его
+     * к каноническому +7XXXXXXXXXX перед сохранением.
+     */
+    public function test_store_accepts_string_typed_form_fields(): void
+    {
+        $user = User::factory()->create();
+        $address = Address::factory()->for($user)->create();
+        $product = Product::factory()->create(['price' => 12000, 'stock_quantity' => 5, 'in_stock' => true]);
+
+        $cart = Cart::factory()->create(['user_id' => $user->id]);
+        CartItem::factory()->create(['cart_id' => $cart->id, 'product_id' => $product->id, 'quantity' => 1, 'price' => 12000]);
+
+        $response = $this->actingAs($user)->post(route('checkout.store'), [
+            'address_id' => (string) $address->id,
+            'first_name' => 'Иван',
+            'last_name' => 'Иванов',
+            'phone' => '8 (999) 123-45-67',
+        ]);
+
+        $order = Order::query()->where('user_id', $user->id)->firstOrFail();
+        $response->assertRedirect(route('account.orders.show', $order));
+
+        $this->assertDatabaseHas('order_customers', [
+            'order_id' => $order->id,
+            'phone' => '+79991234567',
+            'city' => $address->city,
+            'address' => $address->address,
+        ]);
+    }
+
+    public function test_store_rejects_phone_with_invalid_characters(): void
+    {
+        $user = User::factory()->create();
+        $address = Address::factory()->for($user)->create();
+        $product = Product::factory()->create(['price' => 12000, 'stock_quantity' => 5, 'in_stock' => true]);
+
+        $cart = Cart::factory()->create(['user_id' => $user->id]);
+        CartItem::factory()->create(['cart_id' => $cart->id, 'product_id' => $product->id, 'quantity' => 1, 'price' => 12000]);
+
+        $response = $this->actingAs($user)->post(route('checkout.store'), [
+            'address_id' => $address->id,
+            'first_name' => 'Иван',
+            'last_name' => 'Иванов',
+            'phone' => '89873332234оо',
+        ]);
+
+        $response->assertSessionHasErrors('phone');
+        $this->assertDatabaseMissing('orders', ['user_id' => $user->id]);
+    }
+
+    public function test_store_rejects_phone_without_country_prefix(): void
+    {
+        $user = User::factory()->create();
+        $address = Address::factory()->for($user)->create();
+        $product = Product::factory()->create(['price' => 12000, 'stock_quantity' => 5, 'in_stock' => true]);
+
+        $cart = Cart::factory()->create(['user_id' => $user->id]);
+        CartItem::factory()->create(['cart_id' => $cart->id, 'product_id' => $product->id, 'quantity' => 1, 'price' => 12000]);
+
+        $response = $this->actingAs($user)->post(route('checkout.store'), [
+            'address_id' => $address->id,
+            'first_name' => 'Иван',
+            'last_name' => 'Иванов',
+            'phone' => '9991234567',
+        ]);
+
+        $response->assertSessionHasErrors('phone');
+        $this->assertDatabaseMissing('orders', ['user_id' => $user->id]);
+    }
+
     public function test_store_ignores_client_supplied_delivery_and_payment(): void
     {
         $user = User::factory()->create();
@@ -160,7 +273,7 @@ class CheckoutTest extends TestCase
             'address_id' => $address->id,
             'first_name' => 'Иван',
             'last_name' => 'Иванов',
-            'phone' => '9991234567',
+            'phone' => '+79991234567',
         ]);
 
         $order = Order::query()->where('user_id', $user->id)->firstOrFail();
@@ -180,7 +293,7 @@ class CheckoutTest extends TestCase
         $response = $this->actingAs($user)->post(route('checkout.store'), [
             'first_name' => 'Иван',
             'last_name' => 'Иванов',
-            'phone' => '9991234567',
+            'phone' => '+79991234567',
         ]);
 
         $response->assertSessionHasErrors('address_id');
@@ -201,7 +314,7 @@ class CheckoutTest extends TestCase
             'address_id' => $theirAddress->id,
             'first_name' => 'Иван',
             'last_name' => 'Иванов',
-            'phone' => '9991234567',
+            'phone' => '+79991234567',
         ]);
 
         $response->assertSessionHasErrors('address_id');
@@ -221,12 +334,20 @@ class CheckoutTest extends TestCase
             'address_id' => $address->id,
             'first_name' => 'Иван',
             'last_name' => 'Иванов',
-            'phone' => '9991234567',
+            'phone' => '+79991234567',
         ]);
 
         $response->assertSessionHasErrors('checkout');
         $this->assertDatabaseMissing('orders', ['user_id' => $user->id]);
         $this->assertSame(1, CartItem::query()->where('cart_id', $cart->id)->count());
+
+        // Ошибка бизнес-правила пайплайна — не ошибка конкретного поля,
+        // должна попасть в заметный <x-ui.alert tone="err">
+        // (<x-ui.error-alert name="checkout">), не в микро-текст под полем.
+        $page = $this->actingAs($user)->get(route('checkout.index'));
+        $page->assertOk();
+        $page->assertSee('Сумма заказа меньше минимальной');
+        $page->assertSee('bg-danger-50', false);
     }
 
     public function test_rejects_when_item_went_out_of_stock_after_being_added_to_cart(): void
@@ -246,7 +367,7 @@ class CheckoutTest extends TestCase
             'address_id' => $address->id,
             'first_name' => 'Иван',
             'last_name' => 'Иванов',
-            'phone' => '9991234567',
+            'phone' => '+79991234567',
         ]);
 
         $response->assertSessionHasErrors('checkout');

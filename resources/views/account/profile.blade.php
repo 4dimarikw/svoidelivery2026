@@ -86,7 +86,17 @@
                     <x-ui.input-field name="last_name" :label="__('account.field.last_name')" :value="$profile?->last_name" />
                     <x-ui.input-field name="first_name" :label="__('account.field.first_name')" :value="$profile?->first_name" />
                     <x-ui.input-field name="patronymic" :label="__('account.field.patronymic')" :value="$profile?->patronymic" />
-                    <x-ui.input-field name="phone" type="tel" :label="__('account.field.phone')" :value="$profile?->phone" />
+                    <x-ui.input-field
+                        name="phone"
+                        type="tel"
+                        inputmode="tel"
+                        autocomplete="tel"
+                        x-data="phoneMask"
+                        placeholder="+7 (999) 123-45-67"
+                        :label="__('account.field.phone')"
+                        :help="__('account.field.phone_help')"
+                        :value="$profile?->phone"
+                    />
                     <x-ui.input-field name="vk_url" type="url" :label="__('account.field.vk_url')" :value="$profile?->vk_url" placeholder="https://vk.com/..." />
                     <x-ui.input-field name="telegram_url" type="url" :label="__('account.field.telegram_url')" :value="$profile?->telegram_url" placeholder="https://t.me/..." />
                     <x-ui.textarea-field name="default_order_comment" :label="__('account.field.default_order_comment')" :value="$profile?->default_order_comment" />
