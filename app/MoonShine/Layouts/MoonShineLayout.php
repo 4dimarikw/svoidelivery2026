@@ -13,6 +13,7 @@ use App\MoonShine\Resources\Container\ContainerResource;
 use App\MoonShine\Resources\ContentBlock\ContentBlockResource;
 use App\MoonShine\Resources\ContentBlockItem\ContentBlockItemResource;
 use App\MoonShine\Resources\DeliveryType\DeliveryTypeResource;
+use App\MoonShine\Resources\EventLog\EventLogResource;
 use App\MoonShine\Resources\Favorite\FavoriteResource;
 use App\MoonShine\Resources\Manufacturer\ManufacturerResource;
 use App\MoonShine\Resources\MoonshinePermission\MoonshinePermissionResource;
@@ -105,6 +106,7 @@ final class MoonShineLayout extends AppLayout
                 MenuItem::make(MoonShineUserResource::class),
                 MenuItem::make(MoonShineUserRoleResource::class),
                 MenuItem::make(MoonshinePermissionResource::class),
+                MenuItem::make(EventLogResource::class),
 
             ], 'users')->canSee(fn () => $isAdmin),
 

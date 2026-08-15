@@ -262,6 +262,10 @@ return [
         ],
     ],
 
+    'event_log' => [
+        'title' => 'Event log',
+    ],
+
     'order' => [
         'title' => 'Orders',
         'fields' => [

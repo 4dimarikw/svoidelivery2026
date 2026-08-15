@@ -262,6 +262,10 @@ return [
         ],
     ],
 
+    'event_log' => [
+        'title' => 'Журнал событий',
+    ],
+
     'order' => [
         'title' => 'Заказы',
         'fields' => [
