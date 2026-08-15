@@ -4,8 +4,9 @@ declare(strict_types=1);
 
 namespace Domain\Order\States;
 
-use Domain\Order\Events\OrderStatusChanged;
+use App\Events\Order\OrderStatusChanged;
 use Domain\Order\Models\Order;
+use InvalidArgumentException;
 
 abstract class OrderState
 {
@@ -17,7 +18,9 @@ abstract class OrderState
 
     public function __construct(
         protected Order $order,
-    ) {}
+    )
+    {
+    }
 
     abstract public function canBeChanged(): bool;
 
@@ -27,12 +30,12 @@ abstract class OrderState
 
     public function transitionTo(OrderState $state): void
     {
-        if (! $this->canBeChanged()) {
-            throw new \InvalidArgumentException('Status cannot be changed');
+        if (!$this->canBeChanged()) {
+            throw new InvalidArgumentException('Status cannot be changed');
         }
 
-        if (! in_array(get_class($state), $this->allowedTransitions)) {
-            throw new \InvalidArgumentException("No transition for {$this->order->status->value()} cannot be changed");
+        if (!in_array(get_class($state), $this->allowedTransitions)) {
+            throw new InvalidArgumentException("No transition for {$this->order->status->value()} cannot be changed");
         }
 
         // Снимаем old ДО updateQuietly() — иначе $this->order->status ниже

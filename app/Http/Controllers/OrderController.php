@@ -74,7 +74,7 @@ class OrderController extends Controller
         ]);
 
         try {
-            $order = (new OrderProcess($order))
+            $order = new OrderProcess($order)
                 ->processes([
                     new TermsOrder,
                     new CheckProductInStock,
