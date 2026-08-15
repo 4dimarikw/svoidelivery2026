@@ -10,6 +10,7 @@
     "license": "MIT",
     "require": {
         "php": "^8.4",
+        "ext-dom": "*",
         "ext-ftp": "*",
         "ext-simplexml": "*",
         "defstudio/telegraph": "^1.72",
@@ -18,6 +19,7 @@
         "laravel/framework": "^12.0",
         "laravel/socialite": "^5.29",
         "laravel/tinker": "^2.10.1",
+        "league/flysystem-ftp": "^3.31",
         "lee-to/laravel-seo-by-url": "^2.2",
         "mews/purifier": "^3.4",
         "moonshine/ace": "^1.0",
@@ -30,8 +32,7 @@
         "spatie/laravel-settings": "^3.9",
         "spatie/laravel-sluggable": "^4.0",
         "spatie/simple-excel": "^3.10",
-        "visual-ideas/moonshine-spatie-medialibrary": "^4.1",
-        "ext-dom": "*"
+        "visual-ideas/moonshine-spatie-medialibrary": "^4.1"
     },
     "require-dev": {
         "barryvdh/laravel-debugbar": "^4.4",

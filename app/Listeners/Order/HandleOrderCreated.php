@@ -31,8 +31,16 @@ class HandleOrderCreated
         // (см. докблок Domain\Order\Providers\OrderServiceProvider).
         // UploadOrderToFTP сама не бросает исключений наружу (см. её
         // catch (Throwable)) — сбой выгрузки не должен ронять уже
-        // оформленный заказ.
-        app(UploadOrderToFTP::class)->execute($event->order->id);
+        // оформленный заказ. Второй слой защиты здесь — на случай, если в
+        // UploadOrderToFTP когда-нибудь появится необёрнутый путь (уже
+        // бывало: до рефакторинга, добавившего её текущий catch(Throwable),
+        // сбой resetFtpConnection() при отсутствующем league/flysystem-ftp
+        // ронял весь запрос, и notifyAdmin() ниже не успевал отработать).
+        try {
+            app(UploadOrderToFTP::class)->execute($event->order->id);
+        } catch (Throwable $e) {
+            report($e);
+        }
 
         $this->notifyAdmin($event->order);
     }

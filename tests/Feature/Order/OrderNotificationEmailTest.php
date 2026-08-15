@@ -7,6 +7,8 @@ namespace Tests\Feature\Order;
 use App\Events\Order\OrderCreated;
 use App\Listeners\Order\HandleOrderCreated;
 use Domain\Logging\Models\EventLog;
+use Domain\Order\Actions\UploadOrderToFTP;
+use Domain\Order\Mail\NewOrderCreated;
 use Domain\Order\Models\Order;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Mail;
@@ -68,6 +70,38 @@ class OrderNotificationEmailTest extends TestCase
         $this->assertSame('error', $event->level);
         $this->assertSame($order->id, $event->context['order_id']);
         $this->assertSame('SMTP unreachable', $event->context['error_message']);
+    }
+
+    /**
+     * Регрессия: 15.08 в 07:48 сбой resetFtpConnection() (отсутствующий
+     * league/flysystem-ftp) улетел необработанным из UploadOrderToFTP —
+     * HandleOrderCreated::handle() до notifyAdmin() тогда не доходил.
+     * Сегодняшний UploadOrderToFTP сам ловит Throwable, но HandleOrderCreated
+     * теперь дублирует эту защиту на своём уровне — письмо должно уйти,
+     * даже если UploadOrderToFTP когда-нибудь снова начнёт пробрасывать
+     * исключения наружу.
+     */
+    public function test_ftp_upload_throwing_does_not_prevent_notification_email(): void
+    {
+        Mail::fake();
+
+        $settings = app(SiteSettings::class);
+        $settings->notify_email = 'admin@example.test';
+        $settings->save();
+
+        $order = Order::create([]);
+
+        $this->app->bind(UploadOrderToFTP::class, fn () => new class extends UploadOrderToFTP
+        {
+            public function execute(int $orderId, bool $queueOnFailure = true): bool
+            {
+                throw new RuntimeException('Class "League\Flysystem\Ftp\FtpAdapter" not found');
+            }
+        });
+
+        $this->callHandler($order);
+
+        Mail::assertQueued(NewOrderCreated::class, fn (NewOrderCreated $mail) => $mail->order->id === $order->id);
     }
 
     /**
