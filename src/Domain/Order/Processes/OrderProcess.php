@@ -16,7 +16,9 @@ final class OrderProcess
 
     public function __construct(
         protected Order $order
-    ) {}
+    )
+    {
+    }
 
     public function processes(array $processes): self
     {
@@ -35,13 +37,11 @@ final class OrderProcess
      */
     public function run(): Order
     {
-        $order = DB::transaction(fn (): Order => app(Pipeline::class)
+        $order = DB::transaction(fn(): Order => app(Pipeline::class)
             ->send($this->order)
             ->through($this->processes)
             ->thenReturn());
 
-        // Побочные эффекты после оформления (флеш статуса, выгрузка на FTP
-        // 1С) живут в App\Listeners\Order\HandleOrderCreated, не здесь.
         event(new OrderCreated($order));
 
         return $order;
