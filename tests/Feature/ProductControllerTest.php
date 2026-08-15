@@ -12,8 +12,10 @@ use Domain\Catalog\Models\Manufacturer;
 use Domain\Catalog\Models\Product;
 use Domain\Catalog\Models\Volume;
 use Domain\Untappd\Models\UntappdBeer;
+use Illuminate\Contracts\Debug\ExceptionHandler;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Spatie\Sluggable\Exceptions\StaleSelfHealingUrl;
 use Tests\TestCase;
 
 class ProductControllerTest extends TestCase
@@ -74,6 +76,20 @@ class ProductControllerTest extends TestCase
 
         $response->assertStatus(308);
         $response->assertRedirect(route('product.show', $product->fresh()));
+    }
+
+    /**
+     * StaleSelfHealingUrl — штатный flow control для редиректа (у него свой
+     * render(), см. тест выше), не ошибка — bootstrap/app.php регистрирует
+     * его в dontReport(), иначе каждый заход по устаревшей ссылке писал бы
+     * ложный ERROR в лог.
+     */
+    public function test_stale_slug_exception_is_not_reported(): void
+    {
+        $product = Product::factory()->create();
+        $exception = new StaleSelfHealingUrl($product, 'stale-slug');
+
+        $this->assertFalse($this->app->make(ExceptionHandler::class)->shouldReport($exception));
     }
 
     public function test_guest_does_not_see_the_price(): void
