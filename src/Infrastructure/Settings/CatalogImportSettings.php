@@ -9,8 +9,8 @@ use Spatie\LaravelSettings\Settings;
  * Настройки импорта каталога 1С. Изначально — только глобальные маркеры для
  * CategorySlugResolver (см. CategoryRegistry), но со временем сюда же
  * переехали настройки обнуления остатков (zero_out_*) и часть настроек,
- * ранее живших в GeneralSettings (product_status, product_flags, new_days,
- * cache, last_catalog_update) — они относятся к каталогу/импорту, а не к
+ * ранее живших в GeneralSettings (product_status, new_days, cache,
+ * last_catalog_update) — они относятся к каталогу/импорту, а не к
  * «общим» настройкам сайта.
  */
 class CatalogImportSettings extends Settings
@@ -41,18 +41,6 @@ class CatalogImportSettings extends Settings
 
     /** Статус, с которым создаются новые товары при первом импорте. */
     public string $product_status = ProductStatus::DRAFT->value;
-
-    /**
-     * Флаги товара по умолчанию (products.flags) — стартовый набор для
-     * ResolveFlagsStage, часть переопределяется на лету (wu/mss/promo).
-     * wu — without_untappd, fil — first_in_list, mss — manual_stock_status.
-     */
-    public array $product_flags = [
-        'wu' => false,
-        'fil' => false,
-        'mss' => false,
-        'promo' => false,
-    ];
 
     /** Число дней, в течение которых товар считается «новинкой» (Product::isNew()). */
     public int $new_days = 7;

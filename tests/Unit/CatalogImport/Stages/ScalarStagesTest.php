@@ -131,6 +131,8 @@ class ScalarStagesTest extends TestCase
         // wu — true когда товар не сматчен с Untappd (untappdBeer не задан в этом тесте).
         $this->assertTrue($ctx->attributes['flags']['wu']);
         $this->assertFalse($ctx->attributes['flags']['mss']);
+        // fil стейдж не переопределяет — значение приходит из config('catalog_import.flags.defaults').
+        $this->assertFalse($ctx->attributes['flags']['fil']);
     }
 
     public function test_flags_promo_false_when_rating_does_not_match_marker(): void

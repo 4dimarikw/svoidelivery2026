@@ -27,7 +27,7 @@ use Services\CatalogImport\CategoryRegistry;
  * Настройки импорта каталога 1С: маркеры сегментов "Категория" для
  * CategorySlugResolver (читает их CategoryRegistry), предохранитель
  * обнуления остатков (см. ZeroOutStaleProductsAction), а также настройки,
- * перенесённые из GeneralSettings (product_status, product_flags, new_days,
+ * перенесённые из GeneralSettings (product_status, new_days,
  * cache, last_catalog_update) — они логически про каталог/импорт, а не про
  * «общие» настройки сайта. Единственный писатель CatalogImportSettings.
  */
@@ -65,13 +65,7 @@ class CatalogImportSettingsPage extends Page
 
         return FormBuilder::make()
             ->asyncMethod('store')
-            ->fill([
-                ...get_object_vars($settings),
-                'flag_wu' => $settings->product_flags['wu'] ?? false,
-                'flag_fil' => $settings->product_flags['fil'] ?? false,
-                'flag_mss' => $settings->product_flags['mss'] ?? false,
-                'flag_promo' => $settings->product_flags['promo'] ?? false,
-            ])
+            ->fill($settings->toArray())
             ->fields([
                 Text::make(__('moonshine.catalog_import_settings.fields.alcohol_marker'), 'alcohol_marker')
                     ->required()
@@ -117,11 +111,6 @@ class CatalogImportSettingsPage extends Page
                     ->min(0)
                     ->required(),
 
-                Switcher::make(__('moonshine.catalog_import_settings.fields.flag_wu'), 'flag_wu'),
-                Switcher::make(__('moonshine.catalog_import_settings.fields.flag_fil'), 'flag_fil'),
-                Switcher::make(__('moonshine.catalog_import_settings.fields.flag_mss'), 'flag_mss'),
-                Switcher::make(__('moonshine.catalog_import_settings.fields.flag_promo'), 'flag_promo'),
-
                 Preview::make(__('moonshine.catalog_import_settings.fields.last_catalog_update'), 'last_catalog_update'),
             ])
             ->submit(__('moonshine::ui.save'));
@@ -141,10 +130,6 @@ class CatalogImportSettingsPage extends Page
             'new_days' => ['required', 'integer', 'min:1'],
             'cache' => ['boolean'],
             'extra_charge' => ['required', 'integer', 'min:0'],
-            'flag_wu' => ['boolean'],
-            'flag_fil' => ['boolean'],
-            'flag_mss' => ['boolean'],
-            'flag_promo' => ['boolean'],
         ]);
 
         $settings = app(CatalogImportSettings::class);
@@ -153,17 +138,11 @@ class CatalogImportSettingsPage extends Page
         $settings->advent_marker = $data['advent_marker'];
         $settings->fallback_slug = $data['fallback_slug'];
         $settings->zero_out_missing = (bool) ($data['zero_out_missing'] ?? false);
-        $settings->zero_out_max_percent = $data['zero_out_max_percent'];
+        $settings->zero_out_max_percent = (int) $data['zero_out_max_percent'];
         $settings->product_status = $data['product_status'];
-        $settings->new_days = $data['new_days'];
+        $settings->new_days = (int) $data['new_days'];
         $settings->cache = (bool) ($data['cache'] ?? false);
-        $settings->extra_charge = $data['extra_charge'];
-        $settings->product_flags = [
-            'wu' => (bool) ($data['flag_wu'] ?? false),
-            'fil' => (bool) ($data['flag_fil'] ?? false),
-            'mss' => (bool) ($data['flag_mss'] ?? false),
-            'promo' => (bool) ($data['flag_promo'] ?? false),
-        ];
+        $settings->extra_charge = (int) $data['extra_charge'];
 
         $settings->save();
 

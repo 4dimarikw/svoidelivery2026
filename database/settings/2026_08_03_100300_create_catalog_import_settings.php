@@ -7,7 +7,7 @@ use Spatie\LaravelSettings\Migrations\SettingsMigration;
  * Настройки импорта каталога 1С: маркеры сегментов "Категория" для
  * CategorySlugResolver (см. CategoryRegistry), предохранитель обнуления
  * остатков (см. ZeroOutStaleProductsAction), а также настройки, изначально
- * жившие в GeneralSettings (product_status, product_flags, new_days, cache,
+ * жившие в GeneralSettings (product_status, new_days, cache,
  * last_catalog_update, extra_charge) — они логически про каталог/импорт, а
  * не про «общие» настройки сайта. См. Infrastructure\Settings\CatalogImportSettings.
  */
@@ -22,12 +22,6 @@ return new class extends SettingsMigration
         $this->migrator->add('catalog_import.zero_out_missing', true);
         $this->migrator->add('catalog_import.zero_out_max_percent', 20);
         $this->migrator->add('catalog_import.product_status', ProductStatus::DRAFT->value);
-        $this->migrator->add('catalog_import.product_flags', [
-            'wu' => false,
-            'fil' => false,
-            'mss' => false,
-            'promo' => false,
-        ]);
         $this->migrator->add('catalog_import.new_days', 7);
         $this->migrator->add('catalog_import.last_catalog_update', null);
         $this->migrator->add('catalog_import.cache', false);
@@ -44,7 +38,6 @@ return new class extends SettingsMigration
             'catalog_import.zero_out_missing',
             'catalog_import.zero_out_max_percent',
             'catalog_import.product_status',
-            'catalog_import.product_flags',
             'catalog_import.new_days',
             'catalog_import.last_catalog_update',
             'catalog_import.cache',

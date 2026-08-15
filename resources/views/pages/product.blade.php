@@ -16,7 +16,7 @@
      тем более — тот же производитель уже показан строкой выше и в таблице
      характеристик). --}}
 @php
-    $beer = $product->beerDetails;
+    use Domain\Cart\CartManager;$beer = $product->beerDetails;
     $beerStyleName = $beer?->beerStyle?->name;
     $title = $product->brand ?: $product->name;
 
@@ -26,9 +26,9 @@
     ])->filter();
 
     $rating = spec_number($beer?->untappdBeer?->rating_score);
-    $ratingCount = $beer?->untappdBeer?->rating_count;
+//    $ratingCount = $beer?->untappdBeer?->rating_count;
 
-    $cartQuantity = auth()->check() ? app(\Domain\Cart\CartManager::class)->quantityOf($product) : 0;
+    $cartQuantity = auth()->check() ? app(CartManager::class)->quantityOf($product) : 0;
 
     // Строки характеристик — только непустые. Учётные поля (артикул, штук
     // в упаковке, срок годности) сознательно не выводятся — служебные,
@@ -52,7 +52,7 @@
             ['label' => __('catalog.title'), 'url' => route('home')],
             ...($product->category ? [['label' => $product->category->name, 'url' => route('home', ['categories' => [$product->category_id]])]] : []),
             ['label' => $title],
-        ]" class="mb-6" />
+        ]" class="mb-6"/>
 
         <div class="grid gap-8 md:grid-cols-2 md:gap-10">
             <div class="relative aspect-square overflow-hidden border border-hairline bg-cream-100">
@@ -61,7 +61,7 @@
                          не thumb (234px, для карточек каталога). --}}
                     <img src="{{ $product->label }}" alt="{{ $product->name }}" class="h-full w-full object-cover">
                 @else
-                    <x-ui.product-placeholder :product="$product" />
+                    <x-ui.product-placeholder :product="$product"/>
                 @endif
             </div>
 
@@ -73,7 +73,8 @@
                 <h1 class="mt-1 font-display text-heading-s font-bold uppercase leading-[1.15] tracking-brand-snug text-ink-900 sm:text-heading-m">{{ $title }}</h1>
 
                 @if ($beerStyleName)
-                    <div class="mt-2 inline-flex self-start items-center rounded-sm bg-teal-700 px-2.5 py-1 font-display text-micro font-semibold uppercase tracking-[0.06em] text-cream-100">{{ $beerStyleName }}</div>
+                    <div
+                        class="mt-2 inline-flex self-start items-center rounded-sm bg-teal-700 px-2.5 py-1 font-display text-micro font-semibold uppercase tracking-[0.06em] text-cream-100">{{ $beerStyleName }}</div>
                 @endif
 
                 @if ($spec->isNotEmpty())
@@ -87,10 +88,10 @@
                         @endif
                         @if ($rating)
                             <x-ui.chip tone="warn">
-                                <x-ui.icon name="star" :size="12" class="mr-1" />{{ $rating }}
-                                @if ($ratingCount)
-                                    <span class="ml-1 text-ink-500">({{ $ratingCount }})</span>
-                                @endif
+                                <x-ui.icon name="star" :size="12" class="mr-1"/>{{ $rating }}
+                                {{--                                @if ($ratingCount)--}}
+                                {{--                                    <span class="ml-1 text-ink-500">({{ $ratingCount }})</span>--}}
+                                {{--                                @endif--}}
                             </x-ui.chip>
                         @endif
                         @if (! $product->in_stock)
@@ -107,7 +108,8 @@
                              и на записи, и на чтении — безопасно рендерить как HTML.
                              div, не p: описание само может содержать <p> (разрешён
                              профилем), вложенный <p> в <p> невалиден и ломает разметку. --}}
-                        <div class="mt-2 whitespace-pre-line text-body-m text-ink-700">{!! $product->description !!}</div>
+                        <div
+                            class="mt-2 whitespace-pre-line text-body-m text-ink-700">{!! $product->description !!}</div>
                     </div>
                 @endif
 
@@ -119,11 +121,12 @@
 
                 @auth
                     <div class="mt-5 border-t border-hairline pt-5">
-                        <span class="block whitespace-nowrap font-display text-heading-s font-bold tracking-brand-body text-ink-900">{{ $product->price }}</span>
+                        <span
+                            class="block whitespace-nowrap font-display text-heading-s font-bold tracking-brand-body text-ink-900">{{ $product->price }}</span>
 
                         <div class="mt-3 flex items-stretch gap-3">
-                            <x-ui.cart-stepper :product="$product" :quantity="$cartQuantity" class="h-[41px] flex-1" />
-                            <x-ui.favorite-toggle :product="$product" class="shrink-0" />
+                            <x-ui.cart-stepper :product="$product" :quantity="$cartQuantity" class="h-[41px] flex-1"/>
+                            <x-ui.favorite-toggle :product="$product" class="shrink-0"/>
                         </div>
                     </div>
                 @endauth
@@ -151,7 +154,7 @@
 
                 <div class="mt-4 grid grid-cols-2 gap-1 sm:gap-4 md:grid-cols-4 lg:grid-cols-5 xl:gap-1">
                     @foreach ($similar as $item)
-                        <x-ui.product-card :product="$item" />
+                        <x-ui.product-card :product="$item"/>
                     @endforeach
                 </div>
             </div>

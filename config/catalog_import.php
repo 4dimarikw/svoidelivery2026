@@ -217,5 +217,17 @@ return [
     */
     'flags' => [
         'promo_marker' => 'Акция',
+
+        // Стартовый набор products.flags (json) для ResolveFlagsStage; ключи —
+        // контракт пайплайна и полей формы товара (см. ProductFlagsManager).
+        // wu — without_untappd, fil — first_in_list, mss — manual_stock_status.
+        // wu/mss/promo стейдж всё равно вычисляет сам, отсюда берётся только
+        // состав ключей и дефолт fil.
+        'defaults' => [
+            'wu' => false,
+            'fil' => false,
+            'mss' => false,
+            'promo' => false,
+        ],
     ],
 ];

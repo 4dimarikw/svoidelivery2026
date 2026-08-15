@@ -84,7 +84,7 @@ final class SyncProductSeoAction
     {
         $staleUrl = route(
             'product.show',
-            $oldSlug.$product->getSlugOptions()->selfHealingSeparator.$product->getKey(),
+            $oldSlug . $product->getSlugOptions()->selfHealingSeparator . $product->getKey(),
             absolute: false,
         );
 
@@ -121,10 +121,7 @@ final class SyncProductSeoAction
             ->filter()
             ->implode(' ');
 
-        $manufacturer = $product->manufacturer?->name;
-        $manufacturerPart = $manufacturer ? "'{$manufacturer}' " : '';
-
-        $head = "{$product->category?->name} {$manufacturerPart}{$title} {$spec}";
+        $head = "{$product->category?->name} $title $spec";
 
         return preg_replace('/\s+/', ' ', trim($head));
     }
@@ -138,7 +135,7 @@ final class SyncProductSeoAction
 
         $description = $head;
 
-        $description .= '. '.$product->packaging_raw;
+        $description .= '. ' . $product->packaging_raw;
 
         return $description;
     }
@@ -148,16 +145,17 @@ final class SyncProductSeoAction
         $manufacturer = $product->manufacturer?->name;
         $head = $manufacturer ? "{$manufacturer}, {$title}" : $title;
 
-        return self::KEYWORDS_SUFFIX ? "{$head}, ".self::KEYWORDS_SUFFIX : $head;
+        return self::KEYWORDS_SUFFIX ? "{$head}, " . self::KEYWORDS_SUFFIX : $head;
     }
 
     private function buildText(
         Product $product,
-        string $title,
-        string $seoTitle,
-        string $seoDescription,
-        string $absoluteUrl,
-    ): string {
+        string  $title,
+        string  $seoTitle,
+        string  $seoDescription,
+        string  $absoluteUrl,
+    ): string
+    {
         $manufacturer = $product->manufacturer?->name;
         $imageUrl = $product->hasOwnImage() ? $product->label : null;
 
@@ -185,7 +183,7 @@ final class SyncProductSeoAction
         // app.blade.php — поэтому там не используется @seo), здесь строим
         // руками — значит экранируем сами.
         $ogHtml = collect($og)
-            ->map(fn (string $content, string $property): string => sprintf(
+            ->map(fn(string $content, string $property): string => sprintf(
                 '<meta property="%s" content="%s">',
                 $property,
                 htmlspecialchars($content, ENT_QUOTES, 'UTF-8'),
@@ -198,7 +196,7 @@ final class SyncProductSeoAction
             | JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP,
         );
 
-        return $ogHtml."\n\n".'<script type="application/ld+json">'."\n".$jsonLd."\n".'</script>';
+        return $ogHtml . "\n\n" . '<script type="application/ld+json">' . "\n" . $jsonLd . "\n" . '</script>';
     }
 
     /**
@@ -206,19 +204,20 @@ final class SyncProductSeoAction
      */
     private function buildJsonLd(
         Product $product,
-        string $title,
-        string $seoDescription,
-        string $absoluteUrl,
+        string  $title,
+        string  $seoDescription,
+        string  $absoluteUrl,
         ?string $imageUrl,
-    ): array {
+    ): array
+    {
         $manufacturer = $product->manufacturer?->name;
 
         $name = collect([$manufacturer, $title])->filter()->implode(' ');
         if ($product->volume?->label) {
-            $name .= ' '.$product->volume->label;
+            $name .= ' ' . $product->volume->label;
         }
         if ($containerLabel = $this->containerLabel($product)) {
-            $name .= ', '.$containerLabel;
+            $name .= ', ' . $containerLabel;
         }
 
         return array_filter([

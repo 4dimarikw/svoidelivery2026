@@ -9,6 +9,7 @@ use Infrastructure\Settings\CatalogImportSettings;
 use Infrastructure\Settings\SiteSettings;
 use MoonShine\Laravel\Models\MoonshineUser;
 use MoonShine\Laravel\Models\MoonshineUserRole;
+use Spatie\LaravelSettings\Models\SettingsProperty;
 use Tests\TestCase;
 
 /**
@@ -31,13 +32,30 @@ class SettingsPagesSmokeTest extends TestCase
             'moonshine_user_role_id' => MoonshineUserRole::DEFAULT_ROLE_ID,
         ]);
 
+        // Пишем значения напрямую в таблицу settings, а не через
+        // app(Settings::class)->fill()->save() — тот вызов сам форсирует
+        // Settings::loadValues() на том же scoped-инстансе, который потом
+        // резолвит и код страницы, и маскирует баг ленивой загрузки
+        // (см. ниже). Здесь же страница обязана получить нетронутый,
+        // ещё не загруженный объект — как при реальном GET-запросе.
+        SettingsProperty::query()->where('group', 'site')->where('name', 'site_name')
+            ->update(['payload' => json_encode('SMOKE-SITE-NAME')]);
+        SettingsProperty::query()->where('group', 'catalog_import')->where('name', 'alcohol_marker')
+            ->update(['payload' => json_encode('SMOKE-MARKER')]);
+
+        // Значения из БД должны реально попасть в форму — регресс на баг, когда
+        // ->fill(get_object_vars($settings)) отдавал пустой массив из-за
+        // ленивой загрузки свойств Spatie\LaravelSettings\Settings (unset() в
+        // конструкторе, значения подгружаются только через __get()/toArray()).
         $this->actingAs($admin, 'moonshine')
             ->get(app(SiteSettingsPage::class)->getUrl())
-            ->assertOk();
+            ->assertOk()
+            ->assertSee('SMOKE-SITE-NAME', false);
 
         $this->actingAs($admin, 'moonshine')
             ->get(app(CatalogImportSettingsPage::class)->getUrl())
-            ->assertOk();
+            ->assertOk()
+            ->assertSee('SMOKE-MARKER', false);
     }
 
     public function test_site_and_catalog_import_settings_resolve_without_missing_properties(): void

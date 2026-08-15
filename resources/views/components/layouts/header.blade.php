@@ -1,3 +1,4 @@
+@php use Infrastructure\Settings\SiteSettings; @endphp
 {{-- Каталог + CMS-меню (<x-ui.nav-menu>, $items = $menu) справа от логотипа.
      $menu сидируется View Composer'ом (AppServiceProvider::boot()), а не
      пропом страницы — он одинаков на всём сайте, а не только там, где
@@ -29,12 +30,14 @@
     <div
         class="mx-auto flex max-w-page flex-col  px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
         <a href="{{ route('home') }}" class="inline-flex items-center">
-            <img src="{{ asset('img/logo.png') }}" alt="{{ config('app.name') }}" class="h-10 w-10 object-contain">
-            <span class="ml-3 font-display text-heading-s uppercase text-ink-900">{{ config('app.name') }}</span>
+            <img src="{{ asset('img/logo.png') }}" alt="{{ app(SiteSettings::class)->site_name }}"
+                 class="h-10 w-10 object-contain">
+            <span
+                class="ml-3 font-display text-heading-s uppercase text-ink-900">{{ app(SiteSettings::class)->site_name }}</span>
         </a>
 
         <div class="flex items-center space-x-4">
-            <x-ui.nav-menu :items="$menu" />
+            <x-ui.nav-menu :items="$menu"/>
 
             @guest
                 <x-ui.link :href="route('login')">{{ __('account.login.submit') }}</x-ui.link>

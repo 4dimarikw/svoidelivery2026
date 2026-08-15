@@ -28,6 +28,10 @@ class DatabaseSeeder extends Seeder
             PropertySeeder::class,
             SeoSeeder::class,
             MoonshinePermissionSeeder::class,
+            // После CategorySeeder — CatalogImportSettingsSeeder ссылается на
+            // категорию 'not-defined' как fallback_slug.
+            CatalogImportSettingsSeeder::class,
+            VkSyncSettingsSeeder::class,
         ]);
     }
 }

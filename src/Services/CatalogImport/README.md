@@ -104,7 +104,7 @@ ImportContext      ← mutable-контекст, передаётся по вс�
     ├── ResolveShelfLifeStage      СрокГодности → shelf_life_days
     ├── ResolvePriceStage          Цена → price, Остаток → stock
     ├── ResolveExternalIdsStage    КодТовара → external_code, Артикул → article
-    ├── ResolveFlagsStage          РейтингПродаж + product_flags → products.flags (json, только create)
+    ├── ResolveFlagsStage          РейтингПродаж + catalog_import.flags.defaults → products.flags (json, только create)
     ├── ResolveDescriptionStage    Описание → description
     ├── PersistProductStage        firstWhere по [external_code]: у существующего товара обновляет
     │                              price/stock_quantity/in_stock, объёмный блок (volume_id/
@@ -232,7 +232,7 @@ app/Console/Commands/CatalogImportCommand.php    Artisan-команда
 | `EBC` | `beer_product_details.ebc` | `ResolveEbcStage` |
 | `UntappdRef` | синхронизация `untappd_beers` (вкл. `description`, в приоритете над CSV `Описание`) → `beer_product_details.untappd_beer_id` | `ResolveBeerStyleStage` |
 | `СрокГодности` | `products.shelf_life_days` | `ResolveShelfLifeStage` |
-| `РейтингПродаж` | `products.flags` (json, вместе с `CatalogImportSettings::$product_flags`; только при создании) | `ResolveFlagsStage` |
+| `РейтингПродаж` | `products.flags` (json, вместе с `config('catalog_import.flags.defaults')`; только при создании) | `ResolveFlagsStage` |
 | `КодТовара` | `products.external_code` (ключ идемпотентности) | `ResolveExternalIdsStage` |
 | `Артикул` | `products.article` (источник slug, без упоминания объёма, см. ниже) | `ResolveExternalIdsStage`, `PersistProductStage` |
 | `Цена` | `products.price` | `ResolvePriceStage` |
