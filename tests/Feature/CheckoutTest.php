@@ -122,6 +122,10 @@ class CheckoutTest extends TestCase
 
         $this->assertSame(0, CartItem::query()->where('cart_id', $cart->id)->count());
         $this->assertSame(4, $product->fresh()->stock_quantity);
+
+        // OrderCreated → App\Listeners\Order\HandleOrderCreated →
+        // UploadOrderToFTP — проверяем, что цепочка не разорвана.
+        $this->assertCount(1, Storage::disk('ftp')->allFiles(config('order.ftp_upload.dir')));
     }
 
     public function test_store_ignores_client_supplied_delivery_and_payment(): void

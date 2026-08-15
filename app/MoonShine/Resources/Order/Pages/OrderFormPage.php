@@ -101,8 +101,17 @@ class OrderFormPage extends FormPage
         try {
             $order = $request->getResource()->getItem();
 
-            if ($order->id) {
-                app(UploadOrderToFTP::class)->execute($order->id);
+            if (! $order->id) {
+                return JsonResponse::make()->toast('Ошибка при отправке файла', ToastType::ERROR);
+            }
+
+            // queueOnFailure: false — это ручной повтор из админки, при
+            // провале админ видит ошибку и нажимает кнопку сам; фоновый
+            // job дублировал бы то же действие.
+            $uploaded = app(UploadOrderToFTP::class)->execute($order->id, queueOnFailure: false);
+
+            if (! $uploaded) {
+                return JsonResponse::make()->toast('Ошибка при отправке файла', ToastType::ERROR);
             }
 
             return JsonResponse::make()->toast('Файл отправлен', ToastType::SUCCESS);

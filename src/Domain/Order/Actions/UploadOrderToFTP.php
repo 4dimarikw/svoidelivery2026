@@ -2,10 +2,11 @@
 
 namespace Domain\Order\Actions;
 
+use App\Events\Order\OrderFtpUploadFailed;
 use App\Jobs\UploadOrderToFtpJob;
 use Domain\Order\Models\Order;
 use Domain\Order\Models\OrderCustomer;
-use Illuminate\Support\Facades\Log;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\Storage;
 use RuntimeException;
 use SimpleXMLElement;
@@ -13,16 +14,6 @@ use Throwable;
 
 class UploadOrderToFTP
 {
-    /**
-     * Директория на FTP для загрузки заказов
-     */
-    private const string FTP_ORDERS_DIR = 'Orders'; // Orders
-
-    /**
-     * Количество инлайн-попыток загрузки на FTP перед уходом в очередь
-     */
-    private const int MAX_ATTEMPTS = 3;
-
     /**
      * Создать и загрузить заказ на FTP
      */
@@ -42,10 +33,22 @@ class UploadOrderToFTP
     public function execute(int $orderId, bool $queueOnFailure = true): bool
     {
         try {
-            // Получаем заказ с необходимыми связями
-            $order = Order::with(['orderCustomer', 'orderItems.product'])
+            $order = Order::with(['orderCustomer', 'orderItems.product', 'deliveryType'])
                 ->findOrFail($orderId);
+        } catch (ModelNotFoundException $e) {
+            // Заказа нет — уходить в очередь незачем, там его тоже не найдут.
+            report($e);
+            event(new OrderFtpUploadFailed(
+                orderId: $orderId,
+                reason: 'order_not_found',
+                exceptionClass: $e::class,
+                errorMessage: $e->getMessage(),
+            ));
 
+            return false;
+        }
+
+        try {
             // Генерируем XML
             $xml = $this->generateOrderXml($order);
 
@@ -53,35 +56,37 @@ class UploadOrderToFTP
             $fileName = $this->generateFileName($order);
 
             // Путь для сохранения на FTP
-            $ftpPath = self::FTP_ORDERS_DIR.'/'.$fileName;
+            $ftpPath = config('order.ftp_upload.dir').'/'.$fileName;
 
             // Загружаем файл на FTP с повторными попытками: сбой обычно
             // рвёт только data-канал, поэтому перед повтором соединение
             // сбрасывается принудительно (см. resetFtpConnection()).
-            retry(self::MAX_ATTEMPTS, function (int $attempt) use ($ftpPath, $xml) {
+            retry(config('order.ftp_upload.max_attempts'), function (int $attempt) use ($ftpPath, $xml) {
                 if ($attempt > 1) {
                     $this->resetFtpConnection();
                 }
 
-                if (! Storage::disk('ftp')->put($ftpPath, $xml)) {
+                if (! Storage::disk(config('order.ftp_upload.disk'))->put($ftpPath, $xml)) {
                     throw new RuntimeException("FTP put failed: {$ftpPath}");
                 }
-            }, fn (int $attempt) => $attempt * 1000);
+            }, fn (int $attempt) => $attempt * config('order.ftp_upload.retry_delay_ms'));
 
             return true;
 
         } catch (Throwable $e) {
             report($e);
-            Log::warning('Не удалось загрузить заказ на FTP', [
-                'order_id' => $orderId,
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
-                'timestamp' => now()->toDateTimeString(),
-            ]);
 
             if ($queueOnFailure) {
                 UploadOrderToFtpJob::dispatch($orderId);
             }
+
+            event(new OrderFtpUploadFailed(
+                orderId: $orderId,
+                reason: 'upload_failed',
+                exceptionClass: $e::class,
+                errorMessage: $e->getMessage(),
+                queued: $queueOnFailure,
+            ));
 
             return false;
         }
@@ -96,13 +101,20 @@ class UploadOrderToFTP
      */
     private function resetFtpConnection(): void
     {
-        try {
-            Storage::disk('ftp')->getAdapter()->disconnect();
-        } catch (Throwable) {
-            // соединение могло быть уже мертво — не мешаем следующей попытке
+        $disk = config('order.ftp_upload.disk');
+        $adapter = Storage::disk($disk)->getAdapter();
+
+        // В тестах (Storage::fake()) адаптер локальный, и disconnect() у
+        // него нет — метод проверяем заранее, а не полагаемся на try/catch.
+        if (method_exists($adapter, 'disconnect')) {
+            try {
+                $adapter->disconnect();
+            } catch (Throwable) {
+                // соединение могло быть уже мертво — не мешаем следующей попытке
+            }
         }
 
-        Storage::forgetDisk('ftp');
+        Storage::forgetDisk($disk);
     }
 
     /**
@@ -115,11 +127,11 @@ class UploadOrderToFTP
         $orderElement = $xml->addChild('Order');
 
         // Номер заказа
-        $orderElement->addChild('OrderNumber', $order->number);
+        $this->addTextChild($orderElement, 'OrderNumber', $order->number);
 
         // Дата заказа
         $orderDate = $order->created_at ? $order->created_at->format('Y-m-d\TH:i:s') : now()->format('Y-m-d\TH:i:s');
-        $orderElement->addChild('OrderDate', $orderDate);
+        $this->addTextChild($orderElement, 'OrderDate', $orderDate);
 
         // Информация о клиенте
         $customerElement = $orderElement->addChild('Customer');
@@ -130,7 +142,7 @@ class UploadOrderToFTP
         $this->addOrderItems($itemsElement, $order->orderItems);
 
         // Комментарий
-        $orderElement->addChild('Comment', htmlspecialchars($this->getComment($order), ENT_XML1, 'UTF-8'));
+        $this->addTextChild($orderElement, 'Comment', $this->getComment($order));
 
         // Форматируем XML с отступами
         return $this->formatXml($xml);
@@ -138,17 +150,19 @@ class UploadOrderToFTP
 
     private function getComment(Order $order): string
     {
-        $comment = ($order->comment ?? '')."\r\n";
-        $comment .= 'Доставка: '.$order->deliveryType->title."\r\n";
+        $lines = [
+            trim((string) $order->comment),
+            'Доставка: '.$order->deliveryType?->title,
+        ];
 
-        if ($order->deliveryType->with_address) {
-            $comment .= 'Город: '.$order->orderCustomer?->city."\r\n";
-            $comment .= 'Адрес: '.($order->orderCustomer?->address ?? '');
+        if ($order->deliveryType?->with_address) {
+            $lines[] = 'Город: '.$order->orderCustomer?->city;
+            $lines[] = 'Адрес: '.($order->orderCustomer?->address ?? '');
         } else {
-            $comment .= 'Самовывоз';
+            $lines[] = 'Самовывоз';
         }
 
-        return $comment;
+        return implode("\r\n", array_filter($lines, fn ($line) => $line !== ''));
     }
 
     /**
@@ -162,8 +176,8 @@ class UploadOrderToFTP
             $name = trim(($customer->last_name ?? '').' '.($customer->first_name ?? ''));
         }
 
-        $customerElement->addChild('Name', $name);
-        $customerElement->addChild('Phone', $customer?->phone ?? '');
+        $this->addTextChild($customerElement, 'Name', $name);
+        $this->addTextChild($customerElement, 'Phone', $customer?->phone ?? '');
     }
 
     /**
@@ -177,13 +191,13 @@ class UploadOrderToFTP
             // Код товара — у Product нет отдельного SKU-поля, ближайший
             // аналог — article (артикул из 1С).
             $productCode = $orderItem->product?->article ?? '';
-            $itemElement->addChild('ProductCode', $productCode);
+            $this->addTextChild($itemElement, 'ProductCode', $productCode);
 
             $quantity = (int) $orderItem->quantity;
-            $itemElement->addChild('Quantity', $quantity);
+            $this->addTextChild($itemElement, 'Quantity', (string) $quantity);
 
-            $amountValue = number_format($orderItem->amount->major(), 2, '.', '');
-            $itemElement->addChild('Price', $amountValue);
+            $amountValue = number_format($orderItem->amount?->major() ?? 0, 2, '.', '');
+            $this->addTextChild($itemElement, 'Price', $amountValue);
         }
     }
 
@@ -200,13 +214,37 @@ class UploadOrderToFTP
     }
 
     /**
+     * Добавление текстового узла с XML-экранированием значения.
+     *
+     * SimpleXMLElement::addChild() экранирует "<" сам, но "&" считает
+     * началом entity-ссылки — сырой "&" в значении рвёт узел (PHP-warning,
+     * узел остаётся пустым). Через этот хелпер обязаны идти все скалярные
+     * значения, не только Comment, как было раньше.
+     */
+    private function addTextChild(SimpleXMLElement $parent, string $name, ?string $value): SimpleXMLElement
+    {
+        return $parent->addChild($name, htmlspecialchars((string) $value, ENT_XML1, 'UTF-8'));
+    }
+
+    /**
      * Форматирование XML с отступами
      */
     private function formatXml(SimpleXMLElement $xml): string
     {
         $dom = dom_import_simplexml($xml)->ownerDocument;
+
+        if ($dom === null) {
+            throw new RuntimeException('Не удалось получить DOMDocument из сгенерированного XML заказа');
+        }
+
         $dom->formatOutput = true;
 
-        return $dom->saveXML();
+        $result = $dom->saveXML();
+
+        if ($result === false) {
+            throw new RuntimeException('saveXML() вернул false при формировании XML заказа');
+        }
+
+        return $result;
     }
 }
