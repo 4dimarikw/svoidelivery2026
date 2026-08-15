@@ -14,7 +14,7 @@
         "ext-ftp": "*",
         "ext-simplexml": "*",
         "defstudio/telegraph": "^1.72",
-        "kalnoy/nestedset": "^6.0",
+        "kalnoy/nestedset": "^6.0,!=6.0.7",
         "laravel/fortify": "^1.37",
         "laravel/framework": "^12.0",
         "laravel/socialite": "^5.29",
