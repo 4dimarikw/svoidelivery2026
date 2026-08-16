@@ -146,5 +146,8 @@ return [
         'added' => 'Товар добавлен в корзину.',
         'removed' => 'Товар удалён из корзины.',
         'cleared' => 'Корзина очищена.',
+        // no-JS фолбэк CartController::rejectUnavailable() — тот же текст,
+        // что и catalog.cart.unavailable (JSON-ветка), другая область строк.
+        'unavailable' => 'Товар закончился и недоступен для заказа.',
     ],
 ];

@@ -340,4 +340,64 @@ class CheckoutTest extends TestCase
         $response->assertSessionHasErrors('checkout');
         $this->assertDatabaseMissing('orders', ['user_id' => $user->id]);
     }
+
+    /**
+     * Регрессия: CheckProductInStock раньше смотрел только на флаг in_stock,
+     * не на фактический остаток — заказ на количество, превышающее склад
+     * (другой заказ успел частично раскупить товар между добавлением в
+     * корзину и оформлением), проходил, а списание в
+     * UpdateProductStockQuantity молча упиралось в max(0, ...).
+     */
+    public function test_rejects_when_cart_quantity_exceeds_available_stock(): void
+    {
+        $user = User::factory()->create();
+        $address = Address::factory()->for($user)->create();
+        $product = Product::factory()->create(['price' => 12000, 'stock_quantity' => 5, 'in_stock' => true]);
+
+        $cart = Cart::factory()->create(['user_id' => $user->id]);
+        CartItem::factory()->create(['cart_id' => $cart->id, 'product_id' => $product->id, 'quantity' => 3, 'price' => 12000]);
+
+        // Остаток просел ниже количества в корзине уже после того, как
+        // строка там оказалась — CartManager::increment() не пускает набрать
+        // больше остатка с самого начала, но не переклампливает то, что уже
+        // лежит в корзине.
+        $product->update(['stock_quantity' => 1]);
+
+        $response = $this->actingAs($user)->post(route('checkout.store'), [
+            'address_id' => $address->id,
+            'first_name' => 'Иван',
+            'last_name' => 'Иванов',
+            'phone' => '+79991234567',
+        ]);
+
+        $response->assertSessionHasErrors('checkout');
+        $this->assertDatabaseMissing('orders', ['user_id' => $user->id]);
+    }
+
+    /**
+     * Регрессия: UpdateProductStockQuantity раньше писал только
+     * stock_quantity, оставляя in_stock=true у полностью раскупленного
+     * товара — тот расходился с Product::availableStock() и, например,
+     * оставался кликабельным в каталоге (см. Domain\Cart\CartManager).
+     */
+    public function test_store_clears_in_stock_flag_when_order_exhausts_the_stock(): void
+    {
+        $user = User::factory()->create();
+        $address = Address::factory()->for($user)->create();
+        $product = Product::factory()->create(['price' => 12000, 'stock_quantity' => 1, 'in_stock' => true]);
+
+        $cart = Cart::factory()->create(['user_id' => $user->id]);
+        CartItem::factory()->create(['cart_id' => $cart->id, 'product_id' => $product->id, 'quantity' => 1, 'price' => 12000]);
+
+        $this->actingAs($user)->post(route('checkout.store'), [
+            'address_id' => $address->id,
+            'first_name' => 'Иван',
+            'last_name' => 'Иванов',
+            'phone' => '+79991234567',
+        ]);
+
+        $fresh = $product->fresh();
+        $this->assertSame(0, $fresh->stock_quantity);
+        $this->assertFalse($fresh->in_stock);
+    }
 }

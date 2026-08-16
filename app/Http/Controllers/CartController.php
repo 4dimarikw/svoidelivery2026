@@ -74,7 +74,17 @@ class CartController extends Controller
 
     public function increase(Request $request, Product $product, CartManager $cart): RedirectResponse|JsonResponse
     {
+        $before = $cart->quantityOf($product);
         $item = $cart->increment($product);
+
+        // Клампинг по остатку (CartManager::clampQuantity) мог не дать ничего
+        // добавить — товар кончился уже после рендера страницы (in_stock и
+        // stock_quantity разошлись). Сравниваем количество до/после, не
+        // $item === null: у decrease() null — легитимный результат «строку
+        // убрали», здесь такой развилки нет.
+        if ($cart->quantityOf($product) === $before) {
+            return $this->rejectUnavailable($request);
+        }
 
         return $this->respond($request, $cart, $product, 'cart-item-added', $item);
     }
@@ -117,5 +127,14 @@ class CartController extends Controller
         }
 
         return back()->with('status', $status);
+    }
+
+    private function rejectUnavailable(Request $request): RedirectResponse|JsonResponse
+    {
+        if ($request->wantsJson()) {
+            return response()->json(['message' => __('catalog.cart.unavailable')], 422);
+        }
+
+        return back()->with('status', 'cart-item-unavailable');
     }
 }

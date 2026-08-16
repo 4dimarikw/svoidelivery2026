@@ -201,6 +201,23 @@ class Product extends Model implements HasMedia
     }
 
     /**
+     * Сколько штук реально можно положить в корзину. in_stock и stock_quantity
+     * могут разойтись (ручная правка в MoonShine, списание остатка при
+     * оформлении заказа) — доступность считается по обоим полям сразу, и
+     * только здесь; CartManager/CheckProductInStock/каталог/вёрстка кнопки
+     * должны опираться на этот метод, а не читать поля по отдельности.
+     */
+    public function availableStock(): int
+    {
+        return $this->in_stock ? max(0, (int) $this->stock_quantity) : 0;
+    }
+
+    public function isAvailable(): bool
+    {
+        return $this->availableStock() > 0;
+    }
+
+    /**
      * Collection name is read from `catalog_import.untappd_image.collection`
      * by PersistProductImageStage — keep the two in sync if this changes.
      */

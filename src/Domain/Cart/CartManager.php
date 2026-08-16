@@ -148,13 +148,11 @@ final class CartManager
     }
 
     /**
-     * 0..stock_quantity, всегда 0, если товар снят с наличия — клампит
+     * 0..availableStock(), всегда 0, если товар снят с наличия — клампит
      * количество по фактическому остатку независимо от направления изменения.
      */
     private function clampQuantity(Product $product, int $quantity): int
     {
-        $stock = $product->in_stock ? max(0, (int) $product->stock_quantity) : 0;
-
-        return max(0, min($quantity, $stock));
+        return max(0, min($quantity, $product->availableStock()));
     }
 }

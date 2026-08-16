@@ -18,7 +18,12 @@ final class CheckProductInStock implements OrderProcessContract
     {
         /** @var CartItem $item */
         foreach (cart()->cartItems() as $item) {
-            if (! $item->product->in_stock) {
+            // Не только флаг in_stock — количество в корзине могло превысить
+            // фактический остаток (частично раскуплен другим заказом между
+            // добавлением в корзину и оформлением), CartManager::clampQuantity()
+            // тут не участвует. Product::availableStock() — единственный
+            // источник истины про доступное количество, см. Domain\Cart\CartManager.
+            if ($item->quantity > $item->product->availableStock()) {
                 throw new OrderProcessException(__('order.errors.out_of_stock', ['title' => $item->product->name]));
             }
         }

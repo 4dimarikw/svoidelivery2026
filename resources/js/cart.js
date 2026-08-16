@@ -51,6 +51,7 @@ document.addEventListener('alpine:init', () => {
     Alpine.data('uiCartStepper', (quantity = 0, productId) => ({
         quantity,
         pending: false,
+        error: null,
 
         async send(el) {
             if (this.pending) {
@@ -66,11 +67,22 @@ document.addEventListener('alpine:init', () => {
                     headers: { Accept: 'application/json' },
                 });
 
+                // Товар кончился уже после рендера страницы — клампинг в
+                // CartManager не дал ничего добавить, CartController отвечает
+                // 422 (см. rejectUnavailable()). Обрабатываем до !response.ok,
+                // иначе упадём в catch и откатимся на нативный el.submit().
+                if (response.status === 422) {
+                    const body = await response.json().catch(() => ({}));
+                    this.error = body.message ?? null;
+                    return;
+                }
+
                 if (!response.ok) {
                     throw new Error(`Unexpected response: ${response.status}`);
                 }
 
                 const body = await response.json();
+                this.error = null;
                 this.quantity = body.quantity;
                 Alpine.store('cart').count = body.count;
                 Alpine.store('cart').amount = body.amount;

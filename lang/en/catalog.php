@@ -57,6 +57,10 @@ return [
         // Stepper −/+ button aria-labels (design-system.html, §06).
         'increase' => 'Add one more',
         'decrease' => 'Remove one',
+        // CartController::rejectUnavailable() — item sold out after the page
+        // was rendered (in_stock/stock_quantity drifted apart), CartManager's
+        // clamping refused to add anything.
+        'unavailable' => 'This item is out of stock and cannot be ordered.',
     ],
 
     // Product page (route `product.show`, pages/product.blade.php).

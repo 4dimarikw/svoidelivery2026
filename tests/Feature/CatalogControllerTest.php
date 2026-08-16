@@ -165,7 +165,7 @@ class CatalogControllerTest extends TestCase
 
     public function test_in_stock_filter_hides_out_of_stock_products(): void
     {
-        $inStock = Product::factory()->create(['name' => 'В Наличии', 'in_stock' => true]);
+        $inStock = Product::factory()->create(['name' => 'В Наличии', 'in_stock' => true, 'stock_quantity' => 5]);
         $outOfStock = Product::factory()->create(['name' => 'Нет В Наличии', 'in_stock' => false]);
 
         $response = $this->get(route('home', ['in_stock' => 1]));
@@ -173,6 +173,22 @@ class CatalogControllerTest extends TestCase
         $response->assertOk();
         $response->assertSee($inStock->name);
         $response->assertDontSee($outOfStock->name);
+    }
+
+    /**
+     * Регрессия: in_stock и stock_quantity могут разойтись (например,
+     * UpdateProductStockQuantity списал остаток в 0, но раньше не трогал
+     * in_stock, см. Domain\Order\Processes) — ProductBuilder::onlyInStock()
+     * должен проверять оба поля, не только флаг.
+     */
+    public function test_in_stock_filter_hides_products_with_zero_stock_despite_the_flag(): void
+    {
+        $drifted = Product::factory()->create(['name' => 'Рассинхрон Остатка', 'in_stock' => true, 'stock_quantity' => 0]);
+
+        $response = $this->get(route('home', ['in_stock' => 1]));
+
+        $response->assertOk();
+        $response->assertDontSee($drifted->name);
     }
 
     public function test_search_filter_matches_product_name(): void
@@ -385,7 +401,7 @@ class CatalogControllerTest extends TestCase
 
     public function test_authenticated_user_sees_price_and_buy_button(): void
     {
-        Product::factory()->create(['brand' => 'Есть В Наличии', 'price' => 1234, 'in_stock' => true]);
+        Product::factory()->create(['brand' => 'Есть В Наличии', 'price' => 1234, 'in_stock' => true, 'stock_quantity' => 5]);
 
         $response = $this->actingAs(User::factory()->create())->get(route('home'));
 

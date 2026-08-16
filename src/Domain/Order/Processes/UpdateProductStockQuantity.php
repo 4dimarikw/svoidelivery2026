@@ -15,7 +15,16 @@ final class UpdateProductStockQuantity implements OrderProcessContract
         /** @var CartItem $item */
         foreach (cart()->cartItems() as $item) {
             $newStockQuantity = max(0, $item->product->stock_quantity - $item->quantity);
-            $item->product->update(['stock_quantity' => $newStockQuantity]);
+            // in_stock тоже пишем здесь, а не только stock_quantity — иначе
+            // товар, раскупленный в ноль, остаётся "в наличии" по флагу и
+            // расходится с фактическим остатком (Product::availableStock()),
+            // см. Domain\Cart\CartManager::clampQuantity(). Eloquent::update(),
+            // не query-builder: in_stock входит в Product::SEO_WATCHED_ATTRIBUTES,
+            // только так поднимется хук пересинка SEO.
+            $item->product->update([
+                'stock_quantity' => $newStockQuantity,
+                'in_stock' => $newStockQuantity > 0,
+            ]);
         }
 
         return $next($order);

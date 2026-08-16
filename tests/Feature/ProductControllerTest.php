@@ -105,7 +105,7 @@ class ProductControllerTest extends TestCase
 
     public function test_authenticated_user_sees_price_and_buy_button(): void
     {
-        $product = Product::factory()->create(['price' => 480]);
+        $product = Product::factory()->create(['price' => 480, 'in_stock' => true, 'stock_quantity' => 5]);
 
         $response = $this->actingAs(User::factory()->create())->get(route('product.show', $product));
 

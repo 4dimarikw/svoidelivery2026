@@ -57,6 +57,10 @@ return [
         // aria-label кнопок степпера −/+ (design-system.html, §06).
         'increase' => 'Добавить ещё',
         'decrease' => 'Убрать одну',
+        // CartController::rejectUnavailable() — товар кончился уже после
+        // рендера страницы (in_stock/stock_quantity разошлись), клампинг в
+        // CartManager не дал ничего добавить.
+        'unavailable' => 'Товар закончился и недоступен для заказа.',
     ],
 
     // Страница товара (route `product.show`, pages/product.blade.php).

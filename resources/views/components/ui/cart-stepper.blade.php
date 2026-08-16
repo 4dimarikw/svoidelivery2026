@@ -42,11 +42,17 @@
         @csrf
         @if ($showBuyButton)
             <x-ui.btn type="submit" variant="primary" size="md" block class="h-full px-2 xl:px-[22px]"
-                      :disabled="! $product->in_stock">
-                {{ __('catalog.buy') }}
+                      :disabled="! $product->isAvailable()">
+                {{ $product->isAvailable() ? __('catalog.buy') : __('catalog.notify') }}
             </x-ui.btn>
         @endif
     </form>
+
+    {{-- CartController::rejectUnavailable() — товар кончился уже после
+         рендера страницы (клампинг в CartManager не дал ничего добавить,
+         см. cart.js). Тот же паттерн инлайновой ошибки, что и <x-ui.error>,
+         но без привязки к error bag — источник тут не валидация формы. --}}
+    <p x-show="error" x-cloak x-text="error" class="mt-1 text-caption text-rust"></p>
 
     <form
         method="POST"
@@ -77,7 +83,7 @@
             type="submit"
             form="{{ $increaseId }}"
             aria-label="{{ __('catalog.cart.increase') }}"
-            :disabled="quantity >= {{ (int) $product->stock_quantity }}"
+            :disabled="quantity >= {{ $product->availableStock() }}"
             class="grid w-[26px] shrink-0 place-items-center bg-cream-200 text-ink-900 transition hover:bg-cream-300 disabled:cursor-not-allowed disabled:opacity-50 xl:w-[34px]"
         >+
         </button>

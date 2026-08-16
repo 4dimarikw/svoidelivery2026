@@ -40,6 +40,7 @@
         'cart-item-added' => __('account.cart.added'),
         'cart-item-removed' => __('account.cart.removed'),
         'cart-cleared' => __('account.cart.cleared'),
+        'cart-item-unavailable' => __('account.cart.unavailable'),
         default => null,
     };
 

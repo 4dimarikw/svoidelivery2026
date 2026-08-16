@@ -216,7 +216,7 @@
              разной высоте. --}}
         <div class="mt-auto"></div>
 
-        @if (! $product->in_stock)
+        @if (! $product->isAvailable())
             <div class="-ml-1.5 mt-3 flex flex-wrap [&>*]:ml-1.5 [&>*]:mt-1.5">
                 {{-- max-xl:!px-*/!py-* — chip.blade.php задаёт свой padding
                      через $attributes->class(), а в сгенерированном Tailwind

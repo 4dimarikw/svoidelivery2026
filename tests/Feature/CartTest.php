@@ -44,6 +44,25 @@ class CartTest extends TestCase
         $this->assertDatabaseHas('cart_items', ['product_id' => $product->id, 'quantity' => 2]);
     }
 
+    /**
+     * Регрессия: товар с in_stock=true, но stock_quantity=0 (рассинхрон —
+     * например, раскуплен в ноль при оформлении заказа, см.
+     * Domain\Order\Processes\UpdateProductStockQuantity) раньше отвечал
+     * тихим 200 и ничего не добавлял в корзину. CartController::increase()
+     * теперь отдаёт 422, ничего не создавая.
+     */
+    public function test_increase_rejects_a_product_with_no_available_stock(): void
+    {
+        $user = User::factory()->create();
+        $product = Product::factory()->create(['in_stock' => true, 'stock_quantity' => 0]);
+
+        $response = $this->actingAs($user)->postJson(route('cart.increase', $product));
+
+        $response->assertStatus(422);
+        $response->assertJsonStructure(['message']);
+        $this->assertDatabaseCount('cart_items', 0);
+    }
+
     public function test_decrease_decrements_then_removes_the_item(): void
     {
         $user = User::factory()->create();

@@ -146,5 +146,8 @@ return [
         'added' => 'Product added to cart.',
         'removed' => 'Product removed from cart.',
         'cleared' => 'Cart cleared.',
+        // no-JS fallback for CartController::rejectUnavailable() — same text
+        // as catalog.cart.unavailable (JSON branch), different string scope.
+        'unavailable' => 'This item is out of stock and cannot be ordered.',
     ],
 ];

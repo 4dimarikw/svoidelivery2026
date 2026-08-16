@@ -94,7 +94,7 @@
                                 {{--                                @endif--}}
                             </x-ui.chip>
                         @endif
-                        @if (! $product->in_stock)
+                        @if (! $product->isAvailable())
                             <x-ui.chip tone="cream">{{ __('catalog.out_of_stock') }}</x-ui.chip>
                         @endif
                     </div>

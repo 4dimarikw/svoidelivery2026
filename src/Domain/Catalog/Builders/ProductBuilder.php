@@ -23,7 +23,9 @@ class ProductBuilder extends Builder
 {
     public function active(): static
     {
-        return $this->where('status', ProductStatus::PUBLISHED)->where('in_stock', true);
+        return $this->where('status', ProductStatus::PUBLISHED)
+            ->where('in_stock', true)
+            ->where('stock_quantity', '>', 0);
     }
 
     /**
@@ -89,7 +91,7 @@ class ProductBuilder extends Builder
 
     public function onlyInStock(bool $onlyInStock): static
     {
-        return $this->when($onlyInStock, fn (self $q) => $q->where('in_stock', true));
+        return $this->when($onlyInStock, fn (self $q) => $q->where('in_stock', true)->where('stock_quantity', '>', 0));
     }
 
     /**

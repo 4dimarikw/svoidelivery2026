@@ -72,6 +72,24 @@ class CartTest extends TestCase
         $this->assertDatabaseMissing('cart_items', ['product_id' => $product->id]);
     }
 
+    /**
+     * Регрессия: in_stock=true и stock_quantity=0 могут разойтись (см.
+     * Domain\Order\Processes\UpdateProductStockQuantity) — clampQuantity()
+     * должен опираться на Product::availableStock() (учитывает оба поля),
+     * не на голый stock_quantity/in_stock по отдельности.
+     */
+    public function test_increment_does_nothing_when_in_stock_flag_and_quantity_disagree(): void
+    {
+        $user = User::factory()->create();
+        $product = Product::factory()->create(['in_stock' => true, 'stock_quantity' => 0]);
+        $this->actingAs($user);
+
+        $item = app(CartManager::class)->increment($product);
+
+        $this->assertNull($item);
+        $this->assertDatabaseMissing('cart_items', ['product_id' => $product->id]);
+    }
+
     public function test_decrement_removes_the_item_once_quantity_reaches_zero(): void
     {
         $user = User::factory()->create();
