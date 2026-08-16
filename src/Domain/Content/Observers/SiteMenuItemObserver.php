@@ -2,7 +2,6 @@
 
 namespace Domain\Content\Observers;
 
-
 use Domain\Content\Models\SiteMenuItem;
 use Illuminate\Validation\ValidationException;
 
@@ -15,6 +14,32 @@ class SiteMenuItemObserver
 
     public static function validate(SiteMenuItem $item): void
     {
+        $key = trim((string)$item->key);
+
+        if ($key === '' || mb_strlen($key) > 100 || preg_match('/^[\pL\pM\pN_-]+$/u', $key) !== 1) {
+            throw ValidationException::withMessages([
+                'key' => 'Ключ обязателен, должен быть не длиннее 100 символов и содержать только буквы, цифры, дефис или подчёркивание.',
+            ]);
+        }
+
+        if ($item->exists && $item->isDirty('key')) {
+            throw ValidationException::withMessages([
+                'key' => 'Ключ пункта меню нельзя изменить после создания.',
+            ]);
+        }
+
+        $duplicateKey = SiteMenuItem::query()
+            ->where('site_menu_id', $item->site_menu_id)
+            ->where('key', $key)
+            ->when($item->exists, static fn($query) => $query->whereKeyNot($item->getKey()))
+            ->exists();
+
+        if ($duplicateKey) {
+            throw ValidationException::withMessages([
+                'key' => 'В выбранном меню уже существует пункт с таким ключом.',
+            ]);
+        }
+
         $hasSection = $item->site_section_id !== null;
         $hasExternalUrl = trim((string)$item->external_url) !== '';
 

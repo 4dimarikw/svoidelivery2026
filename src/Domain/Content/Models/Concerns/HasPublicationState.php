@@ -1,6 +1,6 @@
 <?php
 
-namespace Domain\Content\Concerns;
+namespace Domain\Content\Models\Concerns;
 
 use Illuminate\Database\Eloquent\Builder;
 

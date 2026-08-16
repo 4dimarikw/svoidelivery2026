@@ -2,14 +2,13 @@
 
 namespace Domain\Content\Observers;
 
-
 use Domain\Content\ContentBlockTypeRegistry;
 use Domain\Content\Models\ContentBlockItem;
 use Illuminate\Validation\ValidationException;
 
-class ContentBlockItemObserver
+readonly class ContentBlockItemObserver
 {
-    public function __construct(private readonly ContentBlockTypeRegistry $types)
+    public function __construct(private ContentBlockTypeRegistry $types)
     {
     }
 

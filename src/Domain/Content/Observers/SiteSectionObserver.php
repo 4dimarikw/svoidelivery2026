@@ -2,7 +2,6 @@
 
 namespace Domain\Content\Observers;
 
-
 use Domain\Content\Models\SiteSection;
 use Illuminate\Validation\ValidationException;
 

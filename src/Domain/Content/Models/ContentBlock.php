@@ -2,14 +2,13 @@
 
 namespace Domain\Content\Models;
 
-use Database\Factories\Content\ContentBlockFactory;
-use Domain\Content\Concerns\HasPublicationState;
+
 use Domain\Content\ContentBlockTypeRegistry;
 use Domain\Content\Contracts\ContentBlockType;
+use Domain\Content\Models\Concerns\HasPublicationState;
 use Domain\Content\Observers\ContentBlockObserver;
 use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -87,15 +86,5 @@ class ContentBlock extends Model implements HasMedia
         foreach ($this->typeDefinition()?->mediaCollections() ?? [] as $collection) {
             $this->addMediaCollection($collection)->singleFile();
         }
-    }
-
-    /**
-     * Модель живёт вне `App\Models` (см. CLAUDE.md, "Domain layer") —
-     * дефолтная конвенция фабрик её не резолвит, та же ловушка, что уже
-     * задокументирована в Domain\Auth\Models\User::newFactory().
-     */
-    protected static function newFactory(): Factory
-    {
-        return ContentBlockFactory::new();
     }
 }
