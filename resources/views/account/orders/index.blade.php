@@ -20,7 +20,8 @@
 
         @forelse ($orders as $order)
             <a href="{{ route('account.orders.show', $order) }}" class="block">
-                <x-ui.surface tone="paper-2" class="rounded-sm border border-hairline p-5 transition hover:border-ink-300">
+                <x-ui.surface tone="paper-2"
+                              class="rounded-sm border border-hairline p-5 transition hover:border-ink-300">
                     <div class="flex items-center justify-between">
                         <div>
                             <div class="font-mono text-body-m text-ink-900">{{ $order->number }}</div>
@@ -31,7 +32,7 @@
                         </div>
 
                         <div class="flex items-center space-x-4">
-                            <x-ui.badge :tone="$statusTone($order->status->value())">{{ $order->status->humanValue() }}</x-ui.badge>
+                            {{-- <x-ui.badge :tone="$statusTone($order->status->value())">{{ $order->status->humanValue() }}</x-ui.badge> --}}
                             <span class="font-mono text-body-m text-ink-900">{{ $order->amount }}</span>
                         </div>
                     </div>
