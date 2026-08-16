@@ -15,6 +15,7 @@ use Illuminate\Contracts\Database\Eloquent\Builder;
 use Illuminate\Support\Str;
 use Infrastructure\Jobs\BroadcastVkPostJob;
 use MoonShine\Contracts\Core\DependencyInjection\CrudRequestContract;
+use MoonShine\Contracts\UI\ComponentContract;
 use MoonShine\Contracts\UI\FieldContract;
 use MoonShine\Crud\JsonResponse;
 use MoonShine\Laravel\Pages\Crud\IndexPage;
@@ -26,6 +27,7 @@ use MoonShine\Support\Enums\JsEvent;
 use MoonShine\Support\Enums\ToastType;
 use MoonShine\Support\ListOf;
 use MoonShine\UI\Components\ActionButton;
+use MoonShine\UI\Components\Table\TableBuilder;
 use MoonShine\UI\Components\Thumbnails;
 use MoonShine\UI\Fields\Date;
 use MoonShine\UI\Fields\Enum;
@@ -45,9 +47,14 @@ final class VkPostIndexPage extends IndexPage
      */
     protected function fields(): iterable
     {
+
+        $isAdmin = request()->user()->isSuperUser();
+
         return [
             ID::make()->sortable(),
-            Date::make('Опубликован', 'posted_at')->format('d.m.Y H:i')->sortable(),
+
+            Date::make('Опубликован', 'posted_at')->format('d.m.Y H:i')->sortable()->canSee(fn () => $isAdmin),
+
             Text::make('Текст', formatted: fn (VkPost $item) => Str::limit((string) ($item->message_text ?: $item->text), 80)),
             Image::make('Картинки', 'images')->changePreview(fn ($value) => Thumbnails::make($value)),
             Enum::make('Статус', 'status')->attach(VkPostStatus::class),
@@ -77,6 +84,18 @@ final class VkPostIndexPage extends IndexPage
             QueryTag::make('Готовые', fn (Builder $query) => $query->where('status', VkPostStatus::READY)),
             QueryTag::make('Отправленные', fn (Builder $query) => $query->where('status', VkPostStatus::SENT)),
         ];
+    }
+
+    /**
+     * @param  TableBuilder  $component
+     * @return TableBuilder
+     */
+    protected function modifyListComponent(ComponentContract $component): ComponentContract
+    {
+        return $component
+            ->columnSelection()
+            ->sticky()
+            ->stickyButtons();
     }
 
     protected function buttons(): ListOf

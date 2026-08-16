@@ -9,6 +9,7 @@ use MoonShine\Contracts\UI\ComponentContract;
 use MoonShine\Contracts\UI\FieldContract;
 use MoonShine\Laravel\Pages\Crud\IndexPage;
 use MoonShine\Support\Enums\Color;
+use MoonShine\UI\Components\Table\TableBuilder;
 use MoonShine\UI\Fields\Date;
 use MoonShine\UI\Fields\Email;
 use MoonShine\UI\Fields\ID;
@@ -51,8 +52,15 @@ final class UserIndexPage extends IndexPage
         ];
     }
 
+    /**
+     * @param  TableBuilder  $component
+     * @return TableBuilder
+     */
     protected function modifyListComponent(ComponentContract $component): ComponentContract
     {
-        return $component->columnSelection();
+        return $component
+            ->columnSelection()
+            ->sticky()
+            ->stickyButtons();
     }
 }

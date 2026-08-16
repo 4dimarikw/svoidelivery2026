@@ -13,8 +13,11 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 /**
  * Пост со стены VK-группы, забранный vk:sync-posts. text — сырой текст
  * из VK, не редактируется в админке; message_text — отредактированная
- * версия для рассылки. Пустой message_text значит «рассылать нечего» —
- * broadcastText() не подставляет вместо него сырой text (см. гарды на
+ * версия для рассылки, засеивается копией text только при создании поста
+ * синхронизацией, дальше живёт исключительно под редактором — повторный
+ * vk:sync-posts его не трогает (как и status) даже у поста в статусе
+ * draft. Пустой message_text значит «рассылать нечего» — broadcastText()
+ * не подставляет вместо него сырой text (см. гарды на
  * SendVkPostToChatAction / BroadcastVkPostJob).
  */
 class VkPost extends Model

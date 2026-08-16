@@ -108,6 +108,48 @@ class SyncVkPostsCommandTest extends TestCase
         $this->assertSame(['https://sun9-1.userapi.com/rejected.jpg'], $post->rejected_images);
     }
 
+    public function test_new_post_seeds_message_text_from_vk_text(): void
+    {
+        $this->fakeWallGet([$this->vkPostPayload(text: 'Привет из VK')]);
+
+        $this->artisan('vk:sync-posts', ['--domain' => 'testgroup', '--force' => true])
+            ->assertExitCode(0);
+
+        $post = VkPost::query()->sole();
+
+        $this->assertSame('Привет из VK', $post->message_text);
+    }
+
+    public function test_status_of_existing_draft_is_not_overwritten(): void
+    {
+        // Http::fake() вызванный повторно с тем же URL-паттерном не
+        // переопределяет более ранний стаб (побеждает первый совпавший) —
+        // нужен именно Http::sequence(), чтобы два прогона sync реально
+        // получили два разных ответа wall.get.
+        Http::fake([
+            'api.vk.com/method/wall.get*' => Http::sequence()
+                ->push(['response' => ['count' => 1, 'items' => [$this->vkPostPayload(text: 'Исходный текст')]]])
+                ->push(['response' => ['count' => 1, 'items' => [$this->vkPostPayload(text: 'Текст изменился в VK')]]]),
+            'sun9-1.userapi.com/*' => Http::response('', 200, ['Content-Type' => 'image/jpeg']),
+        ]);
+
+        $this->artisan('vk:sync-posts', ['--domain' => 'testgroup', '--force' => true])->assertExitCode(0);
+
+        $settings = app(VKSyncSettings::class);
+        $settings->post_status = VkPostStatus::READY->value;
+        $settings->save();
+
+        // Повторная синхронизация того же (всё ещё draft) поста с новым
+        // текстом от VK и настройкой post_status = ready.
+        $this->artisan('vk:sync-posts', ['--domain' => 'testgroup', '--force' => true])->assertExitCode(0);
+
+        $post = VkPost::query()->sole();
+
+        $this->assertSame(VkPostStatus::DRAFT, $post->status);
+        $this->assertSame('Исходный текст', $post->message_text);
+        $this->assertSame('Текст изменился в VK', $post->text);
+    }
+
     public function test_does_not_overwrite_a_post_already_reviewed_in_admin(): void
     {
         $this->fakeWallGet([$this->vkPostPayload(text: 'Исходный текст')]);

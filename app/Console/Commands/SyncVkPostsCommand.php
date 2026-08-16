@@ -131,6 +131,10 @@ class SyncVkPostsCommand extends Command
                     continue;
                 }
 
+                // status и message_text — поля ручного воркфлоу, синхронизация
+                // их не трогает даже у существующего draft-поста: status
+                // выставляется только при создании, message_text вообще
+                // только редактором (см. ветку create ниже).
                 $attributes = [
                     'post_type' => $post->postType,
                     'posted_at' => $post->date,
@@ -138,7 +142,6 @@ class SyncVkPostsCommand extends Command
                     'images' => $images,
                     'rejected_images' => $rejected === [] ? null : $rejected,
                     'raw' => $post->raw,
-                    'status' => $settings->post_status ?? VkPostStatus::DRAFT->value,
                 ];
 
                 if ($existing !== null) {
@@ -148,6 +151,8 @@ class SyncVkPostsCommand extends Command
                     VkPost::query()->create([
                         'owner_id' => $post->ownerId,
                         'vk_post_id' => $post->postId,
+                        'status' => $settings->post_status ?? VkPostStatus::DRAFT->value,
+                        'message_text' => $post->text,
                         ...$attributes,
                     ]);
                     $created++;

@@ -111,4 +111,8 @@ return [
     'locales' => [
         // en
     ],
+
+    'scheduling' => [
+        'auto_menu' => false,
+    ],
 ];

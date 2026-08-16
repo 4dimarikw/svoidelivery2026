@@ -38,8 +38,10 @@ use MoonShine\ColorManager\Palettes\PurplePalette;
 use MoonShine\Contracts\ColorManager\ColorManagerContract;
 use MoonShine\Contracts\ColorManager\PaletteContract;
 use MoonShine\Laravel\Layouts\AppLayout;
+use MoonShine\MenuManager\MenuDivider;
 use MoonShine\MenuManager\MenuGroup;
 use MoonShine\MenuManager\MenuItem;
+use YuriZoom\MoonShineScheduling\Pages\SchedulingPage;
 
 final class MoonShineLayout extends AppLayout
 {
@@ -62,19 +64,20 @@ final class MoonShineLayout extends AppLayout
         $isAdmin = request()->user()->isSuperUser();
 
         return [
+            MenuItem::make(OrderResource::class),
+
             MenuGroup::make(__('moonshine.group.orders'), [
-                MenuItem::make(OrderResource::class),
                 MenuItem::make(OrderCustomerResource::class),
-                MenuItem::make(DeliveryTypeResource::class)->canSee(fn () => $isAdmin),
-                MenuItem::make(PaymentMethodResource::class)->canSee(fn () => $isAdmin),
-                MenuItem::make(OrderItemResource::class)->canSee(fn () => $isAdmin),
-            ], 'shopping-cart'),
+                MenuItem::make(DeliveryTypeResource::class),
+                MenuItem::make(PaymentMethodResource::class),
+                MenuItem::make(OrderItemResource::class),
+            ], 'shopping-cart')->canSee(fn () => $isAdmin),
+
+            MenuItem::make(UserResource::class),
 
             MenuGroup::make(__('moonshine.group.users'), [
-                MenuItem::make(UserResource::class),
-                MenuItem::make(FavoriteResource::class)->canSee(fn () => $isAdmin),
-
-            ], 'users'),
+                MenuItem::make(FavoriteResource::class),
+            ], 'users')->canSee(fn () => $isAdmin),
 
             MenuGroup::make(__('moonshine.group.catalog'), [
                 MenuItem::make(CategoryResource::class),
@@ -97,6 +100,7 @@ final class MoonShineLayout extends AppLayout
                 MenuItem::make(ContentBlockResource::class),
                 MenuItem::make(ContentBlockItemResource::class),
                 MenuItem::make(SiteSettingsPage::class),
+                MenuDivider::make('Посты'),
                 MenuItem::make(VkPostResource::class),
                 MenuItem::make(VkSyncSettingsPage::class)->canSee(fn () => $isAdmin),
 
@@ -107,6 +111,7 @@ final class MoonShineLayout extends AppLayout
                 MenuItem::make(MoonShineUserRoleResource::class),
                 MenuItem::make(MoonshinePermissionResource::class),
                 MenuItem::make(EventLogResource::class),
+                MenuItem::make(SchedulingPage::class, icon: 'clock'),
 
             ], 'users')->canSee(fn () => $isAdmin),
 
