@@ -40,8 +40,6 @@ class EventLogResource extends ModelResource
 
     protected array $with = ['causer'];
 
-    protected bool $detailInModal = true;
-
     public function getTitle(): string
     {
         return __('moonshine.event_log.title');
