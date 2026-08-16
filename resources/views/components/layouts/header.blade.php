@@ -26,7 +26,16 @@
      x-init сидирует $store.cart.count (resources/js/cart.js) с сервера;
      $store.favorites.count сидируется внутри user-menu.blade.php. --}}
 @props(['menu' => []])
-<header class="border-b border-hairline bg-cream-50">
+{{-- sticky, не fixed: высота шапки content-derived и разная на мобиле
+     (flex-col, до двух строк) и от sm: (flex-row, одна строка) — fixed
+     потребовал бы компенсирующий padding-top на контенте под неё же
+     высоту (как у <x-ui.mobile-nav>, см. site.blade.php), а sticky не
+     вынимает элемент из потока, компенсация не нужна вообще. z-20 — выше
+     некликабельных z-10 на карточке товара (favorite-toggle/рейтинг
+     Untappd), ниже выпадающих панелей user-menu/nav-menu (z-30, свой
+     уровень, шапки не касается — обе сидят в собственном relative-wrapper)
+     и мобильной панели/skip-link (z-40/z-50). --}}
+<header class="sticky top-0 z-20 border-b border-hairline bg-cream-50">
     <div
         class="mx-auto flex max-w-page flex-col  px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
         <a href="{{ route('home') }}" class="inline-flex items-center">
@@ -52,7 +61,16 @@
                         aria-label="{{ __('layout.nav.cart') }}"
                     >
                         <x-ui.icon name="shopping-bag" :size="18"/>
-                        <span class="ml-1 font-mono text-micro" x-text="$store.cart.count"></span>
+                        {{-- x-show + серверный style="display:none" — тот же
+                             приём, что бейдж счётчика в <x-ui.mobile-nav>
+                             (mobile-nav.blade.php): пусто — цифры нет
+                             совсем, не "0". --}}
+                        <span
+                            class="ml-1 font-mono text-micro"
+                            x-show="$store.cart.count > 0"
+                            x-text="$store.cart.count"
+                            @if (cart()->count() === 0) style="display:none" @endif
+                        ></span>
                     </a>
                     <x-ui.user-menu/>
                 </div>

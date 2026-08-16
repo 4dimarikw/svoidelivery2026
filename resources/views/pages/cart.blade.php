@@ -58,17 +58,7 @@
             <x-ui.alert tone="ok" class="mb-6">{{ $noJsStatusMessage }}</x-ui.alert>
         @endif
 
-        <div class="mb-6 flex items-center justify-between">
-            <h1 class="font-display text-heading-m uppercase text-ink-900">{{ __('account.cart.title') }}</h1>
-
-            @if ($cartItems->isNotEmpty())
-                <form method="POST" action="{{ route('cart.clear') }}" onsubmit="return confirm(@js(__('account.cart.clear_confirm')))" x-show="$store.cart.count > 0">
-                    @csrf
-                    @method('DELETE')
-                    <button type="submit" class="text-caption text-rust hover:underline">{{ __('account.cart.clear') }}</button>
-                </form>
-            @endif
-        </div>
+        <h1 class="mb-6 font-display text-heading-m uppercase text-ink-900">{{ __('account.cart.title') }}</h1>
 
         <div x-show="$store.cart.count === 0" @if ($cartItems->isNotEmpty()) x-cloak @endif>
             <x-ui.surface tone="paper-2" class="rounded-sm border border-hairline p-8 text-center">
@@ -80,6 +70,16 @@
              (grid, не flex — CLAUDE.md запрещает только flex-gap). --}}
         <div class="grid grid-cols-1 gap-8 lg:grid-cols-12" x-show="$store.cart.count > 0" @if ($cartItems->isEmpty()) x-cloak @endif>
             <div class="grid gap-8 lg:col-span-8">
+                @if ($cartItems->isNotEmpty())
+                    <div class="flex justify-end">
+                        <form method="POST" action="{{ route('cart.clear') }}" onsubmit="return confirm(@js(__('account.cart.clear_confirm')))" x-show="$store.cart.count > 0">
+                            @csrf
+                            @method('DELETE')
+                            <button type="submit" class="text-caption text-rust hover:underline">{{ __('account.cart.clear') }}</button>
+                        </form>
+                    </div>
+                @endif
+
                 <x-ui.surface tone="paper-2" class="border border-hairline px-5">
                     @foreach ($cartItems as $cartItem)
                         <x-ui.cart-line :cart-item="$cartItem" />
@@ -164,7 +164,10 @@
                 </x-ui.form>
             </div>
 
-            <div class="lg:sticky lg:top-6 lg:col-span-4 lg:self-start">
+            {{-- lg:top-24, не lg:top-6 — та же причина, что у панели
+                 фильтров каталога (см. pages/catalog/_filters.blade.php):
+                 sticky-шапка занимает ~73px сверху, top-6 залипал бы под ней. --}}
+            <div class="lg:sticky lg:top-24 lg:col-span-4 lg:self-start">
                 <x-ui.cart-summary :count="$cart->count()" :amount="$amount">
                     <x-ui.btn type="submit" form="checkout-form" variant="cream" size="lg" block class="mt-5" x-bind:disabled="$store.checkout.submitting">
                         <span x-show="! $store.checkout.submitting">{{ __('order.submit') }}</span>

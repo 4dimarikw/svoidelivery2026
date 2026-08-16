@@ -1,7 +1,12 @@
 {{-- Панель фильтров каталога. Обычная GET-форма на route('home') — работает
      без JS (не 'requestSubmit()' — тот доступен только с Safari 16, таргет
      проекта — Safari >= 13.1). Режим применения переключается флагом
-     $autoSubmitFiltersOnChange ниже. --}}
+     $autoSubmitFiltersOnChange ниже.
+
+     lg:top-24 (96px), не lg:top-6: <x-layouts.header> теперь sticky
+     (header.blade.php) и реально занимает ~73px сверху — top-6 (24px)
+     залипал бы под неё, наполовину скрытый. 96px ≈ высота шапки + прежний
+     зазор (24px), округлено до шага шкалы Tailwind. --}}
 @php
     // Режим применения фильтров.
     // true  — чекбоксы сабмитят форму сразу по change (авто-фильтрация).
@@ -10,7 +15,7 @@
     $autoSubmitFiltersOnChange = false;
 @endphp
 
-<x-ui.surface tone="paper-2" class="rounded-sm border border-hairline p-5 lg:sticky lg:top-6">
+<x-ui.surface tone="paper-2" class="rounded-sm border border-hairline p-5 lg:sticky lg:top-24">
     <form
         method="GET"
         action="{{ route('home') }}"

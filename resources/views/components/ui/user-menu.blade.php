@@ -1,13 +1,13 @@
-{{-- Выпадающее меню пользователя в <x-layouts.header> — те же 4 пункта, что
-     в <x-ui.account-nav> (профиль/адреса/избранное/выйти), но в компактной
-     панели вместо сайдбара. Не общий партиал с account-nav: там нужен
-     $active-подсвет и другая обёртка (<nav>, не абсолютно спозиционированная
-     панель) — ради 4 ссылок общий компонент с двумя ветками получился бы
-     сложнее, чем просто продублировать разметку.
+{{-- Выпадающее меню пользователя в <x-layouts.header> — те же 5 пунктов, что
+     в <x-ui.account-nav> (профиль/заказы/адреса/избранное/выйти), в том же
+     порядке, но в компактной панели вместо сайдбара. Не общий партиал с
+     account-nav: там нужен $active-подсвет и другая обёртка (<nav>, не
+     абсолютно спозиционированная панель) — ради 5 ссылок общий компонент с
+     двумя ветками получился бы сложнее, чем просто продублировать разметку.
 
      Триггер — настоящая ссылка на профиль (не <button>), не JS-заглушка:
      панель скрыта через x-cloak, и без Alpine клик по имени просто откроет
-     /account/profile, где те же 4 пункта уже есть в <x-ui.account-nav> —
+     /account/profile, где те же пункты уже есть в <x-ui.account-nav> —
      тот же приём "работает и без JS", что у избранного/степпера корзины.
 
      x-init сидирует $store.favorites.count — единственная точка сидирования
@@ -41,6 +41,14 @@
             href="{{ route('account.profile.edit') }}"
             class="flex items-center justify-between rounded-sm px-3.5 py-2.5 text-body-m text-ink-700 hover:bg-cream-200 hover:text-ink-900"
         >{{ __('account.nav.profile') }}</a>
+
+        <a
+            href="{{ route('account.orders.index') }}"
+            class="flex items-center justify-between rounded-sm px-3.5 py-2.5 text-body-m text-ink-700 hover:bg-cream-200 hover:text-ink-900"
+        >
+            {{ __('account.nav.orders') }}
+            <span class="font-mono text-micro">{{ auth()->user()->ordersCount() }}</span>
+        </a>
 
         <a
             href="{{ route('account.addresses.index') }}"

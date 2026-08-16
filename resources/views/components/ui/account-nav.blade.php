@@ -26,7 +26,10 @@
     <a
         href="{{ route('account.orders.index') }}"
         class="flex items-center justify-between rounded-sm px-3.5 py-2.5 text-body-m {{ $itemClass($active === 'orders') }}"
-    >{{ __('account.nav.orders') }}</a>
+    >
+        {{ __('account.nav.orders') }}
+        <span class="font-mono text-micro">{{ auth()->user()->ordersCount() }}</span>
+    </a>
 
     <a
         href="{{ route('account.addresses.index') }}"

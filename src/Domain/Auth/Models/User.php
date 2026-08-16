@@ -4,6 +4,7 @@ namespace Domain\Auth\Models;
 
 use Database\Factories\UserFactory;
 use Domain\Favorite\Models\Favorite;
+use Domain\Order\Models\Order;
 use Domain\Profile\Models\Address;
 use Domain\Profile\Models\Profile;
 use Domain\Telegram\Models\TelegramChat;
@@ -167,5 +168,26 @@ class User extends Authenticatable implements MustVerifyEmail
     public function favorites(): HasMany
     {
         return $this->hasMany(Favorite::class);
+    }
+
+    public function orders(): HasMany
+    {
+        return $this->hasMany(Order::class);
+    }
+
+    /**
+     * Мемоизированный счётчик заказов — тот же приём, что addressesCount()
+     * (см. её докблок выше): <x-ui.user-menu> и <x-ui.account-nav> оба
+     * показывают это число на одной странице /account/*, loadCount() кладёт
+     * результат в атрибут orders_count того же инстанса модели, второй
+     * вызов в рамках запроса не повторяет SELECT.
+     */
+    public function ordersCount(): int
+    {
+        if (! array_key_exists('orders_count', $this->attributes)) {
+            $this->loadCount('orders');
+        }
+
+        return (int) $this->orders_count;
     }
 }

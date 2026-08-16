@@ -3,12 +3,6 @@
      $order приходит с eager-loaded orderCustomer/orderItems.product/
      deliveryType/paymentMethod (Account\OrderController::show()). --}}
 @php
-    $statusTone = match ($order->status->value()) {
-        'paid', 'sent', 'completed' => 'ok',
-        'cancelled' => 'cancel',
-        default => 'way', // new, pending
-    };
-
     $customer = $order->orderCustomer;
     $addressLine = $customer ? collect([
         $customer->city,
@@ -18,12 +12,9 @@
 
 <x-layouts.account active="orders" :title="$order->number">
     <div class="grid gap-6">
-        <div class="flex items-center justify-between">
-            <div>
-                <h2 class="font-display text-heading-s uppercase text-ink-900">{{ $order->number }}</h2>
-                <p class="mt-1 text-caption text-ink-500">{{ $order->created_at?->format('d.m.Y H:i') }}</p>
-            </div>
-            <x-ui.badge :tone="$statusTone">{{ $order->status->humanValue() }}</x-ui.badge>
+        <div>
+            <h2 class="font-display text-heading-s uppercase text-ink-900">{{ $order->number }}</h2>
+            <p class="mt-1 text-caption text-ink-500">{{ $order->created_at?->format('d.m.Y H:i') }}</p>
         </div>
 
         <x-ui.surface tone="paper-2" class="rounded-sm border border-hairline p-6">
@@ -45,27 +36,20 @@
             </div>
         </x-ui.surface>
 
-        <div class="grid gap-6 sm:grid-cols-2">
-            <x-ui.surface tone="paper-2" class="rounded-sm border border-hairline p-6">
-                <h3 class="mb-3 text-caption uppercase tracking-meta text-ink-500">{{ __('order.delivery_type') }}</h3>
-                <p class="text-body-m text-ink-900">{{ $order->deliveryType->title }}</p>
+        <x-ui.surface tone="paper-2" class="rounded-sm border border-hairline p-6">
+            <h3 class="mb-3 text-caption uppercase tracking-meta text-ink-500">{{ __('order.delivery_type') }}</h3>
+            <p class="text-body-m text-ink-900">{{ $order->deliveryType->title }}</p>
 
-                @if ($order->deliveryType->with_address)
-                    <p class="mt-2 text-body-m text-ink-900">{{ $addressLine ?: '—' }}</p>
-                @endif
+            @if ($order->deliveryType->with_address)
+                <p class="mt-2 text-body-m text-ink-900">{{ $addressLine ?: '—' }}</p>
+            @endif
 
-                @if ($customer)
-                    <p class="mt-3 text-caption text-ink-500">
-                        {{ trim($customer->last_name.' '.$customer->first_name) }} &middot; {{ $customer->phone }}
-                    </p>
-                @endif
-            </x-ui.surface>
-
-            <x-ui.surface tone="paper-2" class="rounded-sm border border-hairline p-6">
-                <h3 class="mb-3 text-caption uppercase tracking-meta text-ink-500">{{ __('order.payment_method') }}</h3>
-                <p class="text-body-m text-ink-900">{{ $order->paymentMethod->title }}</p>
-            </x-ui.surface>
-        </div>
+            @if ($customer)
+                <p class="mt-3 text-caption text-ink-500">
+                    {{ trim($customer->last_name.' '.$customer->first_name) }} &middot; {{ $customer->phone }}
+                </p>
+            @endif
+        </x-ui.surface>
 
         @if ($order->comment)
             <x-ui.surface tone="paper-2" class="rounded-sm border border-hairline p-6">

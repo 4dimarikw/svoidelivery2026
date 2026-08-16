@@ -32,6 +32,7 @@ class HeaderUserMenuTest extends TestCase
         $response->assertSee($user->name);
         $response->assertSee(route('cart.index'), false);
         $response->assertSee(route('account.profile.edit'), false);
+        $response->assertSee(route('account.orders.index'), false);
         $response->assertSee(route('account.addresses.index'), false);
         $response->assertSee(route('account.favorites.index'), false);
         $response->assertSee(route('logout'), false);
