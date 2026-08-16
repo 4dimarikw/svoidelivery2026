@@ -21,6 +21,8 @@ final class ContentBlockItemResource extends ModelResource
 {
     protected string $model = ContentBlockItem::class;
 
+    protected bool $withPolicy = true;
+
     protected string $column = 'title';
 
     protected array $with = ['block.section'];

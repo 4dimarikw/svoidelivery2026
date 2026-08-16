@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\MoonShine\Resources\ContentBlock;
 
-
 use App\MoonShine\Resources\ContentBlock\Pages\ContentBlockFormPage;
 use App\MoonShine\Resources\ContentBlock\Pages\ContentBlockIndexPage;
 use Domain\Content\Models\ContentBlock;
@@ -29,6 +28,8 @@ final class ContentBlockResource extends ModelResource implements HasImportExpor
     use ImportExportConcern;
 
     protected string $model = ContentBlock::class;
+
+    protected bool $withPolicy = true;
 
     protected string $column = 'title';
 
@@ -57,13 +58,13 @@ final class ContentBlockResource extends ModelResource implements HasImportExpor
     {
         return [
             ID::make(),
-//            Number::make('ID раздела', 'site_section_id')->required(),
-//            Text::make('Ключ', 'key')->required(),
-//            Text::make('Тип', 'type')->required(),
-//            Text::make('Название', 'title')->required(),
-////            Json::make('Содержимое', 'content')->nullable(),
-//            Number::make('Порядок', 'sort_order')->default(0)->min(0),
-//            Switcher::make('Активен', 'is_active')->default(true),
+            //            Number::make('ID раздела', 'site_section_id')->required(),
+            //            Text::make('Ключ', 'key')->required(),
+            //            Text::make('Тип', 'type')->required(),
+            //            Text::make('Название', 'title')->required(),
+            // //            Json::make('Содержимое', 'content')->nullable(),
+            //            Number::make('Порядок', 'sort_order')->default(0)->min(0),
+            //            Switcher::make('Активен', 'is_active')->default(true),
         ];
     }
 
@@ -77,7 +78,7 @@ final class ContentBlockResource extends ModelResource implements HasImportExpor
     protected function import(): ?Handler
     {
         return ImportHandler::make(__('moonshine::ui.import'))
-            ->notifyUsers(fn(ImportHandler $ctx) => [auth()->id()])
+            ->notifyUsers(fn (ImportHandler $ctx) => [auth()->id()])
             ->disk('public')
             ->dir('/imports')
             ->deleteAfter();
@@ -86,7 +87,7 @@ final class ContentBlockResource extends ModelResource implements HasImportExpor
     protected function export(): ?Handler
     {
         return ExportHandler::make(__('moonshine::ui.export'))
-            ->notifyUsers(fn() => [auth()->id()])
+            ->notifyUsers(fn () => [auth()->id()])
             ->disk('public')
             ->filename(sprintf('content_block_export_%s', date('Ymd-His')))
             ->dir('/exports');

@@ -21,6 +21,8 @@ final class SiteSectionResource extends ModelResource
 {
     protected string $model = SiteSection::class;
 
+    protected bool $withPolicy = true;
+
     protected string $column = 'title';
 
     protected array $with = ['blocks'];

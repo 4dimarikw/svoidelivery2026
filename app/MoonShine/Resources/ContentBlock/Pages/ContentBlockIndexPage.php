@@ -6,6 +6,7 @@ namespace App\MoonShine\Resources\ContentBlock\Pages;
 
 use App\MoonShine\Resources\ContentBlock\ContentBlockResource;
 use App\MoonShine\Resources\SiteSection\SiteSectionResource;
+use App\MoonShine\Traits\ChecksSuperUser;
 use Domain\Content\ContentBlockTypeRegistry;
 use Domain\Content\Models\ContentBlock;
 use Domain\Content\Models\SiteSection;
@@ -20,16 +21,18 @@ use MoonShine\UI\Fields\Text;
 /** @extends IndexPage<ContentBlockResource> */
 final class ContentBlockIndexPage extends IndexPage
 {
+    use ChecksSuperUser;
+
     protected function fields(): iterable
     {
         $types = app(ContentBlockTypeRegistry::class);
 
         return [
             ID::make(),
-            BelongsTo::make('Раздел', 'section', formatted: static fn(SiteSection $section) => $section->title, resource: SiteSectionResource::class),
+            BelongsTo::make('Раздел', 'section', formatted: static fn (SiteSection $section) => $section->title, resource: SiteSectionResource::class),
             Text::make('Название', 'title'),
-            Text::make('Ключ', 'key'),
-            Text::make('Тип', 'type', formatted: static fn(ContentBlock $block) => $types->get($block->type)?->label() ?? '⚠ Неизвестный: ' . $block->type),
+            Text::make('Ключ', 'key')->canSee(fn () => $this->isSuperUser()),
+            Text::make('Тип', 'type', formatted: static fn (ContentBlock $block) => $types->get($block->type)?->label() ?? '⚠ Неизвестный: '.$block->type),
             Number::make('Порядок', 'sort_order')->sortable(),
             Switcher::make('Активен', 'is_active'),
         ];
@@ -38,7 +41,7 @@ final class ContentBlockIndexPage extends IndexPage
     protected function filters(): iterable
     {
         return [
-            BelongsTo::make('Раздел', 'section', formatted: static fn(SiteSection $section) => $section->title, resource: SiteSectionResource::class),
+            BelongsTo::make('Раздел', 'section', formatted: static fn (SiteSection $section) => $section->title, resource: SiteSectionResource::class),
             Select::make('Тип', 'type')->options(app(ContentBlockTypeRegistry::class)->options()),
             Switcher::make('Активен', 'is_active'),
         ];

@@ -20,6 +20,8 @@ final class SiteMenuResource extends ModelResource
 {
     protected string $model = SiteMenu::class;
 
+    protected bool $withPolicy = true;
+
     protected string $column = 'title';
 
     protected array $with = ['items'];

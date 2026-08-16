@@ -32,8 +32,10 @@ class MoonshinePermissionIndexPage extends IndexPage
     {
         return [
             ID::make('id'),
+
             BelongsTo::make('Role', 'moonshineUserRole', resource: MoonShineUserRoleResource::class),
-            Text::make('Model', 'model'),
+
+            Text::make('Model', 'model')->withoutTextWrap(),
         ];
     }
 

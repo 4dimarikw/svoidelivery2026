@@ -26,6 +26,8 @@ final class SiteMenuItemResource extends ModelResource
 {
     protected string $model = SiteMenuItem::class;
 
+    protected bool $withPolicy = true;
+
     protected string $column = 'label';
 
     protected array $with = ['menu', 'section', 'parent'];
@@ -56,12 +58,12 @@ final class SiteMenuItemResource extends ModelResource
 
     public function save(DataWrapperContract $item, ?FieldsContract $fields = null): DataWrapperContract
     {
-        return DB::transaction(fn(): DataWrapperContract => parent::save($item, $fields), 3);
+        return DB::transaction(fn (): DataWrapperContract => parent::save($item, $fields), 3);
     }
 
     public function delete(DataWrapperContract $item, ?FieldsContract $fields = null): bool
     {
-        return DB::transaction(fn(): bool => parent::delete($item, $fields), 3);
+        return DB::transaction(fn (): bool => parent::delete($item, $fields), 3);
     }
 
     public function massDelete(array $ids): void

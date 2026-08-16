@@ -6,6 +6,7 @@ namespace App\MoonShine\Resources\ContentBlockItem\Pages;
 
 use App\MoonShine\Resources\ContentBlock\ContentBlockResource;
 use App\MoonShine\Resources\ContentBlockItem\ContentBlockItemResource;
+use App\MoonShine\Traits\ChecksSuperUser;
 use Domain\Content\ContentBlockTypeRegistry;
 use Domain\Content\Models\ContentBlock;
 use MoonShine\Laravel\Fields\Relationships\BelongsTo;
@@ -19,14 +20,16 @@ use MoonShine\UI\Fields\Text;
 /** @extends IndexPage<ContentBlockItemResource> */
 final class ContentBlockItemIndexPage extends IndexPage
 {
+    use ChecksSuperUser;
+
     protected function fields(): iterable
     {
         return [
             ID::make(),
-            BelongsTo::make('Блок', 'block', formatted: static fn(ContentBlock $block) => $block->title, resource: ContentBlockResource::class),
+            BelongsTo::make('Блок', 'block', formatted: static fn (ContentBlock $block) => $block->title, resource: ContentBlockResource::class),
             Text::make('Название', 'title'),
             Text::make('Группа', 'group_key'),
-            Text::make('Ключ', 'key'),
+            Text::make('Ключ', 'key')->canSee(fn () => $this->isSuperUser()),
             Number::make('Порядок', 'sort_order')->sortable(),
             Switcher::make('Активен', 'is_active'),
         ];
@@ -35,7 +38,7 @@ final class ContentBlockItemIndexPage extends IndexPage
     protected function filters(): iterable
     {
         return [
-            BelongsTo::make('Блок', 'block', formatted: static fn(ContentBlock $block) => $block->title, resource: ContentBlockResource::class)->nullable(),
+            BelongsTo::make('Блок', 'block', formatted: static fn (ContentBlock $block) => $block->title, resource: ContentBlockResource::class)->nullable(),
             Select::make('Группа', 'group_key')->options($this->groupOptions())->nullable(),
             Switcher::make('Активен', 'is_active'),
         ];

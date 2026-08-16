@@ -26,13 +26,18 @@ use MoonShine\Laravel\Models\MoonshineUserRole;
 class MoonshinePermissionSeeder extends Seeder
 {
     /**
-     * Матрица прав роли "Manager" в MoonShine, снятая с dev-БД (там строки
-     * создавались вручную через UI и нигде не версионировались). Ключ — FQCN
-     * модели, значение — карта способностей `MoonShine\Support\Enums\Ability`.
-     * Все 8 ключей указаны явно (даже `false`) — так строка в БД однозначно
-     * соответствует тому, что видно здесь, без домысливания "отсутствующий
-     * ключ = false" (хотя `MoonshinePermissionPolicy::isCan()` и так его
-     * трактует через `?? false`).
+     * Матрица прав роли "Manager" в MoonShine. Ключ — FQCN модели, значение —
+     * карта способностей `MoonShine\Support\Enums\Ability`. Все 8 ключей
+     * указаны явно (даже `false`) — так строка в БД однозначно соответствует
+     * тому, что видно здесь, без домысливания "отсутствующий ключ = false"
+     * (хотя `MoonshinePermissionPolicy::isCan()` и так его трактует через
+     * `?? false`).
+     *
+     * Контентные модели (SiteSection/SiteMenu/SiteMenuItem/ContentBlock/
+     * ContentBlockItem) — `update => true`: Manager правит содержимое сайта,
+     * но не создаёт и не удаляет разделы/меню/блоки (их структура и служебные
+     * поля скрыты от Manager на уровне форм — см. соответствующие FormPage/
+     * IndexPage в app/MoonShine/Resources).
      */
     private const array PERMISSIONS = [
         Favorite::class => [
@@ -84,23 +89,23 @@ class MoonshinePermissionSeeder extends Seeder
             'restore' => false, 'viewAny' => true, 'massDelete' => false, 'forceDelete' => false,
         ],
         SiteMenu::class => [
-            'view' => true, 'create' => false, 'delete' => false, 'update' => false,
+            'view' => true, 'create' => false, 'delete' => false, 'update' => true,
             'restore' => false, 'viewAny' => true, 'massDelete' => false, 'forceDelete' => false,
         ],
         SiteMenuItem::class => [
-            'view' => true, 'create' => false, 'delete' => false, 'update' => false,
+            'view' => true, 'create' => false, 'delete' => false, 'update' => true,
             'restore' => false, 'viewAny' => true, 'massDelete' => false, 'forceDelete' => false,
         ],
         SiteSection::class => [
-            'view' => true, 'create' => false, 'delete' => false, 'update' => false,
+            'view' => true, 'create' => false, 'delete' => false, 'update' => true,
             'restore' => false, 'viewAny' => true, 'massDelete' => false, 'forceDelete' => false,
         ],
         ContentBlock::class => [
-            'view' => true, 'create' => false, 'delete' => false, 'update' => false,
+            'view' => true, 'create' => false, 'delete' => false, 'update' => true,
             'restore' => false, 'viewAny' => true, 'massDelete' => false, 'forceDelete' => false,
         ],
         ContentBlockItem::class => [
-            'view' => true, 'create' => false, 'delete' => false, 'update' => false,
+            'view' => true, 'create' => false, 'delete' => false, 'update' => true,
             'restore' => false, 'viewAny' => true, 'massDelete' => false, 'forceDelete' => false,
         ],
     ];

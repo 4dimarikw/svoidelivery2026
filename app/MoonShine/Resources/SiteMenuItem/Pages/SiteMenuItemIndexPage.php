@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace App\MoonShine\Resources\SiteMenuItem\Pages;
 
-
 use App\MoonShine\Resources\SiteMenu\SiteMenuResource;
 use App\MoonShine\Resources\SiteMenuItem\SiteMenuItemResource;
 use App\MoonShine\Resources\SiteSection\SiteSectionResource;
+use App\MoonShine\Traits\ChecksSuperUser;
 use App\MoonShine\Traits\MoveItemButtons;
 use Domain\Content\Actions\Menu\MoveSiteMenuItemBranch;
 use Domain\Content\Models\SiteMenu;
@@ -36,17 +36,20 @@ use MoonShine\UI\Fields\Url;
 /** @extends IndexPage<SiteMenuItemResource> */
 final class SiteMenuItemIndexPage extends IndexPage
 {
+    use ChecksSuperUser;
     use MoveItemButtons;
 
     protected function fields(): iterable
     {
+        $isSuperUser = $this->isSuperUser();
+
         return [
             ID::make(),
-            BelongsTo::make('Меню', 'menu', formatted: static fn(SiteMenu $menu) => $menu->title, resource: SiteMenuResource::class),
-            Text::make('Ключ', 'key'),
-            BelongsTo::make('Родитель', 'parent', formatted: static fn(SiteMenuItem $item) => $item->label ?: '#' . $item->getKey(), resource: SiteMenuItemResource::class),
+            BelongsTo::make('Меню', 'menu', formatted: static fn (SiteMenu $menu) => $menu->title, resource: SiteMenuResource::class),
+            Text::make('Ключ', 'key')->canSee(fn () => $isSuperUser),
+            BelongsTo::make('Родитель', 'parent', formatted: static fn (SiteMenuItem $item) => $item->label ?: '#'.$item->getKey(), resource: SiteMenuItemResource::class)->canSee(fn () => $isSuperUser),
             Text::make('Подпись', 'label'),
-            BelongsTo::make('Раздел', 'section', formatted: static fn(SiteSection $section) => $section->title, resource: SiteSectionResource::class),
+            BelongsTo::make('Раздел', 'section', formatted: static fn (SiteSection $section) => $section->title, resource: SiteSectionResource::class),
             Url::make('Внешний URL', 'external_url'),
             Switcher::make('Активен', 'is_active'),
         ];
@@ -55,8 +58,8 @@ final class SiteMenuItemIndexPage extends IndexPage
     protected function filters(): iterable
     {
         return [
-            BelongsTo::make('Меню', 'menu', formatted: static fn(SiteMenu $menu) => $menu->title, resource: SiteMenuResource::class),
-            BelongsTo::make('Раздел', 'section', formatted: static fn(SiteSection $section) => $section->title, resource: SiteSectionResource::class),
+            BelongsTo::make('Меню', 'menu', formatted: static fn (SiteMenu $menu) => $menu->title, resource: SiteMenuResource::class),
+            BelongsTo::make('Раздел', 'section', formatted: static fn (SiteSection $section) => $section->title, resource: SiteSectionResource::class),
             Switcher::make('Активен', 'is_active'),
         ];
     }
@@ -71,16 +74,15 @@ final class SiteMenuItemIndexPage extends IndexPage
 
     protected function modifyMassDeleteButton(ActionButtonContract $button): ActionButtonContract
     {
-        return $button->canSee(static fn(): bool => false);
+        return $button->canSee(static fn (): bool => false);
     }
 
     #[AsyncMethod]
     public function transferItem(
-        CrudRequestContract    $request,
+        CrudRequestContract $request,
         MoveSiteMenuItemBranch $moveBranch,
-    ): JsonResponse
-    {
-        if (!$request->isMethod('patch')) {
+    ): JsonResponse {
+        if (! $request->isMethod('patch')) {
             throw ValidationException::withMessages([
                 'target_menu_id' => 'Для переноса требуется PATCH-запрос.',
             ]);
@@ -88,9 +90,12 @@ final class SiteMenuItemIndexPage extends IndexPage
 
         $resource = $request->getResource();
         abort_unless($resource->can(Ability::UPDATE), 403);
+        // Перенос ветки между меню — структурная операция, доступна только
+        // суперюзеру (Manager видит только стрелки сортировки, не саму кнопку).
+        abort_unless($this->isSuperUser(), 403);
 
         $item = $resource->getItem();
-        if (!$item instanceof SiteMenuItem) {
+        if (! $item instanceof SiteMenuItem) {
             throw ValidationException::withMessages([
                 'target_menu_id' => 'Не удалось определить пункт меню.',
             ]);
@@ -102,13 +107,13 @@ final class SiteMenuItemIndexPage extends IndexPage
                 'required',
                 'integer',
                 Rule::exists('site_menus', 'id'),
-                Rule::notIn([(int)$item->site_menu_id]),
+                Rule::notIn([(int) $item->site_menu_id]),
             ],
             'target_parent_id' => [
                 'nullable',
                 'integer',
                 Rule::exists('site_menu_items', 'id')->where(
-                    static fn($query) => $query->where('site_menu_id', $targetMenuId),
+                    static fn ($query) => $query->where('site_menu_id', $targetMenuId),
                 ),
             ],
         ]);
@@ -119,7 +124,7 @@ final class SiteMenuItemIndexPage extends IndexPage
             : null;
 
         $moved = $moveBranch->handle($item, $targetMenu, $targetParent);
-        $label = trim((string)$moved->label) ?: '#' . $moved->getKey();
+        $label = trim((string) $moved->label) ?: '#'.$moved->getKey();
 
         return JsonResponse::make()->toast("Ветка «{$label}» перенесена.");
     }
@@ -132,13 +137,14 @@ final class SiteMenuItemIndexPage extends IndexPage
             ->icon('arrow-right-circle')
             ->showInLine()
             ->square()
+            ->canSee(fn (): bool => $this->isSuperUser())
             ->method('transferItem', events: $events)
             ->async(HttpMethod::PATCH, events: $events)
             ->withConfirm(
                 title: 'Перенести ветку',
                 content: 'Пункт и все вложенные пункты будут перенесены вместе.',
                 button: 'Перенести',
-                fields: fn(SiteMenuItem $item): array => $this->transferFields($item),
+                fields: fn (SiteMenuItem $item): array => $this->transferFields($item),
                 method: HttpMethod::PATCH,
             );
     }
@@ -158,8 +164,8 @@ final class SiteMenuItemIndexPage extends IndexPage
             ->orderBy('site_menu_id')
             ->orderBy('_lft')
             ->get()
-            ->mapWithKeys(static fn(SiteMenuItem $parent): array => [
-                $parent->getKey() => '[' . $parent->menu->title . '] ' . (trim((string)$parent->label) ?: '#' . $parent->getKey()),
+            ->mapWithKeys(static fn (SiteMenuItem $parent): array => [
+                $parent->getKey() => '['.$parent->menu->title.'] '.(trim((string) $parent->label) ?: '#'.$parent->getKey()),
             ])
             ->all();
 

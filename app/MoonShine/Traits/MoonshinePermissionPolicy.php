@@ -68,10 +68,15 @@ trait MoonshinePermissionPolicy
 
         $key = $roleId.':'.$model;
 
-        $permission = self::$cache[$key] ??= MoonshinePermission::query()
+        $query = MoonshinePermission::query()
             ->where('moonshine_user_role_id', $moonshineUser->moonshineUserRole->id)
-            ->where('model', $model)
-            ->first();
+            ->where('model', $model);
+
+        // В тестах роли пересоздаются между кейсами под RefreshDatabase, а id
+        // переиспользуются — статический кеш иначе отдал бы права чужого теста.
+        $permission = app()->runningUnitTests()
+            ? $query->first()
+            : self::$cache[$key] ??= $query->first();
 
         return (bool) ($permission?->permissions[$ability->value] ?? false);
     }

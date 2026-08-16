@@ -7,6 +7,7 @@ namespace App\MoonShine\Resources\SiteMenuItem\Pages;
 use App\MoonShine\Resources\SiteMenu\SiteMenuResource;
 use App\MoonShine\Resources\SiteMenuItem\SiteMenuItemResource;
 use App\MoonShine\Resources\SiteSection\SiteSectionResource;
+use App\MoonShine\Traits\ChecksSuperUser;
 use Domain\Content\Models\SiteMenu;
 use Domain\Content\Models\SiteMenuItem;
 use Domain\Content\Models\SiteSection;
@@ -25,33 +26,38 @@ use MoonShine\UI\Fields\Url;
 /** @extends FormPage<SiteMenuItemResource, SiteMenuItem> */
 final class SiteMenuItemFormPage extends FormPage
 {
+    use ChecksSuperUser;
+
     protected function fields(): iterable
     {
-        $model = $this->getItem();
-        $editing = $model instanceof SiteMenuItem && $model->exists;
-        $excludedParentIds = $editing
-            ? $model->newScopedQuery()->descendantsAndSelf($model->getKey(), [$model->getKeyName()])->modelKeys()
-            : [];
-        $currentMenuId = $editing ? (int)$model->site_menu_id : null;
+        $isSuperUser = $this->isSuperUser();
 
-        $menu = BelongsTo::make('Меню', 'menu', formatted: static fn(SiteMenu $menu) => $menu->title, resource: SiteMenuResource::class)
-            ->required();
+        $fields = [ID::make()];
 
-        if ($editing) {
-            $menu->readonly();
-        }
+        if ($isSuperUser) {
+            $model = $this->getItem();
+            $editing = $model instanceof SiteMenuItem && $model->exists;
+            $excludedParentIds = $editing
+                ? $model->newScopedQuery()->descendantsAndSelf($model->getKey(), [$model->getKeyName()])->modelKeys()
+                : [];
+            $currentMenuId = $editing ? (int) $model->site_menu_id : null;
 
-        $key = Text::make('Ключ', 'key')->required();
+            $menu = BelongsTo::make('Меню', 'menu', formatted: static fn (SiteMenu $menu) => $menu->title, resource: SiteMenuResource::class)
+                ->required();
 
-        if ($editing) {
-            $key->readonly();
-        }
+            if ($editing) {
+                $menu->readonly();
+            }
 
-        return [Box::make([
-            ID::make(),
-            $menu,
-            $key,
-            BelongsTo::make('Родитель', 'parent', formatted: static fn(SiteMenuItem $item) => $item->label ?: '#' . $item->getKey(), resource: SiteMenuItemResource::class)
+            $key = Text::make('Ключ', 'key')->required();
+
+            if ($editing) {
+                $key->readonly();
+            }
+
+            $fields[] = $menu;
+            $fields[] = $key;
+            $fields[] = BelongsTo::make('Родитель', 'parent', formatted: static fn (SiteMenuItem $item) => $item->label ?: '#'.$item->getKey(), resource: SiteMenuItemResource::class)
                 ->nullable()
                 ->associatedWith(
                     'site_menu_id',
@@ -60,24 +66,35 @@ final class SiteMenuItemFormPage extends FormPage
 
                         return $query
                             ->where('site_menu_id', $menuId)
-                            ->when($excludedParentIds !== [], static fn(Builder $items): Builder => $items->whereNotIn('id', $excludedParentIds))
-                            ->when(filled($term), static fn(Builder $items): Builder => $items->where('label', 'like', "%{$term}%"))
+                            ->when($excludedParentIds !== [], static fn (Builder $items): Builder => $items->whereNotIn('id', $excludedParentIds))
+                            ->when(filled($term), static fn (Builder $items): Builder => $items->where('label', 'like', "%{$term}%"))
                             ->orderBy('_lft');
                     },
-                ),
-            BelongsTo::make('Раздел', 'section', formatted: static fn(SiteSection $section) => $section->title, resource: SiteSectionResource::class)->nullable()->searchable(),
-            Url::make('Внешний URL', 'external_url'),
-            Text::make('Подпись (если отличается от названия раздела)', 'label'),
-            Switcher::make('Открывать в новой вкладке', 'open_in_new_tab')->default(false),
-            Switcher::make('Активен', 'is_active')->default(true),
-        ])];
+                );
+            $fields[] = BelongsTo::make('Раздел', 'section', formatted: static fn (SiteSection $section) => $section->title, resource: SiteSectionResource::class)->nullable()->searchable();
+            $fields[] = Url::make('Внешний URL', 'external_url');
+        }
+
+        $fields[] = Text::make('Подпись (если отличается от названия раздела)', 'label');
+        $fields[] = Switcher::make('Открывать в новой вкладке', 'open_in_new_tab')->default(false);
+        $fields[] = Switcher::make('Активен', 'is_active')->default(true);
+
+        return [Box::make($fields)];
     }
 
     protected function rules(DataWrapperContract $item): array
     {
+        if (! $this->isSuperUser()) {
+            return [
+                'label' => ['nullable', 'string', 'max:255'],
+                'open_in_new_tab' => ['boolean'],
+                'is_active' => ['boolean'],
+            ];
+        }
+
         $model = $item->getOriginal();
         $editing = $model instanceof SiteMenuItem && $model->exists;
-        $menuId = request()->integer('site_menu_id') ?: (int)$model->site_menu_id;
+        $menuId = request()->integer('site_menu_id') ?: (int) $model->site_menu_id;
         $excludedParentIds = $editing
             ? $model->newScopedQuery()->descendantsAndSelf($model->getKey(), [$model->getKeyName()])->modelKeys()
             : [];
@@ -90,12 +107,12 @@ final class SiteMenuItemFormPage extends FormPage
                 'alpha_dash',
                 'max:100',
                 Rule::unique('site_menu_items', 'key')
-                    ->where(static fn($query) => $query->where('site_menu_id', $menuId))
+                    ->where(static fn ($query) => $query->where('site_menu_id', $menuId))
                     ->ignore($editing ? $model->getKey() : null),
             ],
             'parent_id' => [
                 'nullable',
-                Rule::exists('site_menu_items', 'id')->where(static fn($query) => $query->where('site_menu_id', $menuId)),
+                Rule::exists('site_menu_items', 'id')->where(static fn ($query) => $query->where('site_menu_id', $menuId)),
                 Rule::notIn($excludedParentIds),
             ],
             'site_section_id' => ['nullable', 'exists:site_sections,id'],
