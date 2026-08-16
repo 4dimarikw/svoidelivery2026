@@ -148,14 +148,29 @@ class ProductBuilder extends Builder
      * поиске + этой сортировкой. Подзапрос — изолированная область видимости
      * колонок, наружу ничего не протекает.
      *
-     * Везде вторичный orderByDesc('id') — тай-брейк для строк с одинаковым
-     * значением сортировки, иначе порядок "плавает" между запросами
-     * пагинации. NULL (нет производителя/стиля/рейтинга): MySQL кладёт их в
-     * начало при ASC и в конец при DESC — принято как есть для обеих сторон
-     * пары, без NULLS LAST-трюков (MySQL их не умеет нативно).
+     * Два уровня приоритета впереди ЛЮБОГО выбранного $sort, безусловно:
+     * 1) товары не в наличии — вниз (тот же критерий, что Product::availableStock(),
+     *    но выражен в SQL, а не PHP — участвует в ORDER BY, не в WHERE);
+     * 2) внутри каждой из этих двух групп — flags->fil ("Первый в списке",
+     *    ProductFlagsManager) поднимает товар наверх. Наличие важнее fil:
+     *    раскупленный fil-товар всё равно ниже любого товара в наличии.
+     * JSON_UNQUOTE(JSON_EXTRACT(flags, '$.fil')) = 'true' NULL-safe — NULL
+     * при отсутствующем flags/ключе (фабрика, пустая БД) ни с чем не
+     * совпадает и уходит в ELSE, как false.
+     *
+     * Дальше — вторичный orderByDesc('id') на каждой ветке $sort — тай-брейк
+     * для строк с одинаковым значением сортировки, иначе порядок "плавает"
+     * между запросами пагинации. NULL (нет производителя/стиля/рейтинга):
+     * MySQL кладёт их в начало при ASC и в конец при DESC — принято как есть
+     * для обеих сторон пары, без NULLS LAST-трюков (MySQL их не умеет
+     * нативно).
      */
     public function sorted(ProductSort $sort): static
     {
+        $this
+            ->orderByRaw('CASE WHEN in_stock = 1 AND stock_quantity > 0 THEN 0 ELSE 1 END')
+            ->orderByRaw("CASE WHEN JSON_UNQUOTE(JSON_EXTRACT(flags, '$.fil')) = 'true' THEN 0 ELSE 1 END");
+
         return match ($sort) {
             ProductSort::CREATED_DESC => $this->orderByDesc('id'),
             ProductSort::BRAND_ASC => $this->orderBy('brand')->orderByDesc('id'),

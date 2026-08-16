@@ -592,8 +592,11 @@ class CatalogControllerTest extends TestCase
 
     public function test_default_sort_shows_newest_products_first(): void
     {
-        $older = Product::factory()->create(['brand' => 'Первый Импорт']);
-        $newer = Product::factory()->create(['brand' => 'Второй Импорт']);
+        // stock_quantity явно >0 у обоих — иначе сравнение ломается новым
+        // правилом "наличие впереди сортировки" (ProductBuilder::sorted()),
+        // а фабрика по умолчанию рандомит 0..500.
+        $older = Product::factory()->create(['brand' => 'Первый Импорт', 'in_stock' => true, 'stock_quantity' => 5]);
+        $newer = Product::factory()->create(['brand' => 'Второй Импорт', 'in_stock' => true, 'stock_quantity' => 5]);
 
         $response = $this->get(route('home'));
 
@@ -601,11 +604,100 @@ class CatalogControllerTest extends TestCase
         $response->assertSeeInOrder([$newer->brand, $older->brand]);
     }
 
+    /**
+     * Регрессия: раскупленный товар не должен подниматься выше товара в
+     * наличии независимо от выбранной сортировки — два безусловных
+     * orderByRaw() перед match($sort) в ProductBuilder::sorted().
+     */
+    public function test_out_of_stock_products_sort_below_in_stock_regardless_of_sort(): void
+    {
+        // Раскупленный создан первым (значит "новее" по id) — если бы
+        // наличие не участвовало в сортировке, default (created_desc) as-is
+        // поставил бы его выше товара в наличии.
+        $outOfStock = Product::factory()->create(['brand' => 'Раскуплено', 'in_stock' => false, 'stock_quantity' => 0]);
+        $inStock = Product::factory()->create(['brand' => 'В Наличии', 'in_stock' => true, 'stock_quantity' => 5]);
+
+        $response = $this->get(route('home'));
+
+        $response->assertOk();
+        $response->assertSeeInOrder([$inStock->brand, $outOfStock->brand]);
+    }
+
+    /**
+     * Регрессия: товар с in_stock=true, но stock_quantity=0 (рассинхрон —
+     * см. Domain\Order\Processes\UpdateProductStockQuantity) должен
+     * считаться не в наличии для сортировки, тем же критерием, что
+     * Product::availableStock() — не только флагом in_stock.
+     */
+    public function test_zero_stock_quantity_sorts_below_in_stock_despite_the_flag(): void
+    {
+        $drifted = Product::factory()->create(['brand' => 'Рассинхрон', 'in_stock' => true, 'stock_quantity' => 0]);
+        $inStock = Product::factory()->create(['brand' => 'Настоящее Наличие', 'in_stock' => true, 'stock_quantity' => 5]);
+
+        $response = $this->get(route('home'));
+
+        $response->assertOk();
+        $response->assertSeeInOrder([$inStock->brand, $drifted->brand]);
+    }
+
+    /**
+     * flags->fil ("Первый в списке", ProductFlagsManager) поднимает товар
+     * наверх внутри группы "в наличии" даже когда обычная сортировка
+     * поставила бы его ниже (тут — он новее, но проверяем именно fil,
+     * а не факт свежести: created_desc и так дал бы такой порядок).
+     */
+    public function test_fil_flag_sorts_the_product_first_within_its_stock_group(): void
+    {
+        $regular = Product::factory()->create(['brand' => 'Обычный', 'in_stock' => true, 'stock_quantity' => 5]);
+        $fil = Product::factory()->create(['brand' => 'Приоритетный', 'in_stock' => true, 'stock_quantity' => 5, 'flags' => ['fil' => true]]);
+
+        // fil создан позже $regular — created_desc и без fil поставил бы его
+        // первым, поэтому проверяем fil сортировкой по цене (обычный дешевле,
+        // без fil ушёл бы вперёд при price_asc).
+        $regular->update(['price' => 100]);
+        $fil->update(['price' => 4000]);
+
+        $response = $this->actingAs(User::factory()->create())
+            ->get(route('home', ['sort' => 'price_asc']));
+
+        $response->assertOk();
+        $response->assertSeeInOrder([$fil->brand, $regular->brand]);
+    }
+
+    /**
+     * Наличие важнее fil: раскупленный fil-товар всё равно уходит ниже
+     * обычного товара в наличии.
+     */
+    public function test_out_of_stock_product_with_fil_flag_still_sorts_below_in_stock(): void
+    {
+        $filButOutOfStock = Product::factory()->create(['brand' => 'Приоритетный Но Раскуплен', 'in_stock' => false, 'stock_quantity' => 0, 'flags' => ['fil' => true]]);
+        $regularInStock = Product::factory()->create(['brand' => 'Обычный В Наличии', 'in_stock' => true, 'stock_quantity' => 5]);
+
+        $response = $this->get(route('home'));
+
+        $response->assertOk();
+        $response->assertSeeInOrder([$regularInStock->brand, $filButOutOfStock->brand]);
+    }
+
+    /**
+     * flags = NULL (дефолт фабрики/пустая БД) не должен ронять запрос
+     * JSON_EXTRACT'ом на NULL — трактуется как fil=false, без 500.
+     */
+    public function test_null_flags_does_not_break_sorting(): void
+    {
+        Product::factory()->create(['brand' => 'Без Флагов', 'in_stock' => true, 'stock_quantity' => 5, 'flags' => null]);
+
+        $response = $this->get(route('home'));
+
+        $response->assertOk();
+        $response->assertSee('Без Флагов');
+    }
+
     public function test_sort_by_price_orders_ascending(): void
     {
         // sort=price_asc — гостю недоступен (SortFilter::availableCases()).
-        Product::factory()->create(['brand' => 'Дорогое', 'price' => 4000]);
-        Product::factory()->create(['brand' => 'Дешёвое', 'price' => 100]);
+        Product::factory()->create(['brand' => 'Дорогое', 'price' => 4000, 'in_stock' => true, 'stock_quantity' => 5]);
+        Product::factory()->create(['brand' => 'Дешёвое', 'price' => 100, 'in_stock' => true, 'stock_quantity' => 5]);
 
         $response = $this->actingAs(User::factory()->create())
             ->get(route('home', ['sort' => 'price_asc']));
@@ -616,8 +708,8 @@ class CatalogControllerTest extends TestCase
 
     public function test_sort_by_price_orders_descending(): void
     {
-        Product::factory()->create(['brand' => 'Дорогое', 'price' => 4000]);
-        Product::factory()->create(['brand' => 'Дешёвое', 'price' => 100]);
+        Product::factory()->create(['brand' => 'Дорогое', 'price' => 4000, 'in_stock' => true, 'stock_quantity' => 5]);
+        Product::factory()->create(['brand' => 'Дешёвое', 'price' => 100, 'in_stock' => true, 'stock_quantity' => 5]);
 
         $response = $this->actingAs(User::factory()->create())
             ->get(route('home', ['sort' => 'price_desc']));
@@ -630,8 +722,8 @@ class CatalogControllerTest extends TestCase
     {
         // Гость не может восстановить порядок цен через ?sort=price_asc —
         // SortFilter::apply() отклоняет недоступный кейс и уходит на дефолт.
-        $older = Product::factory()->create(['brand' => 'Первый Импорт', 'price' => 4000]);
-        $newer = Product::factory()->create(['brand' => 'Второй Импорт', 'price' => 100]);
+        $older = Product::factory()->create(['brand' => 'Первый Импорт', 'price' => 4000, 'in_stock' => true, 'stock_quantity' => 5]);
+        $newer = Product::factory()->create(['brand' => 'Второй Импорт', 'price' => 100, 'in_stock' => true, 'stock_quantity' => 5]);
 
         $response = $this->get(route('home', ['sort' => 'price_asc']));
 
@@ -650,8 +742,8 @@ class CatalogControllerTest extends TestCase
 
     public function test_sort_by_brand_orders_alphabetically(): void
     {
-        Product::factory()->create(['brand' => 'Брют']);
-        Product::factory()->create(['brand' => 'Амбер']);
+        Product::factory()->create(['brand' => 'Брют', 'in_stock' => true, 'stock_quantity' => 5]);
+        Product::factory()->create(['brand' => 'Амбер', 'in_stock' => true, 'stock_quantity' => 5]);
 
         $response = $this->get(route('home', ['sort' => 'brand_asc']));
 
@@ -661,8 +753,8 @@ class CatalogControllerTest extends TestCase
 
     public function test_sort_by_brand_orders_reverse_alphabetically(): void
     {
-        Product::factory()->create(['brand' => 'Брют']);
-        Product::factory()->create(['brand' => 'Амбер']);
+        Product::factory()->create(['brand' => 'Брют', 'in_stock' => true, 'stock_quantity' => 5]);
+        Product::factory()->create(['brand' => 'Амбер', 'in_stock' => true, 'stock_quantity' => 5]);
 
         $response = $this->get(route('home', ['sort' => 'brand_desc']));
 
@@ -675,10 +767,10 @@ class CatalogControllerTest extends TestCase
         $manufacturerB = Manufacturer::factory()->create(['name' => 'Пивоварня Б']);
         $manufacturerA = Manufacturer::factory()->create(['name' => 'Пивоварня А']);
 
-        Product::factory()->create(['brand' => 'Товар Б', 'manufacturer_id' => $manufacturerB->id]);
-        Product::factory()->create(['brand' => 'Товар А', 'manufacturer_id' => $manufacturerA->id]);
+        Product::factory()->create(['brand' => 'Товар Б', 'manufacturer_id' => $manufacturerB->id, 'in_stock' => true, 'stock_quantity' => 5]);
+        Product::factory()->create(['brand' => 'Товар А', 'manufacturer_id' => $manufacturerA->id, 'in_stock' => true, 'stock_quantity' => 5]);
         // Товар без производителя не должен ломать сортировку — просто остаётся в выдаче.
-        Product::factory()->create(['brand' => 'Без Производителя', 'manufacturer_id' => null]);
+        Product::factory()->create(['brand' => 'Без Производителя', 'manufacturer_id' => null, 'in_stock' => true, 'stock_quantity' => 5]);
 
         $response = $this->get(route('home', ['sort' => 'manufacturer_asc']));
 
@@ -692,8 +784,8 @@ class CatalogControllerTest extends TestCase
         $manufacturerB = Manufacturer::factory()->create(['name' => 'Пивоварня Б']);
         $manufacturerA = Manufacturer::factory()->create(['name' => 'Пивоварня А']);
 
-        Product::factory()->create(['brand' => 'Товар Б', 'manufacturer_id' => $manufacturerB->id]);
-        Product::factory()->create(['brand' => 'Товар А', 'manufacturer_id' => $manufacturerA->id]);
+        Product::factory()->create(['brand' => 'Товар Б', 'manufacturer_id' => $manufacturerB->id, 'in_stock' => true, 'stock_quantity' => 5]);
+        Product::factory()->create(['brand' => 'Товар А', 'manufacturer_id' => $manufacturerA->id, 'in_stock' => true, 'stock_quantity' => 5]);
 
         $response = $this->get(route('home', ['sort' => 'manufacturer_desc']));
 
@@ -703,13 +795,13 @@ class CatalogControllerTest extends TestCase
 
     public function test_sort_by_rating_orders_highest_first(): void
     {
-        $lowRated = Product::factory()->create(['brand' => 'Низкий Рейтинг']);
+        $lowRated = Product::factory()->create(['brand' => 'Низкий Рейтинг', 'in_stock' => true, 'stock_quantity' => 5]);
         BeerProductDetail::factory()->create([
             'product_id' => $lowRated->id,
             'untappd_beer_id' => UntappdBeer::factory()->create(['rating_score' => 2.1])->id,
         ]);
 
-        $highRated = Product::factory()->create(['brand' => 'Высокий Рейтинг']);
+        $highRated = Product::factory()->create(['brand' => 'Высокий Рейтинг', 'in_stock' => true, 'stock_quantity' => 5]);
         BeerProductDetail::factory()->create([
             'product_id' => $highRated->id,
             'untappd_beer_id' => UntappdBeer::factory()->create(['rating_score' => 4.5])->id,
@@ -717,7 +809,7 @@ class CatalogControllerTest extends TestCase
 
         // Аксессуар без beerDetails — сортировка не должна вести себя как
         // whereHas-фильтр (тот же guard-принцип, что у ofBeerStyles()).
-        Product::factory()->create(['brand' => 'Совсем Не Пиво']);
+        Product::factory()->create(['brand' => 'Совсем Не Пиво', 'in_stock' => true, 'stock_quantity' => 5]);
 
         $response = $this->get(route('home', ['sort' => 'rating_desc']));
 
@@ -728,13 +820,13 @@ class CatalogControllerTest extends TestCase
 
     public function test_sort_by_rating_orders_lowest_first(): void
     {
-        $lowRated = Product::factory()->create(['brand' => 'Низкий Рейтинг']);
+        $lowRated = Product::factory()->create(['brand' => 'Низкий Рейтинг', 'in_stock' => true, 'stock_quantity' => 5]);
         BeerProductDetail::factory()->create([
             'product_id' => $lowRated->id,
             'untappd_beer_id' => UntappdBeer::factory()->create(['rating_score' => 2.1])->id,
         ]);
 
-        $highRated = Product::factory()->create(['brand' => 'Высокий Рейтинг']);
+        $highRated = Product::factory()->create(['brand' => 'Высокий Рейтинг', 'in_stock' => true, 'stock_quantity' => 5]);
         BeerProductDetail::factory()->create([
             'product_id' => $highRated->id,
             'untappd_beer_id' => UntappdBeer::factory()->create(['rating_score' => 4.5])->id,
@@ -751,10 +843,10 @@ class CatalogControllerTest extends TestCase
         $styleB = BeerStyle::factory()->create(['name' => 'Портер']);
         $styleA = BeerStyle::factory()->create(['name' => 'Лагер']);
 
-        $productB = Product::factory()->create(['brand' => 'Товар Портер']);
+        $productB = Product::factory()->create(['brand' => 'Товар Портер', 'in_stock' => true, 'stock_quantity' => 5]);
         BeerProductDetail::factory()->create(['product_id' => $productB->id, 'beer_style_id' => $styleB->id]);
 
-        $productA = Product::factory()->create(['brand' => 'Товар Лагер']);
+        $productA = Product::factory()->create(['brand' => 'Товар Лагер', 'in_stock' => true, 'stock_quantity' => 5]);
         BeerProductDetail::factory()->create(['product_id' => $productA->id, 'beer_style_id' => $styleA->id]);
 
         $response = $this->get(route('home', ['sort' => 'style_asc']));
@@ -768,10 +860,10 @@ class CatalogControllerTest extends TestCase
         $styleB = BeerStyle::factory()->create(['name' => 'Портер']);
         $styleA = BeerStyle::factory()->create(['name' => 'Лагер']);
 
-        $productB = Product::factory()->create(['brand' => 'Товар Портер']);
+        $productB = Product::factory()->create(['brand' => 'Товар Портер', 'in_stock' => true, 'stock_quantity' => 5]);
         BeerProductDetail::factory()->create(['product_id' => $productB->id, 'beer_style_id' => $styleB->id]);
 
-        $productA = Product::factory()->create(['brand' => 'Товар Лагер']);
+        $productA = Product::factory()->create(['brand' => 'Товар Лагер', 'in_stock' => true, 'stock_quantity' => 5]);
         BeerProductDetail::factory()->create(['product_id' => $productA->id, 'beer_style_id' => $styleA->id]);
 
         $response = $this->get(route('home', ['sort' => 'style_desc']));
