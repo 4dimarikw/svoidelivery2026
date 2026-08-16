@@ -43,7 +43,7 @@
         @if ($showBuyButton)
             <x-ui.btn type="submit" variant="primary" size="md" block class="h-full px-2 xl:px-[22px]"
                       :disabled="! $product->isAvailable()">
-                {{ $product->isAvailable() ? __('catalog.buy') : __('catalog.notify') }}
+                {{ __('catalog.buy') }}
             </x-ui.btn>
         @endif
     </form>
