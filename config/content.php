@@ -1,34 +1,9 @@
 <?php
 
-use Domain\Content\Types\AboutBlockType;
-use Domain\Content\Types\CharityBlockType;
-use Domain\Content\Types\examples\LocationBlockType;
-use Domain\Content\Types\FaqBlockType;
-use Domain\Content\Types\HeroBlockType;
-use Domain\Content\Types\MarketBlockType;
-use Domain\Content\Types\PageHeadersBlockType;
-use Domain\Content\Types\ProgramBlockType;
 
 return [
-    'views' => [
-        'hero' => 'components.blocks.hero',
-        'about' => 'components.blocks.about',
-        'program' => 'components.blocks.program',
-        'market' => 'components.blocks.market',
-        'charity' => 'components.blocks.charity',
-        'location' => 'components.blocks.location',
-        'faq' => 'components.blocks.faq',
-    ],
-    'types' => [
-        PageHeadersBlockType::class,
-        HeroBlockType::class,
-        AboutBlockType::class,
-        ProgramBlockType::class,
-        MarketBlockType::class,
-        CharityBlockType::class,
-        LocationBlockType::class,
-        FaqBlockType::class,
-    ],
+    'views' => [],
+    'types' => [],
     'icons' => [
         'heart',
         'sparkles',

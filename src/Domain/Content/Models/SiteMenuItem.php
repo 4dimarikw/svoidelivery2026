@@ -2,7 +2,6 @@
 
 namespace Domain\Content\Models;
 
-use App\Models\SiteSection;
 use Domain\Content\Models\Concerns\HasPublicationState;
 use Domain\Content\Observers\SiteMenuItemObserver;
 use Domain\Content\Support\SafeContentUrl;
