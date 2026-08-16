@@ -10,6 +10,7 @@ use MoonShine\Contracts\UI\FieldContract;
 use MoonShine\Laravel\Pages\Crud\DetailPage;
 use MoonShine\UI\Fields\Date;
 use MoonShine\UI\Fields\ID;
+use MoonShine\UI\Fields\Preview;
 use MoonShine\UI\Fields\Text;
 use MoonShine\UI\Fields\Textarea;
 
@@ -32,12 +33,19 @@ class EventLogDetailPage extends DetailPage
             // Контексты не единообразно плоские (у CatalogImportCompleted
             // внутри вложенный список warnings из {line,stage,message,value}),
             // поэтому обычный key/value-виджет тут отрисует плохо —
-            // читаемый pretty-printed JSON надёжнее.
-            Textarea::make('Контекст', formatted: fn(EventLog $item) => json_encode(
-                $item->context,
-                JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES
-            )),
-            Text::make('Инициатор', formatted: fn(EventLog $item) => $item->causer?->name ?? '—'),
+            // читаемый pretty-printed JSON надёжнее. Textarea для этого не
+            // подходит: её preview экранирует значение через htmlspecialchars
+            // (переносы/отступы JSON схлопываются в HTML) и заворачивает
+            // результат в <div class="text-clamp"> (line-clamp-3 на мобиле).
+            // Preview::resolvePreview() значение не экранирует и textWrap не
+            // применяет — экранирование делает сам blade-партиал через {{ }}.
+            Preview::make('Контекст', formatted: fn (EventLog $item) => view('admin.event-log.context', [
+                'json' => json_encode(
+                    $item->context,
+                    JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES
+                ),
+            ])->render()),
+            Text::make('Инициатор', formatted: fn (EventLog $item) => $item->causer?->name ?? '—'),
             Text::make('Источник', 'caused_by_type'),
         ];
     }
