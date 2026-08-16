@@ -13,6 +13,7 @@ final readonly class OrderFtpUploadFailed implements LoggableEvent
 {
     public function __construct(
         public int $orderId,
+        public ?string $orderNumber, // null там, где загружена только $orderId, а не Order — см. call site
         public string $reason, // order_not_found | upload_failed | queue_exhausted
         public ?string $exceptionClass = null,
         public ?string $errorMessage = null,
@@ -35,12 +36,14 @@ final readonly class OrderFtpUploadFailed implements LoggableEvent
 
     public function message(): string
     {
+        $label = $this->orderNumber !== null ? "№{$this->orderNumber}" : "#{$this->orderId}";
+
         return match ($this->reason) {
-            'order_not_found' => "Заказ #{$this->orderId} не найден — выгрузка на FTP отменена.",
-            'queue_exhausted' => "Заказ #{$this->orderId} не выгружен на FTP после всех попыток очереди: {$this->errorMessage}.",
+            'order_not_found' => "Заказ {$label} не найден — выгрузка на FTP отменена.",
+            'queue_exhausted' => "Заказ {$label} не выгружен на FTP после всех попыток очереди: {$this->errorMessage}.",
             default => $this->queued
-                ? "Заказ #{$this->orderId} не выгружен на FTP: {$this->errorMessage}. Поставлен в очередь на повтор."
-                : "Заказ #{$this->orderId} не выгружен на FTP: {$this->errorMessage}.",
+                ? "Заказ {$label} не выгружен на FTP: {$this->errorMessage}. Поставлен в очередь на повтор."
+                : "Заказ {$label} не выгружен на FTP: {$this->errorMessage}.",
         };
     }
 
@@ -48,6 +51,7 @@ final readonly class OrderFtpUploadFailed implements LoggableEvent
     {
         return [
             'order_id' => $this->orderId,
+            'order_number' => $this->orderNumber,
             'reason' => $this->reason,
             'exception_class' => $this->exceptionClass,
             'error_message' => $this->errorMessage,

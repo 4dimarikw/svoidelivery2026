@@ -5,12 +5,11 @@ namespace App\Events\Order;
 use App\Events\LoggableEvent;
 
 /**
- * Сбой отправки письма о новом заказе — попадает в event_logs через
- * App\Listeners\PersistEventLog. По образцу OrderFtpUploadFailed:
- * ошибка отправки не должна ронять уже оформленный заказ (см.
- * App\Listeners\Order\HandleOrderCreated), но должна быть видна админу.
+ * Сбой уведомления о новом заказе в служебную Telegram-группу — попадает
+ * в event_logs через App\Listeners\PersistEventLog (автодискавери по
+ * LoggableEvent, как и OrderNotificationEmailFailed).
  */
-final readonly class OrderNotificationEmailFailed implements LoggableEvent
+final readonly class OrderTelegramNotificationFailed implements LoggableEvent
 {
     public function __construct(
         public int $orderId,
@@ -21,7 +20,7 @@ final readonly class OrderNotificationEmailFailed implements LoggableEvent
 
     public function eventType(): string
     {
-        return 'order.notification_email_failed';
+        return 'order.telegram_notification_failed';
     }
 
     public function level(): string
@@ -33,7 +32,7 @@ final readonly class OrderNotificationEmailFailed implements LoggableEvent
     {
         $label = $this->orderNumber !== null ? "№{$this->orderNumber}" : "#{$this->orderId}";
 
-        return "Заказ {$label}: не удалось поставить в очередь письмо-уведомление о заказе: {$this->errorMessage}.";
+        return "Заказ {$label}: не удалось отправить уведомление о заказе в Telegram: {$this->errorMessage}.";
     }
 
     public function context(): array

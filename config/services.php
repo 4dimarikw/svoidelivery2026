@@ -79,4 +79,17 @@ return [
         'image_hosts' => ['userapi.com', 'vk.com', 'vk-cdn.net', 'vkuserphoto.ru'],
     ],
 
+    /*
+     * Уведомления в служебную Telegram-группу (Domain\Telegram\Actions\SendTelegramMessage).
+     * Не путать с 'telegram' выше — тот блок про Login Widget и
+     * перезаписывается в рантайме из БД, к рассылке в группу отношения не
+     * имеет.
+     */
+    'telegram_notify' => [
+        'manage_group' => env('TELEGRAM_MANAGE_GROUP'),
+        'new_order_thread_id' => env('TELEGRAM_BOT_NEW_ORDER_THREAD_ID') !== null
+            ? (int) env('TELEGRAM_BOT_NEW_ORDER_THREAD_ID')
+            : null,
+    ],
+
 ];

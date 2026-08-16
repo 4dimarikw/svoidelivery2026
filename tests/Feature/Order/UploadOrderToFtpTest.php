@@ -37,6 +37,10 @@ class UploadOrderToFtpTest extends TestCase
         $this->assertSame('order_not_found', $event->context['reason']);
         $this->assertSame(999999, $event->context['order_id']);
         $this->assertFalse($event->context['queued']);
+
+        // Заказа нет — номер взять неоткуда, message() падает на #id.
+        $this->assertNull($event->context['order_number']);
+        $this->assertSame('Заказ #999999 не найден — выгрузка на FTP отменена.', $event->message);
     }
 
     public function test_upload_failure_logs_event_and_queues_job(): void
@@ -67,6 +71,11 @@ class UploadOrderToFtpTest extends TestCase
         $this->assertSame('warning', $event->level);
         $this->assertSame('upload_failed', $event->context['reason']);
         $this->assertTrue($event->context['queued']);
+
+        // Заказ загружен (findOrFail отработал) — номер должен попасть и
+        // в context, и в текст сообщения вместо голого id.
+        $this->assertSame($order->number, $event->context['order_number']);
+        $this->assertStringContainsString("Заказ №{$order->number}", $event->message);
     }
 
     public function test_successful_upload_does_not_write_event_log(): void

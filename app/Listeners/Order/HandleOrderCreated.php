@@ -4,10 +4,12 @@ namespace App\Listeners\Order;
 
 use App\Events\Order\OrderCreated;
 use App\Events\Order\OrderNotificationEmailFailed;
+use App\Events\Order\OrderTelegramNotificationFailed;
 use Domain\Order\Actions\BuildOrderXml;
 use Domain\Order\Actions\UploadOrderToFTP;
 use Domain\Order\Mail\NewOrderCreated;
 use Domain\Order\Models\Order;
+use Domain\Telegram\Actions\SendTelegramMessage;
 use Illuminate\Support\Facades\Mail;
 use Infrastructure\Settings\SiteSettings;
 use Throwable;
@@ -44,6 +46,7 @@ class HandleOrderCreated
         }
 
         $this->notifyAdmin($event->order);
+        $this->notifyAdminByTelegram($event->order);
     }
 
     /**
@@ -83,9 +86,91 @@ class HandleOrderCreated
             report($e);
             event(new OrderNotificationEmailFailed(
                 orderId: $order->id,
+                orderNumber: $order->number,
                 exceptionClass: $e::class,
                 errorMessage: $e->getMessage(),
             ));
         }
+    }
+
+    /**
+     * Уведомление о новом заказе в служебную Telegram-группу
+     * (config('services.telegram_notify')) — независимо от notifyAdmin()
+     * (письмо): сбой одного канала не должен снимать другой. Сбой попадает
+     * в event_logs через OrderTelegramNotificationFailed, тот же принцип,
+     * что у notifyAdmin()/UploadOrderToFTP::execute() (см. их catch (Throwable)).
+     */
+    private function notifyAdminByTelegram(Order $order): void
+    {
+        $chatId = config('services.telegram_notify.manage_group');
+
+        if ($chatId === null) {
+            return;
+        }
+
+        try {
+            // Дублирует loadMissing() из notifyAdmin() — безопасно (уже
+            // загруженные связи не перезапрашиваются), а нужен на случай,
+            // если email-ветка вообще не дошла до своего loadMissing()
+            // (notify_email === null).
+            $order->loadMissing(['orderCustomer', 'orderItems.product', 'deliveryType']);
+
+            app(SendTelegramMessage::class)(
+                (string) $chatId,
+                $this->buildTelegramMessage($order),
+                config('services.telegram_notify.new_order_thread_id'),
+            );
+        } catch (Throwable $e) {
+            report($e);
+            event(new OrderTelegramNotificationFailed(
+                orderId: $order->id,
+                orderNumber: $order->number,
+                exceptionClass: $e::class,
+                errorMessage: $e->getMessage(),
+            ));
+        }
+    }
+
+    /**
+     * Простой Telegram HTML (parse_mode=HTML), без Blade-вьюхи — формат
+     * сообщения мессенджера отличается от письма настолько, что общий
+     * шаблон не даёт выгоды (тот же подход, что у
+     * Domain\Vk\Actions\SendVkPostToChatAction::buildText()). Все
+     * динамические значения экранированы через htmlspecialchars — Telegram
+     * принимает узкое подмножество HTML, необработанные "<"/"&" ломают
+     * разбор сообщения.
+     */
+    private function buildTelegramMessage(Order $order): string
+    {
+        $escape = fn (?string $value): string => htmlspecialchars((string) $value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+
+        $lines = [
+            '🆕 <b>Новый заказ №'.$escape($order->number).'</b>',
+            'Сумма: '.$escape((string) $order->amount),
+            'Доставка: '.$escape($order->deliveryType?->title),
+            '',
+            'Получатель: '.$escape(trim(($order->orderCustomer?->first_name ?? '').' '.($order->orderCustomer?->last_name ?? ''))),
+            'Телефон: '.$escape($order->orderCustomer?->phone),
+        ];
+
+        if ($order->deliveryType?->with_address) {
+            $lines[] = 'Город: '.$escape($order->orderCustomer?->city);
+            $lines[] = 'Адрес: '.$escape($order->orderCustomer?->address);
+        }
+
+        if ($order->comment) {
+            $lines[] = '';
+            $lines[] = 'Комментарий: '.$escape($order->comment);
+        }
+
+        $lines[] = '';
+        $lines[] = '<b>Состав заказа:</b>';
+
+        foreach ($order->orderItems as $item) {
+            $name = $item->product?->brand ?: $item->product?->name;
+            $lines[] = '• '.$escape($name).' × '.$item->quantity.' = '.$escape((string) $item->amount);
+        }
+
+        return implode("\n", $lines);
     }
 }

@@ -69,7 +69,9 @@ class OrderNotificationEmailTest extends TestCase
 
         $this->assertSame('error', $event->level);
         $this->assertSame($order->id, $event->context['order_id']);
+        $this->assertSame($order->number, $event->context['order_number']);
         $this->assertSame('SMTP unreachable', $event->context['error_message']);
+        $this->assertStringContainsString("Заказ №{$order->number}", $event->message);
     }
 
     /**

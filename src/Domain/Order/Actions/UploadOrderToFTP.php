@@ -38,6 +38,7 @@ class UploadOrderToFTP
             report($e);
             event(new OrderFtpUploadFailed(
                 orderId: $orderId,
+                orderNumber: null, // Order не найден — номера взять неоткуда
                 reason: 'order_not_found',
                 exceptionClass: $e::class,
                 errorMessage: $e->getMessage(),
@@ -78,6 +79,7 @@ class UploadOrderToFTP
 
             event(new OrderFtpUploadFailed(
                 orderId: $orderId,
+                orderNumber: $order->number,
                 reason: 'upload_failed',
                 exceptionClass: $e::class,
                 errorMessage: $e->getMessage(),

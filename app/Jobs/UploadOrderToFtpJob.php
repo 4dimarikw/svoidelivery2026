@@ -76,6 +76,7 @@ class UploadOrderToFtpJob implements ShouldBeUnique, ShouldQueue
         // выгрузка сама не повторится — только ручной resend из MoonShine.
         event(new OrderFtpUploadFailed(
             orderId: $this->orderId,
+            orderNumber: null, // job сериализует только int $orderId, не модель Order
             reason: 'queue_exhausted',
             exceptionClass: $e::class,
             errorMessage: $e->getMessage(),
