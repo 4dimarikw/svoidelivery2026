@@ -28,7 +28,6 @@ class OrderController extends Controller
             'orderCustomer',
             'orderItems.product',
             'deliveryType',
-            'paymentMethod',
         ]);
 
         return view('account.orders.show', [
