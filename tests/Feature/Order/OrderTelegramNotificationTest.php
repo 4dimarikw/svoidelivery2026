@@ -8,9 +8,14 @@ use App\Events\Order\OrderCreated;
 use App\Listeners\Order\HandleOrderCreated;
 use DefStudio\Telegraph\Facades\Telegraph;
 use DefStudio\Telegraph\Telegraph as TelegraphClient;
+use Domain\Auth\Models\User;
+use Domain\Cart\Models\Cart;
+use Domain\Cart\Models\CartItem;
+use Domain\Catalog\Models\Product;
 use Domain\Logging\Models\EventLog;
 use Domain\Order\Mail\NewOrderCreated;
 use Domain\Order\Models\Order;
+use Domain\Profile\Models\Address;
 use Domain\Telegram\Models\TelegramBot;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Mail;
@@ -71,6 +76,54 @@ class OrderTelegramNotificationTest extends TestCase
         Telegraph::assertSentData(TelegraphClient::ENDPOINT_MESSAGE, [
             'chat_id' => '-100123456789',
             'message_thread_id' => 42,
+        ], false);
+    }
+
+    /**
+     * Регрессия: OrderProcess::run() прогоняет один и тот же $order через
+     * весь пайплайн; AssignProducts создаёт позиции через
+     * $order->orderItems()->createMany(), а OrderItemObserver пересчитывает
+     * и сохраняет amount на ОТДЕЛЬНОМ, лениво подгруженном экземпляре Order
+     * (через $orderItem->order — belongsTo без кеша), не на этом объекте.
+     * Без OrderProcess::run()'s $order->refresh() перед event(new
+     * OrderCreated($order)) уведомление уходит с amount = 0, снятым ещё
+     * PersistOrder до появления позиций — предыдущие тесты этого файла не
+     * ловят баг, т.к. зовут HandleOrderCreated::handle() напрямую на
+     * Order::create([]), минуя OrderProcess целиком. Здесь — реальный
+     * HTTP-чекаут, тот же путь, что и у настоящего заказа.
+     */
+    public function test_message_contains_the_correct_order_amount_after_real_checkout(): void
+    {
+        config([
+            'services.telegram_notify.manage_group' => '-100123456789',
+            'services.telegram_notify.new_order_thread_id' => 42,
+        ]);
+
+        Telegraph::fake();
+        Mail::fake();
+
+        TelegramBot::create([
+            'token' => 'test-bot-token',
+            'name' => 'Test Bot',
+            'username' => 'svoi_test_bot',
+        ]);
+
+        $user = User::factory()->create();
+        $address = Address::factory()->for($user)->create();
+        $product = Product::factory()->create(['price' => 12000, 'stock_quantity' => 5, 'in_stock' => true]);
+
+        $cart = Cart::factory()->create(['user_id' => $user->id]);
+        CartItem::factory()->create(['cart_id' => $cart->id, 'product_id' => $product->id, 'quantity' => 1, 'price' => 12000]);
+
+        $this->actingAs($user)->post(route('checkout.store'), [
+            'address_id' => $address->id,
+            'first_name' => 'Иван',
+            'last_name' => 'Иванов',
+            'phone' => '+79991234567',
+        ]);
+
+        Telegraph::assertSentData(TelegraphClient::ENDPOINT_MESSAGE, [
+            'text' => 'Сумма: ₽ 12 000',
         ], false);
     }
 

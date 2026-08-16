@@ -172,7 +172,16 @@ class CheckoutTest extends TestCase
 
         // Та же цепочка → notifyAdmin() — письмо ставится в очередь, не
         // отправляется синхронно (см. HandleOrderCreated::notifyAdmin()).
-        Mail::assertQueued(NewOrderCreated::class, fn (NewOrderCreated $mail) => $mail->order->id === $order->id);
+        // amount тоже проверяем здесь: регрессия на OrderProcess::run() —
+        // без её $order->refresh() перед event(new OrderCreated($order))
+        // $mail->order->amount оставался бы 0 (снят PersistOrder ещё до
+        // появления позиций), хотя в БД (см. $order->fresh() выше) сумма
+        // всегда была верной — два разных объекта Order в памяти.
+        Mail::assertQueued(
+            NewOrderCreated::class,
+            fn (NewOrderCreated $mail) => $mail->order->id === $order->id
+                && $mail->order->amount->major() === 12000.0
+        );
     }
 
     /**

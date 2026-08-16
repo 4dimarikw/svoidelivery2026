@@ -16,9 +16,7 @@ final class OrderProcess
 
     public function __construct(
         protected Order $order
-    )
-    {
-    }
+    ) {}
 
     public function processes(array $processes): self
     {
@@ -37,10 +35,17 @@ final class OrderProcess
      */
     public function run(): Order
     {
-        $order = DB::transaction(fn(): Order => app(Pipeline::class)
+        $order = DB::transaction(fn (): Order => app(Pipeline::class)
             ->send($this->order)
             ->through($this->processes)
             ->thenReturn());
+
+        // AssignProducts создаёт позиции через $order->orderItems()->createMany() —
+        // OrderItemObserver пересчитывает и сохраняет amount, но на отдельном,
+        // лениво подгруженном экземпляре Order (через $orderItem->order), а
+        // не на этом $order. Без refresh() эмейл/Telegram-уведомление ниже
+        // уходит с amount = 0, снятым ещё в PersistOrder до появления позиций.
+        $order->refresh();
 
         event(new OrderCreated($order));
 
