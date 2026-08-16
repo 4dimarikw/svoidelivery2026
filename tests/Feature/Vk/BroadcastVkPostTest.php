@@ -39,7 +39,7 @@ class BroadcastVkPostTest extends TestCase
         return $user;
     }
 
-    private function makePost(): VkPost
+    private function makePost(array $attributes = []): VkPost
     {
         return VkPost::query()->create([
             'owner_id' => -1,
@@ -47,9 +47,11 @@ class BroadcastVkPostTest extends TestCase
             'post_type' => 'post',
             'posted_at' => now(),
             'text' => 'Новость',
+            'message_text' => 'Текст для рассылки',
             'images' => [],
             'raw' => [],
             'status' => VkPostStatus::READY,
+            ...$attributes,
         ]);
     }
 
@@ -90,5 +92,21 @@ class BroadcastVkPostTest extends TestCase
         $this->runJob($post);
 
         $this->assertSame(1, VkPostDelivery::query()->where('user_id', $user->id)->count());
+    }
+
+    public function test_post_without_message_text_is_not_broadcast(): void
+    {
+        Telegraph::fake();
+
+        $user = $this->userWithTelegram(1, isBotActive: true);
+        $post = $this->makePost(['message_text' => null]);
+
+        $this->runJob($post);
+
+        $this->assertSame(0, VkPostDelivery::query()->where('user_id', $user->id)->count());
+
+        $post->refresh();
+        $this->assertSame(VkPostStatus::READY, $post->status);
+        $this->assertNull($post->broadcast_at);
     }
 }

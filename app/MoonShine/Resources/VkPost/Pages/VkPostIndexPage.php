@@ -48,7 +48,7 @@ final class VkPostIndexPage extends IndexPage
         return [
             ID::make()->sortable(),
             Date::make('Опубликован', 'posted_at')->format('d.m.Y H:i')->sortable(),
-            Text::make('Текст', formatted: fn (VkPost $item) => Str::limit((string) $item->broadcastText, 80)),
+            Text::make('Текст', formatted: fn (VkPost $item) => Str::limit((string) ($item->message_text ?: $item->text), 80)),
             Image::make('Картинки', 'images')->changePreview(fn ($value) => Thumbnails::make($value)),
             Enum::make('Статус', 'status')->attach(VkPostStatus::class),
             Date::make('Разослан', 'broadcast_at')->format('d.m.Y H:i')->sortable(),

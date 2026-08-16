@@ -56,6 +56,12 @@ class BroadcastVkPostJob implements ShouldBeUnique, ShouldQueue
     {
         $post = VkPost::query()->findOrFail($this->vkPostId);
 
+        if (trim($post->broadcastText) === '') {
+            Log::warning('Рассылка поста VK пропущена: пустой текст для рассылки', ['vk_post_id' => $post->id]);
+
+            return;
+        }
+
         $alreadySent = VkPostDelivery::query()
             ->where('vk_post_id', $post->id)
             ->where('status', 'sent')

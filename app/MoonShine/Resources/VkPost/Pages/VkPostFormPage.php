@@ -17,13 +17,21 @@ use MoonShine\Laravel\Pages\Crud\FormPage;
 use MoonShine\Support\Attributes\AsyncMethod;
 use MoonShine\Support\ListOf;
 use MoonShine\UI\Components\ActionButton;
+use MoonShine\UI\Components\Collapse;
+use MoonShine\UI\Components\FlexibleRender;
+use MoonShine\UI\Components\Heading;
+use MoonShine\UI\Components\Img;
 use MoonShine\UI\Components\Layout\Box;
+use MoonShine\UI\Components\Layout\Column;
+use MoonShine\UI\Components\Layout\Flex;
+use MoonShine\UI\Components\Layout\Grid;
 use MoonShine\UI\Fields\Date;
 use MoonShine\UI\Fields\Enum;
 use MoonShine\UI\Fields\ID;
 use MoonShine\UI\Fields\Json;
-use MoonShine\UI\Fields\Text;
 use MoonShine\UI\Fields\Textarea;
+use MoonShine\UI\Fields\Url;
+use Throwable;
 
 /**
  * @extends FormPage<VkPostResource, VkPost>
@@ -32,19 +40,87 @@ final class VkPostFormPage extends FormPage
 {
     /**
      * @return list<ComponentContract|FieldContract>
+     *
+     * @throws Throwable
      */
     protected function fields(): iterable
     {
         return [
-            Box::make([
+            Box::make('Пост во ВКонтакте', [
                 ID::make(),
-                Text::make('Ссылка на VK', formatted: fn (VkPost $item) => $item->vkUrl)->locked(),
+                Url::make('Ссылка на VK', formatted: fn (?VkPost $item) => $item?->vkUrl ?? '')
+                    ->title(fn () => 'Ссылка на пост VK')
+                    ->previewMode(),
                 Date::make('Опубликован', 'posted_at')->withTime()->locked(),
-                Textarea::make('Исходный текст (VK)', 'text')->readonly(),
-                Textarea::make('Текст для рассылки', 'message_text')
-                    ->hint('Пусто — рассылается исходный текст. Telegram понимает только узкое подмножество HTML: <b>, <i>, <a href>, <code>, <pre> — остальные теги приведут к ошибке отправки.'),
-                Json::make('Картинки', 'images')->onlyValue('URL')->removable(),
                 Enum::make('Статус', 'status')->attach(VkPostStatus::class),
+            ]),
+            Box::make('Рассылка', [
+                Collapse::make('Исходный текст (VK)', [
+                    Textarea::make('', 'text')->readonly()->customAttributes([
+                        'rows' => 30,
+                    ]),
+                ]),
+                Textarea::make('Текст для рассылки', 'message_text')
+                    ->hint('Пусто — пост не рассылается. Перенесите нужное из исходного текста VK.'),
+                Collapse::make('Описание синтаксиса для форматирования текста сообщения Telegram', [
+                    FlexibleRender::make(
+                        view('pages.telegram-standard-html-tags')
+                    ),
+                ]),
+                Collapse::make('Ссылки на картинки VK поста', [
+                    Json::make('', 'images')->onlyValue('URL')->removable(),
+                ]),
+
+            ]),
+        ];
+    }
+
+    /**
+     * Отдельный блок со всеми картинками поста (то, что реально уйдёт
+     * в рассылку — rejected_images сюда не входят, они остаются на
+     * VkPostDetailPage как сырой JSON). Превью кликабельны — открывают
+     * стандартный лайтбокс MoonShine (глобальный слушатель img-popup,
+     * см. moonshine::components.layout.body).
+     */
+    private function imagesBox(): ComponentContract
+    {
+        $item = $this->getItem();
+        $images = $item instanceof VkPost ? $item->images : [];
+
+        if ($images === [] || $images === null) {
+            return Box::make('Картинки поста', [
+                Heading::make('Картинок нет')->h(5),
+            ]);
+        }
+
+        return Box::make('Картинки поста ('.count($images).')', [
+            Flex::make(
+                array_map(
+                    static fn (string $url) => Img::make($url)
+                        ->lazyLoading()
+                        ->customAttributes([
+                            'class' => 'zoom-in',
+                            'style' => 'width:100%;max-width:220px;height:140px;object-fit:cover;border-radius:4px;cursor:pointer',
+                            '@click.stop' => '$dispatch(\'img-popup\', { open: true, src: '.json_encode($url).' })',
+                        ]),
+                    $images,
+                ),
+                justifyAlign: 'start',
+            )->wrap(),
+        ]);
+    }
+
+    /**
+     * @return list<ComponentContract>
+     *
+     * @throws Throwable
+     */
+    protected function mainLayer(): array
+    {
+        return [
+            Grid::make([
+                Column::make(parent::mainLayer(), colSpan: 8, adaptiveColSpan: 12),
+                Column::make([$this->imagesBox()], colSpan: 4, adaptiveColSpan: 12),
             ]),
         ];
     }

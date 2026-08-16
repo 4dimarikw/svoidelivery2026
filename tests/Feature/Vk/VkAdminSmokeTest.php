@@ -32,7 +32,7 @@ class VkAdminSmokeTest extends TestCase
         ]);
     }
 
-    private function makePost(): VkPost
+    private function makePost(array $attributes = []): VkPost
     {
         return VkPost::query()->create([
             'owner_id' => -1,
@@ -43,6 +43,7 @@ class VkAdminSmokeTest extends TestCase
             'images' => [],
             'raw' => [],
             'status' => VkPostStatus::DRAFT,
+            ...$attributes,
         ]);
     }
 
@@ -61,7 +62,18 @@ class VkAdminSmokeTest extends TestCase
 
         $this->actingAs($this->superuser(), 'moonshine')
             ->get("/admin/resource/vk-post-resource/vk-post-form-page/{$post->id}")
-            ->assertOk();
+            ->assertOk()
+            ->assertSee('https://vk.com/wall-1_1');
+    }
+
+    public function test_form_page_shows_post_images(): void
+    {
+        $post = $this->makePost(['images' => ['https://sun9-1.userapi.com/a.jpg']]);
+
+        $this->actingAs($this->superuser(), 'moonshine')
+            ->get("/admin/resource/vk-post-resource/vk-post-form-page/{$post->id}")
+            ->assertOk()
+            ->assertSee('https://sun9-1.userapi.com/a.jpg', false);
     }
 
     public function test_detail_page_renders(): void

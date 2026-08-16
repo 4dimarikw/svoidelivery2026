@@ -13,7 +13,9 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 /**
  * Пост со стены VK-группы, забранный vk:sync-posts. text — сырой текст
  * из VK, не редактируется в админке; message_text — отредактированная
- * версия для рассылки (broadcastText() отдаёт message_text ?: text).
+ * версия для рассылки. Пустой message_text значит «рассылать нечего» —
+ * broadcastText() не подставляет вместо него сырой text (см. гарды на
+ * SendVkPostToChatAction / BroadcastVkPostJob).
  */
 class VkPost extends Model
 {
@@ -59,7 +61,7 @@ class VkPost extends Model
 
     protected function broadcastText(): Attribute
     {
-        return Attribute::get(fn (): string => (string) ($this->message_text ?: $this->text));
+        return Attribute::get(fn (): string => (string) $this->message_text);
     }
 
     /**
