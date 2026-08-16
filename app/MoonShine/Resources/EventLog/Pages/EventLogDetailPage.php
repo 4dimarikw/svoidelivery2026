@@ -10,7 +10,6 @@ use MoonShine\Contracts\UI\FieldContract;
 use MoonShine\Laravel\Pages\Crud\DetailPage;
 use MoonShine\UI\Fields\Date;
 use MoonShine\UI\Fields\ID;
-use MoonShine\UI\Fields\Preview;
 use MoonShine\UI\Fields\Text;
 use MoonShine\UI\Fields\Textarea;
 
@@ -38,11 +37,6 @@ class EventLogDetailPage extends DetailPage
                 $item->context,
                 JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES
             )),
-            Preview::make('Контекст', formatted: fn(EventLog $item) => json_encode(
-                $item->context,
-                JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES
-            )
-            ),
             Text::make('Инициатор', formatted: fn(EventLog $item) => $item->causer?->name ?? '—'),
             Text::make('Источник', 'caused_by_type'),
         ];
