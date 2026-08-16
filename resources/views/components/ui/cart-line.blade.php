@@ -36,6 +36,7 @@
 @php
     $product = $cartItem->product;
     $beerStyleName = $product->beerDetails?->beerStyle?->name;
+    $available = $product->isAvailable();
 
     $spec = collect([
         $beerStyleName,
@@ -51,7 +52,7 @@
     x-on:cart:item-updated.window="if ($event.detail.productId === {{ $product->id }}) { quantity = $event.detail.quantity; amount = $event.detail.amount }"
     class="grid grid-cols-[56px_1fr_auto] items-center gap-x-4 gap-y-3 border-b border-hairline py-3.5 last:border-b-0 sm:grid-cols-[56px_1fr_auto_auto_auto] sm:gap-y-0"
 >
-    <div class="row-span-2 h-14 w-14 shrink-0 overflow-hidden rounded-sm border border-hairline bg-cream-100 sm:row-span-1">
+    <div @class(['row-span-2 h-14 w-14 shrink-0 overflow-hidden rounded-sm border border-hairline bg-cream-100 sm:row-span-1', 'grayscale opacity-50' => ! $available])>
         @if ($product->hasOwnImage())
             <img
                 src="{{ $product->thumb }}"
@@ -64,7 +65,7 @@
         @endif
     </div>
 
-    <div class="col-start-2 row-start-1 min-w-0">
+    <div @class(['col-start-2 row-start-1 min-w-0', 'opacity-60' => ! $available])>
         @if ($product->manufacturer)
             <div class="truncate font-mono text-badge uppercase text-ink-300">{{ $product->manufacturer->name }}</div>
         @endif
@@ -74,12 +75,23 @@
         @endif
     </div>
 
-    <x-ui.cart-stepper
-        :product="$product"
-        :quantity="$cartItem->quantity"
-        :show-buy-button="false"
-        class="col-start-2 row-start-2 h-[34px] sm:col-start-3 sm:row-start-1"
-    />
+    @if (! $available)
+        {{-- Товар выбыл из наличия после того, как уже был добавлен в
+             корзину (или сток обнулился задним числом) — вместо степпера
+             (управлять количеством нечего) чип «нет в наличии», в той же
+             ячейке грида, что и cart-stepper ниже. Удаление — крестик
+             справа (uiCartRemove), тот же, что и для доступных строк. --}}
+        <div class="col-start-2 row-start-2 flex h-[34px] items-center sm:col-start-3 sm:row-start-1">
+            <x-ui.chip tone="rust">{{ __('catalog.out_of_stock') }}</x-ui.chip>
+        </div>
+    @else
+        <x-ui.cart-stepper
+            :product="$product"
+            :quantity="$cartItem->quantity"
+            :show-buy-button="false"
+            class="col-start-2 row-start-2 h-[34px] sm:col-start-3 sm:row-start-1"
+        />
+    @endif
 
     <div class="col-start-3 row-start-2 justify-self-end text-right sm:col-start-4 sm:row-start-1 sm:w-24">
         <div class="whitespace-nowrap font-mono text-micro text-ink-500" x-text="quantity + ' × ' + unitPrice"></div>

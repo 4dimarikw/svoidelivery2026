@@ -50,6 +50,17 @@
     // значение поля «Комментарий к заказу»; при переключении радио-кнопки
     // ниже подменяется на лету через Alpine (addressComments).
     $selectedAddress = $addresses->firstWhere('id', (int) $selectedAddressId);
+
+    // Товары, выбывшие из наличия уже после добавления в корзину — плашка
+    // над кнопкой оформления (см. ниже) и приглушение строки (cart-line.blade.php).
+    // Кнопку «Оформить заказ» это не блокирует — единственный надёжный барьер
+    // всё равно Domain\Order\Processes\CheckProductInStock на бэке, сток
+    // может кончиться и после этого рендера.
+    $unavailableProductIds = $cartItems
+        ->reject(fn ($item) => $item->product->isAvailable())
+        ->pluck('product_id')
+        ->values()
+        ->all();
 @endphp
 
 <x-layouts.site :title="__('account.cart.title')">
@@ -168,6 +179,20 @@
                  фильтров каталога (см. pages/catalog/_filters.blade.php):
                  sticky-шапка занимает ~73px сверху, top-6 залипал бы под ней. --}}
             <div class="lg:sticky lg:top-24 lg:col-span-4 lg:self-start">
+                {{-- Предупреждение о недоступных товарах в корзине — то же
+                     window-событие cart:item-removed, что и у строк/степпера,
+                     чтобы плашка исчезала сама при удалении последнего такого
+                     товара, без перезагрузки страницы. --}}
+                <div
+                    x-data="{ unavailable: {{ count($unavailableProductIds) }} }"
+                    x-on:cart:item-removed.window="if (@js($unavailableProductIds).includes($event.detail.productId)) unavailable--"
+                    x-show="unavailable > 0"
+                    @if ($unavailableProductIds === []) style="display: none" @endif
+                    class="mb-4"
+                >
+                    <x-ui.alert tone="warn">{{ __('account.cart.has_unavailable') }}</x-ui.alert>
+                </div>
+
                 <x-ui.cart-summary :count="$cart->count()" :amount="$amount">
                     <x-ui.btn type="submit" form="checkout-form" variant="cream" size="lg" block class="mt-5" x-bind:disabled="$store.checkout.submitting">
                         <span x-show="! $store.checkout.submitting">{{ __('order.submit') }}</span>

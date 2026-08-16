@@ -149,5 +149,6 @@ return [
         // no-JS fallback for CartController::rejectUnavailable() — same text
         // as catalog.cart.unavailable (JSON branch), different string scope.
         'unavailable' => 'This item is out of stock and cannot be ordered.',
+        'has_unavailable' => 'Your cart contains items that are out of stock. Remove them to place the order.',
     ],
 ];

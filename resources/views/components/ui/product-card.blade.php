@@ -143,13 +143,19 @@
     // авторизованных, мемоизировано в CartManager на один HTTP-запрос (см.
     // Domain\Cart\CartManager::items()).
     $cartQuantity = auth()->check() ? app(\Domain\Cart\CartManager::class)->quantityOf($product) : 0;
+    $available = $product->isAvailable();
 @endphp
 
 <article
     title="{{ $product->name }}"
     class="flex h-full flex-col overflow-hidden rounded-sm border border-hairline bg-cream-50 transition hover:-translate-y-0.5 hover:shadow-md"
 >
-    <div class="relative aspect-square overflow-hidden border-b border-hairline bg-cream-100">
+    {{-- ! $available — фото и текст карточки приглушены (grayscale/opacity),
+         чтобы состояние читалось с первого взгляда без наведения на чип; чип
+         «нет в наличии» (ниже) и кнопка «Удалить из корзины»
+         (cart-stepper.blade.php) намеренно НЕ затемнены — они и есть
+         единственный контраст, который должен привлекать внимание. --}}
+    <div @class(['relative aspect-square overflow-hidden border-b border-hairline bg-cream-100', 'grayscale opacity-50' => ! $available])>
         <a href="{{ route('product.show', $product) }}" aria-label="{{ __('catalog.go_to_product') }}" class="product-card-thumb block h-full w-full">
             @if ($product->hasOwnImage())
                 <img
@@ -183,10 +189,10 @@
 
     <div class="flex flex-1 flex-col px-2 pb-2.5 pt-2 xl:px-5 xl:pb-5 xl:pt-4.5">
         @if ($product->manufacturer)
-            <div class="font-mono text-badge uppercase text-ink-300">{{ $product->manufacturer->name }}</div>
+            <div @class(['font-mono text-badge uppercase text-ink-300', 'opacity-60' => ! $available])>{{ $product->manufacturer->name }}</div>
         @endif
 
-        <div class="mt-1 line-clamp-2 font-display text-caption font-bold uppercase leading-[1.15] tracking-brand-snug text-ink-900 xl:text-btn-lg">{{ $title }}</div>
+        <div @class(['mt-1 line-clamp-2 font-display text-caption font-bold uppercase leading-[1.15] tracking-brand-snug text-ink-900 xl:text-btn-lg', 'opacity-60' => ! $available])>{{ $title }}</div>
 
         {{-- Брендбук (design-system.html §06 .style-tag) заливает эту плашку
              тем же teal-700/cream-100, что и .btn (app.css) — на реальной
@@ -196,15 +202,15 @@
              chip.blade.php (tone="teal") уже используют для некликабельных
              меток; форма/шрифт/регистр не меняются. --}}
         @if ($beerStyleName)
-            <div class="mt-1.5 inline-flex self-start items-center rounded-sm bg-teal-100 px-1.5 py-0.5 font-display text-micro font-semibold uppercase tracking-[0.06em] text-teal-800 xl:px-2.5 xl:py-1">{{ $beerStyleName }}</div>
+            <div @class(['mt-1.5 inline-flex self-start items-center rounded-sm bg-teal-100 px-1.5 py-0.5 font-display text-micro font-semibold uppercase tracking-[0.06em] text-teal-800 xl:px-2.5 xl:py-1', 'opacity-60' => ! $available])>{{ $beerStyleName }}</div>
         @endif
 
         @if ($spec->isNotEmpty())
-            <div class="mt-1.5 text-micro text-ink-500 xl:text-caption">{{ $spec->implode(' · ') }}</div>
+            <div @class(['mt-1.5 text-micro text-ink-500 xl:text-caption', 'opacity-60' => ! $available])>{{ $spec->implode(' · ') }}</div>
         @endif
 
         @if ($numbers->isNotEmpty())
-            <div class="mt-1.5 font-mono text-[11px] leading-4 tracking-[0.06em] text-teal-800">{{ $numbers->implode(' · ') }}</div>
+            <div @class(['mt-1.5 font-mono text-[11px] leading-4 tracking-[0.06em] text-teal-800', 'opacity-60' => ! $available])>{{ $numbers->implode(' · ') }}</div>
         @endif
 
         {{-- Распорка: тело карточки — flex flex-1 flex-col, поэтому auto-margin
@@ -216,7 +222,7 @@
              разной высоте. --}}
         <div class="mt-auto"></div>
 
-        @if (! $product->isAvailable())
+        @if (! $available)
             <div class="-ml-1.5 mt-3 flex flex-wrap [&>*]:ml-1.5 [&>*]:mt-1.5">
                 {{-- max-xl:!px-*/!py-* — chip.blade.php задаёт свой padding
                      через $attributes->class(), а в сгенерированном Tailwind
@@ -248,7 +254,7 @@
              становятся заметно меньше, чем у соседних. --}}
         @auth
             <div class="mt-2.5 border-t border-hairline pt-2.5 xl:mt-3.5 xl:pt-3.5">
-                <span class="block whitespace-nowrap font-display text-btn-lg font-bold tracking-brand-body text-ink-900 xl:text-heading-s">{{ $product->price }}</span>
+                <span @class(['block whitespace-nowrap font-display text-btn-lg font-bold tracking-brand-body text-ink-900 xl:text-heading-s', 'opacity-60' => ! $available])>{{ $product->price }}</span>
 
                 <x-ui.cart-stepper :product="$product" :quantity="$cartQuantity" class="mt-2 h-[41px]" />
             </div>

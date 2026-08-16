@@ -149,5 +149,6 @@ return [
         // no-JS фолбэк CartController::rejectUnavailable() — тот же текст,
         // что и catalog.cart.unavailable (JSON-ветка), другая область строк.
         'unavailable' => 'Товар закончился и недоступен для заказа.',
+        'has_unavailable' => 'В корзине есть товары, которых нет в наличии. Уберите их, чтобы оформить заказ.',
     ],
 ];
