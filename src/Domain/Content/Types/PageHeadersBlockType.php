@@ -1,8 +1,6 @@
 <?php
 
-namespace Domain\Content\Types\examples;
-
-use Domain\Content\Types\AbstractContentBlockType;
+namespace Domain\Content\Types;
 
 final class PageHeadersBlockType extends AbstractContentBlockType
 {

@@ -1,9 +1,13 @@
 <?php
 
 
+use Domain\Content\Types\PageHeadersBlockType;
+
 return [
     'views' => [],
-    'types' => [],
+    'types' => [
+        PageHeadersBlockType::class,
+    ],
     'icons' => [
         'heart',
         'sparkles',
