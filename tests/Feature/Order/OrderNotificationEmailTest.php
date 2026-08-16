@@ -105,6 +105,34 @@ class OrderNotificationEmailTest extends TestCase
     }
 
     /**
+     * XML заказа (BuildOrderXml, тот же, что уходит на FTP) должен быть
+     * вложением письма — иначе почта не даёт ручного фолбэка на молчаливый
+     * сбой выгрузки.
+     */
+    public function test_order_xml_is_attached_to_notification_email(): void
+    {
+        Mail::fake();
+
+        $settings = app(SiteSettings::class);
+        $settings->notify_email = 'admin@example.test';
+        $settings->save();
+
+        $order = Order::create([]);
+
+        $this->callHandler($order);
+
+        Mail::assertQueued(NewOrderCreated::class, function (NewOrderCreated $mail) use ($order) {
+            if ($mail->order->id !== $order->id || $mail->xml === null) {
+                return false;
+            }
+
+            $attachments = $mail->attachments();
+
+            return \count($attachments) === 1 && $attachments[0]->as === $mail->xml->filename;
+        });
+    }
+
+    /**
      * Листенер целиком (session()->flash + UploadOrderToFTP) дёргать не
      * нужно — тестируем только notifyAdmin(), но она private, поэтому
      * прогоняем через реальный handle() на изолированном Order без
