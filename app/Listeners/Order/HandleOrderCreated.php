@@ -165,7 +165,7 @@ class HandleOrderCreated
 
         foreach ($order->orderItems as $item) {
             $name = $item->product?->brand ?: $item->product?->name;
-            $lines[] = '• '.$escape($name).' × '.$item->quantity.' = '.$escape((string) $item->amount);
+            $lines[] = $escape($name).' × '.$item->quantity.' = '.$escape((string) $item->amount);
         }
 
         $lines[] = '</blockquote>';
