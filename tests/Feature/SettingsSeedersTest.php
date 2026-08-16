@@ -3,9 +3,11 @@
 namespace Tests\Feature;
 
 use Database\Seeders\CatalogImportSettingsSeeder;
+use Database\Seeders\SiteSettingsSeeder;
 use Database\Seeders\VkSyncSettingsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Infrastructure\Settings\CatalogImportSettings;
+use Infrastructure\Settings\SiteSettings;
 use Infrastructure\Settings\VKSyncSettings;
 use ReflectionClass;
 use Spatie\LaravelSettings\Migrations\SettingsMigrator;
@@ -72,6 +74,42 @@ class SettingsSeedersTest extends TestCase
     public function test_vk_sync_settings_seeder_defaults_cover_every_property(): void
     {
         $this->assertSeederCoversAllProperties(VKSyncSettings::class, VkSyncSettingsSeeder::class);
+    }
+
+    public function test_site_settings_seeder_defaults_cover_every_property(): void
+    {
+        $this->assertSeederCoversAllProperties(SiteSettings::class, SiteSettingsSeeder::class);
+    }
+
+    public function test_site_settings_repair_adds_missing_property(): void
+    {
+        app(SettingsMigrator::class)->delete('site.site_name');
+
+        $this->seedFresh(SiteSettingsSeeder::class);
+
+        $this->assertSame('', $this->fresh(SiteSettings::class)->site_name);
+    }
+
+    public function test_site_settings_run_without_force_does_not_overwrite_existing_value(): void
+    {
+        $settings = app(SiteSettings::class);
+        $settings->site_name = 'SvoiDelivery';
+        $settings->save();
+
+        $this->seedFresh(SiteSettingsSeeder::class);
+
+        $this->assertSame('SvoiDelivery', $this->fresh(SiteSettings::class)->site_name);
+    }
+
+    public function test_site_settings_run_with_force_resets_value_to_default(): void
+    {
+        $settings = app(SiteSettings::class);
+        $settings->site_name = 'SvoiDelivery';
+        $settings->save();
+
+        $this->seedFresh(SiteSettingsSeeder::class, force: true);
+
+        $this->assertSame('', $this->fresh(SiteSettings::class)->site_name);
     }
 
     private function seedFresh(string $seederClass, bool $force = false): void

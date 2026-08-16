@@ -2,13 +2,14 @@
 
 namespace Domain\Content\Models;
 
-
+use Database\Factories\Content\ContentBlockFactory;
 use Domain\Content\ContentBlockTypeRegistry;
 use Domain\Content\Contracts\ContentBlockType;
 use Domain\Content\Models\Concerns\HasPublicationState;
 use Domain\Content\Observers\ContentBlockObserver;
 use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -22,6 +23,12 @@ class ContentBlock extends Model implements HasMedia
     use HasFactory;
     use HasPublicationState;
     use InteractsWithMedia;
+
+    // См. SiteSection::newFactory() — тот же пробел конвенции для Domain\.
+    protected static function newFactory(): Factory
+    {
+        return ContentBlockFactory::new();
+    }
 
     protected $attributes = [
         'content' => '[]',

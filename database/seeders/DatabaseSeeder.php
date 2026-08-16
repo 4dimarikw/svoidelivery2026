@@ -32,6 +32,7 @@ class DatabaseSeeder extends Seeder
             // категорию 'not-defined' как fallback_slug.
             CatalogImportSettingsSeeder::class,
             VkSyncSettingsSeeder::class,
+            SiteSettingsSeeder::class,
         ]);
     }
 }

@@ -2,11 +2,13 @@
 
 namespace Domain\Content\Models;
 
+use Database\Factories\Content\SiteMenuItemFactory;
 use Domain\Content\Models\Concerns\HasPublicationState;
 use Domain\Content\Observers\SiteMenuItemObserver;
 use Domain\Content\Support\SafeContentUrl;
 use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -23,6 +25,13 @@ class SiteMenuItem extends Model
     use NodeTrait {
         callPendingAction as private callNestedSetPendingAction;
         setParentIdAttribute as private setNestedSetParentIdAttribute;
+    }
+
+    // См. Domain\Content\Models\SiteSection::newFactory() — тот же пробел
+    // конвенции для Domain\.
+    protected static function newFactory(): Factory
+    {
+        return SiteMenuItemFactory::new();
     }
 
     protected $attributes = [
@@ -104,11 +113,11 @@ class SiteMenuItem extends Model
 
     public function save(array $options = [])
     {
-        return $this->getConnection()->transaction(fn(): bool => parent::save($options), 3);
+        return $this->getConnection()->transaction(fn (): bool => parent::save($options), 3);
     }
 
     public function delete()
     {
-        return $this->getConnection()->transaction(fn(): ?bool => parent::delete(), 3);
+        return $this->getConnection()->transaction(fn (): ?bool => parent::delete(), 3);
     }
 }

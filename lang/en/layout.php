@@ -1,8 +1,9 @@
 <?php
 
-// App-owned header/footer chrome copy. Same ownership rule as account.php —
+// App-owned header/mobile-nav chrome copy. Same ownership rule as account.php —
 // not in auth.php/validation.php (laravel-lang) and not in ui.php
-// (<x-ui.*> component-internal strings only).
+// (<x-ui.*> component-internal strings only). Footer text is CMS-driven now
+// (Domain\Content, type=footer_info, see resources/views/components/layouts/footer.blade.php).
 
 return [
     'nav' => [
@@ -16,10 +17,5 @@ return [
         'profile' => 'Profile',
         'about' => 'About',
         'primary' => 'Primary navigation',
-    ],
-
-    'footer' => [
-        'age_notice' => '18+ · Alcohol may be harmful to your health',
-        'rights' => 'All rights reserved',
     ],
 ];

@@ -2,7 +2,6 @@
 
 namespace Database\Seeders;
 
-
 use Domain\Content\Models\ContentBlock;
 use Domain\Content\Models\ContentBlockItem;
 use Domain\Content\Models\SiteMenu;
@@ -13,7 +12,6 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
-use Infrastructure\Settings\SiteSettings;
 use LogicException;
 use Spatie\MediaLibrary\MediaCollections\Exceptions\FileDoesNotExist;
 use Spatie\MediaLibrary\MediaCollections\Exceptions\FileIsTooBig;
@@ -27,7 +25,7 @@ final class SiteContentSeeder extends Seeder
     /** @param array<string, mixed>|null $fixture */
     public function __construct(?array $fixture = null)
     {
-        $this->fixture = $fixture ?? require __DIR__ . '/data/site-content.php';
+        $this->fixture = $fixture ?? require __DIR__.'/data/site-content.php';
     }
 
     /**
@@ -43,7 +41,6 @@ final class SiteContentSeeder extends Seeder
             }
 
             $this->validateFixture();
-            $this->seedSettings();
             $sections = $this->seedSections();
             $this->seedMenus($sections);
             $this->seedBlocks($sections);
@@ -53,13 +50,8 @@ final class SiteContentSeeder extends Seeder
     private function cmsContainsData(): bool
     {
         /** @var Model $model */
-        return array_any([SiteSection::class, SiteMenu::class, SiteMenuItem::class, ContentBlock::class, ContentBlockItem::class], fn($model) => $model::query()->exists());
+        return array_any([SiteSection::class, SiteMenu::class, SiteMenuItem::class, ContentBlock::class, ContentBlockItem::class], fn ($model) => $model::query()->exists());
 
-    }
-
-    private function seedSettings(): void
-    {
-        app(SiteSettings::class)->fill($this->fixture['settings'])->save();
     }
 
     /** @return array<string, SiteSection> */
@@ -124,7 +116,8 @@ final class SiteContentSeeder extends Seeder
     }
 
     /**
-     * @param array<string, SiteSection> $sections
+     * @param  array<string, SiteSection>  $sections
+     *
      * @throws FileDoesNotExist
      * @throws FileIsTooBig
      */
@@ -170,15 +163,15 @@ final class SiteContentSeeder extends Seeder
     }
 
     /**
-     * @param ContentBlock $block
-     * @param array<string, string> $media
+     * @param  array<string, string>  $media
+     *
      * @throws FileDoesNotExist
      * @throws FileIsTooBig
      */
     private function seedMedia(ContentBlock $block, array $media): void
     {
         foreach ($media as $collection => $fileName) {
-            $path = __DIR__ . '/assets/' . $fileName;
+            $path = __DIR__.'/assets/'.$fileName;
             $block->addMedia($path)
                 ->preservingOriginal()
                 ->toMediaCollection($collection, 'public');
@@ -191,25 +184,36 @@ final class SiteContentSeeder extends Seeder
         $routeFragments = [];
 
         foreach ($this->fixture['sections'] ?? [] as $section) {
-            $key = trim((string)($section['key'] ?? ''));
+            $key = trim((string) ($section['key'] ?? ''));
             if ($key === '' || isset($sections[$key])) {
                 throw new LogicException("Ключ раздела [$key] пуст или повторяется в fixture.");
             }
 
-            $routeName = trim((string)($section['route_name'] ?? ''));
-            if ($routeName === '' || !Route::has($routeName)) {
-                throw new LogicException("Раздел [$key] ссылается на неизвестный маршрут [$routeName].");
+            // route_name === null — глобальная секция (не привязана к
+            // странице, см. миграцию make_site_sections_route_name_nullable),
+            // Route::has()-проверка и дедуп по паре route_name+fragment для
+            // неё не имеют смысла: уникальность и так гарантирует key выше.
+            // Явно null, а не пустая строка — опечатка/пропуск в fixture
+            // по-прежнему обязана указывать на реальный маршрут.
+            $routeNameRaw = array_key_exists('route_name', $section) ? $section['route_name'] : '';
+
+            if ($routeNameRaw !== null) {
+                $routeName = trim((string) $routeNameRaw);
+                if ($routeName === '' || ! Route::has($routeName)) {
+                    throw new LogicException("Раздел [$key] ссылается на неизвестный маршрут [$routeName].");
+                }
+
+                // Зеркалим уникальный индекс site_sections_route_name_fragment_unique —
+                // иначе fixture падает не читаемым LogicException, а сырым SQL 1062.
+                $fragment = ltrim(trim((string) ($section['fragment'] ?? '')), '#');
+                $routeFragmentKey = $routeName.'#'.$fragment;
+                if (isset($routeFragments[$routeFragmentKey])) {
+                    throw new LogicException("Раздел [$key] дублирует пару маршрут+якорь [$routeFragmentKey].");
+                }
+
+                $routeFragments[$routeFragmentKey] = true;
             }
 
-            // Зеркалим уникальный индекс site_sections_route_name_fragment_unique —
-            // иначе fixture падает не читаемым LogicException, а сырым SQL 1062.
-            $fragment = ltrim(trim((string)($section['fragment'] ?? '')), '#');
-            $routeFragmentKey = $routeName.'#'.$fragment;
-            if (isset($routeFragments[$routeFragmentKey])) {
-                throw new LogicException("Раздел [$key] дублирует пару маршрут+якорь [$routeFragmentKey].");
-            }
-
-            $routeFragments[$routeFragmentKey] = true;
             $sections[$key] = true;
         }
 
@@ -217,7 +221,7 @@ final class SiteContentSeeder extends Seeder
             $knownItems = [];
 
             foreach ($menu['items'] ?? [] as $item) {
-                $key = trim((string)($item['key'] ?? ''));
+                $key = trim((string) ($item['key'] ?? ''));
                 if ($key === '' || mb_strlen($key) > 100 || preg_match('/^[\pL\pM\pN_-]+$/u', $key) !== 1) {
                     throw new LogicException("Пункт меню [$menuKey] содержит недопустимый ключ [$key].");
                 }
@@ -227,17 +231,17 @@ final class SiteContentSeeder extends Seeder
                 }
 
                 $parentKey = $item['parent_key'] ?? null;
-                if ($parentKey !== null && !isset($knownItems[$parentKey])) {
+                if ($parentKey !== null && ! isset($knownItems[$parentKey])) {
                     throw new LogicException("Родитель [$parentKey] пункта [$menuKey.$key] должен быть объявлен раньше ребёнка.");
                 }
 
                 $sectionKey = $item['section_key'] ?? null;
-                $externalUrl = trim((string)($item['external_url'] ?? ''));
+                $externalUrl = trim((string) ($item['external_url'] ?? ''));
                 if (($sectionKey !== null) === ($externalUrl !== '')) {
                     throw new LogicException("Пункт меню [$menuKey.$key] должен иметь ровно одну цель.");
                 }
 
-                if ($sectionKey !== null && !isset($sections[$sectionKey])) {
+                if ($sectionKey !== null && ! isset($sections[$sectionKey])) {
                     throw new LogicException("Пункт меню [$menuKey.$key] ссылается на неизвестный раздел [$sectionKey].");
                 }
 
@@ -250,13 +254,13 @@ final class SiteContentSeeder extends Seeder
         }
 
         foreach ($this->fixture['blocks'] ?? [] as $sectionKey => $block) {
-            if (!isset($sections[$sectionKey])) {
+            if (! isset($sections[$sectionKey])) {
                 throw new LogicException("Блок [$sectionKey] ссылается на неизвестный раздел.");
             }
 
             foreach ($block['media'] ?? [] as $fileName) {
-                $path = __DIR__ . '/assets/' . $fileName;
-                if (!is_file($path)) {
+                $path = __DIR__.'/assets/'.$fileName;
+                if (! is_file($path)) {
                     throw new LogicException("Не найден seed-asset [$path].");
                 }
             }

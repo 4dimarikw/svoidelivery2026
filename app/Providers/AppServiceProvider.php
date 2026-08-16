@@ -16,6 +16,7 @@ use Domain\Catalog\Filters\PriceRangeFilter;
 use Domain\Catalog\Filters\SearchFilter;
 use Domain\Catalog\Filters\SortFilter;
 use Domain\Catalog\Filters\VolumeFilter;
+use Domain\Content\Actions\Content\LoadSiteFooter;
 use Domain\Content\Actions\Content\LoadSiteMenu;
 use Domain\Favorite\Providers\FavoriteServiceProvider;
 use Domain\Order\Providers\OrderServiceProvider;
@@ -68,6 +69,10 @@ class AppServiceProvider extends ServiceProvider
         // мемоизирует построенное дерево (см. класс), так что View Composer
         // ниже и LoadPublicPage::handle() на home/about не строят его дважды.
         $this->app->singleton(LoadSiteMenu::class);
+
+        // Тот же мотив, что у LoadSiteMenu — мемоизация на запрос под
+        // composer подвала ниже.
+        $this->app->singleton(LoadSiteFooter::class);
     }
 
     /**
@@ -120,6 +125,15 @@ class AppServiceProvider extends ServiceProvider
         View::composer(
             'components.layouts.header',
             fn ($view) => $view->with('menu', app(LoadSiteMenu::class)->handle()),
+        );
+
+        // Подвал — то же самое, что и меню выше, но за одним блоком
+        // глобальной секции `footer` вместо дерева. $block может быть null
+        // (секция/блок ещё не заведены в CMS) — footer.blade.php читает
+        // content null-safe.
+        View::composer(
+            'components.layouts.footer',
+            fn ($view) => $view->with('block', app(LoadSiteFooter::class)->handle()),
         );
     }
 }

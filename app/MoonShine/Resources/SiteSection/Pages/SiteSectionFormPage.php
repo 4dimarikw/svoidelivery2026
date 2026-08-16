@@ -32,7 +32,10 @@ final class SiteSectionFormPage extends FormPage
                 Select::make('Именованный маршрут', 'route_name')
                     ->options(app(PublicRouteOptions::class)->get())
                     ->searchable()
-                    ->required(),
+                    // Пусто = глобальная секция, не привязанная к странице
+                    // (см. Domain\Content\Actions\Content\LoadSiteFooter) —
+                    // единственный такой случай сегодня — подвал сайта.
+                    ->nullable(),
                 Text::make('Якорь без #', 'fragment')->default(''),
                 Number::make('Порядок', 'sort_order')->default(0)->min(0),
                 Switcher::make('Активен', 'is_active')->default(true),
@@ -43,7 +46,7 @@ final class SiteSectionFormPage extends FormPage
 
     public function prepareForValidation(): void
     {
-        request()->merge(['fragment' => ltrim(trim((string)request('fragment')), '#')]);
+        request()->merge(['fragment' => ltrim(trim((string) request('fragment')), '#')]);
     }
 
     protected function rules(DataWrapperContract $item): array
@@ -51,13 +54,13 @@ final class SiteSectionFormPage extends FormPage
         return [
             'title' => ['required', 'string', 'max:255'],
             'key' => ['required', 'alpha_dash', 'max:255', Rule::unique('site_sections', 'key')->ignore($item->getKey())],
-            'route_name' => ['required', Rule::in(array_keys(app(PublicRouteOptions::class)->get()))],
+            'route_name' => ['nullable', Rule::in(array_keys(app(PublicRouteOptions::class)->get()))],
             'fragment' => [
                 'present',
                 'string',
                 'max:255',
                 Rule::unique('site_sections', 'fragment')
-                    ->where(fn($query) => $query->where('route_name', request('route_name')))
+                    ->where(fn ($query) => $query->where('route_name', request('route_name')))
                     ->ignore($item->getKey()),
             ],
             'sort_order' => ['required', 'integer', 'min:0'],

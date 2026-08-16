@@ -2,9 +2,11 @@
 
 namespace Domain\Content\Models;
 
+use Database\Factories\Content\SiteSectionFactory;
 use Domain\Content\Models\Concerns\HasPublicationState;
 use Domain\Content\Observers\SiteSectionObserver;
 use Illuminate\Database\Eloquent\Attributes\ObservedBy;
+use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -17,6 +19,14 @@ class SiteSection extends Model
 {
     use HasFactory;
     use HasPublicationState;
+
+    // Домен вне App\Models — конвенция Laravel не угадает Database\Factories\Content\*
+    // сама, без этого переопределения ::factory() падает NotFoundException
+    // (тот же паттерн, что у Domain\Auth\Models\User::newFactory()).
+    protected static function newFactory(): Factory
+    {
+        return SiteSectionFactory::new();
+    }
 
     protected $attributes = [
         'fragment' => '',
@@ -58,7 +68,16 @@ class SiteSection extends Model
 
     public function url(): ?string
     {
-        if (!Route::has($this->route_name)) {
+        // route_name = null — глобальная секция (см. миграцию
+        // make_site_sections_route_name_nullable), у неё в принципе нет
+        // собственного URL; такая секция никогда не участвует в меню, но
+        // метод не должен падать, если его всё же вызовут. Не варнинг —
+        // это ожидаемое состояние, а не рассинхрон с роутами.
+        if ($this->route_name === null) {
+            return null;
+        }
+
+        if (! Route::has($this->route_name)) {
             Log::warning('Site section references a missing route.', [
                 'site_section_id' => $this->getKey(),
                 'route_name' => $this->route_name,
@@ -81,6 +100,6 @@ class SiteSection extends Model
 
         $fragment = ltrim(trim($this->fragment), '#');
 
-        return $fragment === '' ? $url : $url . '#' . $fragment;
+        return $fragment === '' ? $url : $url.'#'.$fragment;
     }
 }

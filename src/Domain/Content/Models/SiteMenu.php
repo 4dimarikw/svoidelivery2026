@@ -2,7 +2,9 @@
 
 namespace Domain\Content\Models;
 
+use Database\Factories\Content\SiteMenuFactory;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -10,6 +12,13 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class SiteMenu extends Model
 {
     use HasFactory;
+
+    // См. Domain\Content\Models\SiteSection::newFactory() — тот же пробел
+    // конвенции для Domain\.
+    protected static function newFactory(): Factory
+    {
+        return SiteMenuFactory::new();
+    }
 
     protected $attributes = [
         'is_active' => true,

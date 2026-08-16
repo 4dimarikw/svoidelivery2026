@@ -922,8 +922,11 @@ class CatalogControllerTest extends TestCase
         // в каждый public-page view уже давно, но ни один Blade-файл его не
         // читал — свойство лениво грузится из БД при первом обращении, а
         // первым обращением стал <x-ui.telegram-autologin> (смонтирован в
-        // components/layouts/app.blade.php на каждой странице).
-        $this->assertLessThan(16, $queryCount, 'Сортировка по рейтингу не должна добавлять N+1.');
+        // components/layouts/app.blade.php на каждой странице). Плюс
+        // фиксированный запрос подвала (Domain\Content\Actions\Content\LoadSiteFooter,
+        // View Composer components.layouts.footer — на каждой публичной
+        // странице, не только на /about).
+        $this->assertLessThan(17, $queryCount, 'Сортировка по рейтингу не должна добавлять N+1.');
     }
 
     public function test_partial_request_returns_only_cards_with_next_page_header(): void
@@ -1001,8 +1004,10 @@ class CatalogControllerTest extends TestCase
         // Товары + справочники фильтров (категории/производители/объёмы/тара) +
         // главное меню (site_menus/site_menu_items — 2 запроса, читаются
         // LoadPublicPage и View Composer шапки из одного мемоизированного
-        // LoadSiteMenu, см. AppServiceProvider::boot()) — фиксированное
-        // небольшое число запросов независимо от количества товаров.
-        $this->assertLessThan(17, $queryCount, 'Ожидались фиксированные запросы без N+1 по manufacturer/volume/container.');
+        // LoadSiteMenu, см. AppServiceProvider::boot()) + подвал
+        // (Domain\Content\Actions\Content\LoadSiteFooter, View Composer
+        // components.layouts.footer) — фиксированное небольшое число
+        // запросов независимо от количества товаров.
+        $this->assertLessThan(18, $queryCount, 'Ожидались фиксированные запросы без N+1 по manufacturer/volume/container.');
     }
 }
