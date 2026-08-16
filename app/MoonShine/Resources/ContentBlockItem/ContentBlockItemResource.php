@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\MoonShine\Resources\ContentBlockItem;
 
-
 use App\MoonShine\Resources\ContentBlockItem\Pages\ContentBlockItemFormPage;
 use App\MoonShine\Resources\ContentBlockItem\Pages\ContentBlockItemIndexPage;
 use Domain\Content\Models\ContentBlockItem;

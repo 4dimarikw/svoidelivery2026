@@ -2,9 +2,9 @@
 
 use Domain\Content\Types\AboutBlockType;
 use Domain\Content\Types\CharityBlockType;
+use Domain\Content\Types\examples\LocationBlockType;
 use Domain\Content\Types\FaqBlockType;
 use Domain\Content\Types\HeroBlockType;
-use Domain\Content\Types\LocationBlockType;
 use Domain\Content\Types\MarketBlockType;
 use Domain\Content\Types\PageHeadersBlockType;
 use Domain\Content\Types\ProgramBlockType;

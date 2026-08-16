@@ -4,12 +4,10 @@ declare(strict_types=1);
 
 namespace App\MoonShine\Resources\ContentBlockItem\Pages;
 
-
 use App\MoonShine\Resources\ContentBlock\ContentBlockResource;
 use App\MoonShine\Resources\ContentBlockItem\ContentBlockItemResource;
 use Domain\Content\ContentBlockTypeRegistry;
 use Domain\Content\Models\ContentBlock;
-use Illuminate\Contracts\Container\BindingResolutionException;
 use MoonShine\Laravel\Fields\Relationships\BelongsTo;
 use MoonShine\Laravel\Pages\Crud\IndexPage;
 use MoonShine\UI\Fields\ID;
@@ -43,9 +41,7 @@ final class ContentBlockItemIndexPage extends IndexPage
         ];
     }
 
-    /** @return array<string, string>
-     * @throws BindingResolutionException
-     */
+    /** @return array<string, string> */
     private function groupOptions(): array
     {
         $options = [];

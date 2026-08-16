@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\MoonShine\Resources\SiteMenu;
 
-
 use App\MoonShine\Resources\SiteMenu\Pages\SiteMenuFormPage;
 use App\MoonShine\Resources\SiteMenu\Pages\SiteMenuIndexPage;
 use Domain\Content\Models\SiteMenu;

@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace App\MoonShine\Resources\SiteMenuItem\Pages;
 
+use App\Actions\Menu\MoveSiteMenuItemBranch;
+use App\Models\SiteMenu;
+use App\Models\SiteMenuItem;
+use App\Models\SiteSection;
 use App\MoonShine\Resources\SiteMenu\SiteMenuResource;
 use App\MoonShine\Resources\SiteMenuItem\SiteMenuItemResource;
 use App\MoonShine\Resources\SiteSection\SiteSectionResource;
 use App\MoonShine\Traits\MoveItemButtons;
-use Domain\Content\Actions\Menu\MoveSiteMenuItemBranch;
-use Domain\Content\Models\SiteMenu;
-use Domain\Content\Models\SiteMenuItem;
-use Domain\Content\Models\SiteSection;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use MoonShine\Contracts\Core\DependencyInjection\CrudRequestContract;
@@ -43,19 +43,7 @@ final class SiteMenuItemIndexPage extends IndexPage
             ID::make(),
             BelongsTo::make('Меню', 'menu', formatted: static fn (SiteMenu $menu) => $menu->title, resource: SiteMenuResource::class),
             Text::make('Ключ', 'key'),
-            BelongsTo::make(
-                'Родитель',
-                'parent',
-                // При parent_id = null MoonShine всё равно вызывает formatted-колбэк,
-                // подставляя `$relation->getModel()` (ModelRelationField::toFormattedValue).
-                // У nestedset-отношения parent() (`->setModel($this)`) это сама текущая
-                // строка, поэтому у корневого пункта в колонке отрисовывался бы его
-                // собственный label — отсюда явная проверка настоящего значения поля.
-                formatted: static fn (?SiteMenuItem $item, int $index, BelongsTo $field): string => $field->toValue(withDefault: false) === null
-                    ? ''
-                    : ($item->label ?: '#'.$item->getKey()),
-                resource: SiteMenuItemResource::class,
-            ),
+            BelongsTo::make('Родитель', 'parent', formatted: static fn (SiteMenuItem $item) => $item->label ?: '#'.$item->getKey(), resource: SiteMenuItemResource::class),
             Text::make('Подпись', 'label'),
             BelongsTo::make('Раздел', 'section', formatted: static fn (SiteSection $section) => $section->title, resource: SiteSectionResource::class),
             Url::make('Внешний URL', 'external_url'),

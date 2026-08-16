@@ -1,9 +1,10 @@
 <?php
 
-namespace Domain\Content\Types;
+namespace Domain\Content\Types\examples;
 
 use Domain\Content\Data\ContentItemGroup;
 use Domain\Content\Rules\SafeContentUrl;
+use Domain\Content\Types\AbstractContentBlockType;
 
 final class LocationBlockType extends AbstractContentBlockType
 {

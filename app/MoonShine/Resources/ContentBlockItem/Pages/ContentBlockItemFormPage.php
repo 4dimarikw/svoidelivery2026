@@ -4,14 +4,12 @@ declare(strict_types=1);
 
 namespace App\MoonShine\Resources\ContentBlockItem\Pages;
 
-
 use App\MoonShine\Resources\ContentBlock\ContentBlockResource;
 use App\MoonShine\Resources\ContentBlockItem\ContentBlockItemResource;
 use Domain\Content\ContentBlockTypeRegistry;
 use Domain\Content\Data\ContentItemGroup;
 use Domain\Content\Models\ContentBlock;
 use Domain\Content\Models\ContentBlockItem;
-use Illuminate\Contracts\Container\BindingResolutionException;
 use Illuminate\Validation\Rule;
 use MoonShine\Contracts\Core\TypeCasts\DataWrapperContract;
 use MoonShine\Laravel\Fields\Relationships\BelongsTo;
@@ -47,13 +45,23 @@ final class ContentBlockItemFormPage extends FormPage
         ];
 
         if ($group !== null) {
-            $fields[] = Box::make('Содержимое', [
-                Json::make('Поля элемента', 'content')->fields($group->fields)->object()->stopFilteringEmpty(),
+            $contentFields = [
                 ...array_map(
                     static fn(string $collection) => MediaLibrary::make('Изображение: ' . $collection, $collection)->allowedExtensions(['jpg', 'jpeg', 'png', 'webp']),
                     $group->mediaCollections,
                 ),
-            ]);
+            ];
+
+            if ($group->fields !== []) {
+                array_unshift(
+                    $contentFields,
+                    Json::make('Поля элемента', 'content')->fields($group->fields)->object()->stopFilteringEmpty(),
+                );
+            }
+
+            if ($contentFields !== []) {
+                $fields[] = Box::make('Содержимое', $contentFields);
+            }
         }
 
         return $fields;
@@ -87,8 +95,10 @@ final class ContentBlockItemFormPage extends FormPage
             'is_active' => ['boolean'],
         ];
 
-        foreach ($group?->rules ?? [] as $key => $rule) {
-            $rules['content.' . $key] = $rule;
+        if ($model->exists) {
+            foreach ($group?->rules ?? [] as $key => $rule) {
+                $rules['content.' . $key] = $rule;
+            }
         }
 
         return $rules;
@@ -101,9 +111,7 @@ final class ContentBlockItemFormPage extends FormPage
             ?->itemGroups()[$item->group_key] ?? null;
     }
 
-    /** @return array<string, string>
-     * @throws BindingResolutionException
-     */
+    /** @return array<string, string> */
     private function groupOptions(): array
     {
         $options = [];
