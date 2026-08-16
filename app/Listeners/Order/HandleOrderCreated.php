@@ -145,31 +145,30 @@ class HandleOrderCreated
         $escape = fn (?string $value): string => htmlspecialchars((string) $value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
 
         $lines = [
-            '🆕 <b>Новый заказ №'.$escape($order->number).'</b>',
-            'Сумма: '.$escape((string) $order->amount),
-            'Доставка: '.$escape($order->deliveryType?->title),
+            '🆕 <code>Новый заказ: '.$escape($order->number).'</code>',
+            '<code>Сумма: '.$escape((string) $order->amount).'</code>',
             '',
-            'Получатель: '.$escape(trim(($order->orderCustomer?->first_name ?? '').' '.($order->orderCustomer?->last_name ?? ''))),
-            'Телефон: '.$escape($order->orderCustomer?->phone),
+            '<code>Получатель: </code>'.$escape(trim(($order->orderCustomer?->first_name ?? '').' '.($order->orderCustomer?->last_name ?? ''))),
+            '<code>Телефон: </code>'.$escape($order->orderCustomer?->phone),
         ];
 
         if ($order->deliveryType?->with_address) {
-            $lines[] = 'Город: '.$escape($order->orderCustomer?->city);
-            $lines[] = 'Адрес: '.$escape($order->orderCustomer?->address);
-        }
-
-        if ($order->comment) {
-            $lines[] = '';
-            $lines[] = 'Комментарий: '.$escape($order->comment);
+            $lines[] = '<code>Город: </code>'.$escape($order->orderCustomer?->city);
+            $lines[] = '<code>Адрес: </code>'.$escape($order->orderCustomer?->address);
         }
 
         $lines[] = '';
-        $lines[] = '<b>Состав заказа:</b>';
+        $lines[] = '<code>Комментарий: </code> '.blank($order->comment) ? $escape($order->comment) : '<i>отсутствует</i>';
+
+        $lines[] = '';
+        $lines[] = "<blockquote expandable>Состав заказа\n";
 
         foreach ($order->orderItems as $item) {
             $name = $item->product?->brand ?: $item->product?->name;
             $lines[] = '• '.$escape($name).' × '.$item->quantity.' = '.$escape((string) $item->amount);
         }
+
+        $lines[] = '</blockquote>';
 
         return implode("\n", $lines);
     }
