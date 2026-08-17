@@ -68,13 +68,27 @@ final class ResolveContainerStage implements ImportStage
     private function detectCode(string $source): ?string
     {
         $map = config('catalog_import.container_map', []);
+        $haystack = $this->normalize($source);
 
         foreach ($map as $needle => $code) {
-            if (str_contains($source, $needle)) {
+            if (str_contains($haystack, $this->normalize($needle))) {
                 return $code;
             }
         }
 
         return null;
+    }
+
+    /**
+     * 1С пишет маркеры тары непоследовательно («ст. бут.» и «ст бут.»,
+     * иногда в верхнем регистре), поэтому перед сравнением точки схлопываются
+     * в пробелы, пробелы — в один, регистр приводится к нижнему.
+     */
+    private function normalize(string $value): string
+    {
+        $value = mb_strtolower($value, 'UTF-8');
+        $value = str_replace('.', ' ', $value);
+
+        return trim((string) preg_replace('/\s+/u', ' ', $value));
     }
 }

@@ -107,6 +107,20 @@ final class ProductIndexPage extends IndexPage
                 'manufacturer',
                 formatted: static fn (Manufacturer $model) => $model->name,
                 resource: ManufacturerResource::class,
+            )->nullable()->searchable(),
+
+            BelongsTo::make(
+                __('moonshine.product.fields.volume'),
+                'volume',
+                formatted: static fn (Volume $model) => $model->label,
+                resource: VolumeResource::class,
+            )->nullable(),
+
+            BelongsTo::make(
+                __('moonshine.product.fields.container'),
+                'container',
+                formatted: static fn (Container $model) => $model->name,
+                resource: ContainerResource::class,
             )->nullable(),
 
             Switcher::make(__('moonshine.product.fields.in_stock'), 'in_stock'),

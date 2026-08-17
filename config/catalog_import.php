@@ -125,7 +125,7 @@ return [
         'ж/б' => 'can',
         'ст. бут.' => 'glass_bottle',
         'конс./б' => 'tin_can',
-        'бут' => 'piece',
+        'бут' => 'glass_bottle',
         'пачка' => 'pack',
         'газ. баллон' => 'gas_cylinder',
     ],

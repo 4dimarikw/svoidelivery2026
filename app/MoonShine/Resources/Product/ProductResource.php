@@ -12,8 +12,6 @@ use MoonShine\Laravel\Resources\ModelResource;
 use MoonShine\MenuManager\Attributes\Group;
 use MoonShine\MenuManager\Attributes\Order;
 use MoonShine\Support\Attributes\Icon;
-use MoonShine\Support\Enums\Action;
-use MoonShine\Support\ListOf;
 
 /**
  * Товар редактируется из админки, но не полностью: catalog:import
@@ -47,11 +45,6 @@ class ProductResource extends ModelResource
     public function getTitle(): string
     {
         return __('moonshine.product.title');
-    }
-
-    protected function activeActions(): ListOf
-    {
-        return parent::activeActions()->except(Action::DELETE, Action::MASS_DELETE);
     }
 
     protected function pages(): array
