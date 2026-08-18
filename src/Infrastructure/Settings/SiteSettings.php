@@ -16,7 +16,10 @@ class SiteSettings extends Settings
     /** Email тестового пользователя для кнопки "Тестовый заказ" (OrderIndexPage::createTestOrder()). Перенесено из GeneralSettings. */
     public ?string $test_user_email = null;
 
-    /** Email для уведомления о новом заказе (App\Listeners\Order\HandleOrderCreated). */
+    /**
+     * Email(ы) для уведомления о новом заказе (App\Listeners\Order\HandleOrderCreated).
+     * Список адресов через ";" — см. notifyEmails().
+     */
     public ?string $notify_email = null;
 
     /** Лимит обновлений Untappd за прогон. Не используется ни одним читателем кода — перенесено из GeneralSettings как есть. */
@@ -25,5 +28,21 @@ class SiteSettings extends Settings
     public static function group(): string
     {
         return 'site';
+    }
+
+    /**
+     * Адреса уведомления о новом заказе, распарсенные из notify_email
+     * (список через ";"). Валидность каждого адреса гарантирует
+     * SiteSettingsPage::save() (Infrastructure\Rules\EmailListRule),
+     * здесь только разбор: split + trim + отбрасывание пустых частей.
+     *
+     * @return list<string>
+     */
+    public function notifyEmails(): array
+    {
+        return array_values(array_filter(array_map(
+            trim(...),
+            explode(';', (string) $this->notify_email),
+        ), fn (string $email): bool => $email !== ''));
     }
 }

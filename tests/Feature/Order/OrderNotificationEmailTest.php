@@ -135,6 +135,45 @@ class OrderNotificationEmailTest extends TestCase
     }
 
     /**
+     * notify_email хранит список адресов через ";" (SiteSettings::notifyEmails())
+     * — письмо одно, но с несколькими получателями в To:.
+     */
+    public function test_multiple_addresses_are_all_queued_as_recipients(): void
+    {
+        Mail::fake();
+
+        $settings = app(SiteSettings::class);
+        $settings->notify_email = 'a@example.test; b@example.test';
+        $settings->save();
+
+        $order = Order::create([]);
+
+        $this->callHandler($order);
+
+        Mail::assertQueued(NewOrderCreated::class, fn (NewOrderCreated $mail) => $mail->hasTo('a@example.test') && $mail->hasTo('b@example.test')
+        );
+    }
+
+    /**
+     * Мусор в списке (двойной ";", хвостовой ";") не должен ронять
+     * уведомление целиком — notifyEmails() просто отбрасывает пустые части.
+     */
+    public function test_blank_entries_in_address_list_are_skipped(): void
+    {
+        Mail::fake();
+
+        $settings = app(SiteSettings::class);
+        $settings->notify_email = 'a@example.test;;';
+        $settings->save();
+
+        $order = Order::create([]);
+
+        $this->callHandler($order);
+
+        Mail::assertQueued(NewOrderCreated::class, fn (NewOrderCreated $mail) => $mail->hasTo('a@example.test'));
+    }
+
+    /**
      * Листенер целиком (session()->flash + UploadOrderToFTP) дёргать не
      * нужно — тестируем только notifyAdmin(), но она private, поэтому
      * прогоняем через реальный handle() на изолированном Order без

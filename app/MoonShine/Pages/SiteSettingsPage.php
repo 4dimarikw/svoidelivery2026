@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\MoonShine\Pages;
 
 use Illuminate\Http\Request;
+use Infrastructure\Rules\EmailListRule;
 use Infrastructure\Settings\SiteSettings;
 use MoonShine\Contracts\UI\ComponentContract;
 use MoonShine\Crud\JsonResponse;
@@ -46,7 +47,8 @@ final class SiteSettingsPage extends Page
                             ->hint('Гость, открывший сайт внутри Telegram, входит автоматически, без нажатия кнопки.'),
                         Text::make('Email тестового пользователя', 'test_user_email')
                             ->hint('Используется кнопкой «Тестовый заказ» в списке заказов — должен совпадать с email существующего пользователя.'),
-                        Text::make('Email для уведомлений', 'notify_email'),
+                        Text::make('Email для уведомлений', 'notify_email')
+                            ->hint('Несколько адресов — через ";", например: a@example.ru; b@example.ru'),
                         Number::make('Лимит обновлений Untappd', 'untappd_update_limit')->min(0),
                     ])
                     ->fill($settings->toArray())
@@ -63,7 +65,7 @@ final class SiteSettingsPage extends Page
         $validated = $request->validate([
             'site_name' => ['required', 'string', 'max:255'],
             'test_user_email' => ['nullable', 'email', 'exists:users,email'],
-            'notify_email' => ['nullable', 'email', 'max:255'],
+            'notify_email' => ['nullable', 'string', 'max:1000', new EmailListRule],
             'untappd_update_limit' => ['required', 'integer', 'min:0'],
             'telegram_autologin' => ['nullable', 'boolean'],
         ]);

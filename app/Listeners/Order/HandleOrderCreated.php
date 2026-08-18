@@ -57,9 +57,9 @@ class HandleOrderCreated
      */
     private function notifyAdmin(Order $order): void
     {
-        $email = app(SiteSettings::class)->notify_email;
+        $emails = app(SiteSettings::class)->notifyEmails();
 
-        if ($email === null) {
+        if ($emails === []) {
             return;
         }
 
@@ -81,7 +81,7 @@ class HandleOrderCreated
                 report($e);
             }
 
-            Mail::to($email)->queue(new NewOrderCreated($order, $xml));
+            Mail::to($emails)->queue(new NewOrderCreated($order, $xml));
         } catch (Throwable $e) {
             report($e);
             event(new OrderNotificationEmailFailed(
@@ -112,7 +112,7 @@ class HandleOrderCreated
             // Дублирует loadMissing() из notifyAdmin() — безопасно (уже
             // загруженные связи не перезапрашиваются), а нужен на случай,
             // если email-ветка вообще не дошла до своего loadMissing()
-            // (notify_email === null).
+            // (notifyEmails() === []).
             $order->loadMissing(['orderCustomer', 'orderItems.product', 'deliveryType']);
 
             app(SendTelegramMessage::class)(
