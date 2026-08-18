@@ -79,4 +79,19 @@ class ValidateCategoryRegistryCommandTest extends TestCase
 
         $this->artisan('catalog:validate-registry')->assertExitCode(1);
     }
+
+    public function test_passes_when_fallback_category_is_inactive(): void
+    {
+        // Отключение fallback-категории — штатный способ скрыть с витрины
+        // нераспознанные товары (ProductBuilder::inCategories()), а не
+        // ошибка реестра — команда должна пройти, только предупредить.
+        $settings = app(CatalogImportSettings::class);
+        $category = Category::query()->where('slug', $settings->fallback_slug)->firstOrFail();
+        $category->is_active = false;
+        $category->save();
+
+        $this->artisan('catalog:validate-registry')
+            ->expectsOutputToContain('неактивна')
+            ->assertExitCode(0);
+    }
 }

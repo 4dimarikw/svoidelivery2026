@@ -377,7 +377,10 @@ price-exemption, и `ResolveCategoryStage` для резолва модели) �
 порядком в конфиге» (не больше одного активного `alcohol`-правила на каждый
 `match_when`, уникальность `accessory_title`-значений), теперь проверяет
 `php artisan catalog:validate-registry` — гоняй её после правок вручную в БД
-или перед импортом.
+или перед импортом. Отключить `fallback_slug`-категорию (`is_active=false`) —
+штатный способ скрыть нераспознанные товары с витрины (см.
+`ProductBuilder::inCategories()`): валидатор об этом только предупреждает,
+импорт не блокирует.
 
 `database/seeders/CategorySeeder.php` только гарантирует наличие исходного
 набора категорий (`firstOrCreate` по slug, никогда не перезаписывает) — не

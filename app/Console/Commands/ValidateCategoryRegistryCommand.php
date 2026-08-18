@@ -23,7 +23,12 @@ use Infrastructure\Settings\CatalogImportSettings;
  * 4. type=accessory_title — value обязателен и глобально уникален среди
  *    активных правил (дубль тихо перезаписывается последним объявлением).
  * 5. CatalogImportSettings::fallback_slug должен указывать на существующую
- *    активную категорию.
+ *    категорию. Активность категории — НЕ инвариант: импорт резолвит
+ *    fallback по slug независимо от is_active (CategoryRegistry грузит
+ *    категории без фильтра), а отключённая категория просто не показывает
+ *    свои товары на витрине (ProductBuilder::inCategories()) — рабочий
+ *    способ скрыть нераспознанные товары. Неактивный fallback — только
+ *    заметка, не ошибка.
  */
 class ValidateCategoryRegistryCommand extends Command
 {
@@ -34,16 +39,21 @@ class ValidateCategoryRegistryCommand extends Command
     public function handle(CatalogImportSettings $settings): int
     {
         $errors = [];
+        $notices = [];
 
         $rules = CategoryMatchRule::query()->active()->with('category:id,slug')->get();
 
         $this->checkAlcoholWhenUniqueness($rules, $errors);
         $this->checkRequiredValues($rules, $errors);
         $this->checkAccessoryTitleUniqueness($rules, $errors);
-        $this->checkFallback($settings, $errors);
+        $this->checkFallback($settings, $errors, $notices);
 
         if ($errors === []) {
             $this->info('Реестр категорий валиден.');
+
+            foreach ($notices as $notice) {
+                $this->warn("  ! {$notice}");
+            }
 
             return self::SUCCESS;
         }
@@ -51,6 +61,10 @@ class ValidateCategoryRegistryCommand extends Command
         $this->error('Найдены нарушения инвариантов реестра категорий:');
         foreach ($errors as $error) {
             $this->line("  - {$error}");
+        }
+
+        foreach ($notices as $notice) {
+            $this->warn("  ! {$notice}");
         }
 
         return self::FAILURE;
@@ -122,15 +136,20 @@ class ValidateCategoryRegistryCommand extends Command
 
     /**
      * @param  list<string>  $errors
+     * @param  list<string>  $notices
      */
-    private function checkFallback(CatalogImportSettings $settings, array &$errors): void
+    private function checkFallback(CatalogImportSettings $settings, array &$errors, array &$notices): void
     {
         $category = Category::query()->where('slug', $settings->fallback_slug)->first();
 
         if ($category === null) {
             $errors[] = "fallback_slug '{$settings->fallback_slug}' не найден среди категорий.";
         } elseif (! $category->is_active) {
-            $errors[] = "fallback_slug '{$settings->fallback_slug}' указывает на неактивную категорию.";
+            // Не ошибка: импорт резолвит fallback по slug независимо от
+            // is_active, а отключённая категория просто не показывает свои
+            // товары на витрине (ProductBuilder::inCategories()) — это
+            // штатный способ скрыть нераспознанные товары из выдачи.
+            $notices[] = "fallback_slug '{$settings->fallback_slug}' — категория неактивна: товары без правила импортируются, но на витрине видны не будут.";
         }
     }
 }
