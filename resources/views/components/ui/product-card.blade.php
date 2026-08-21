@@ -2,12 +2,18 @@
      из брендбука (data/design-system/project/design-system.html, §06) в
      токенах Tailwind.
 
-     Анатомия сверху вниз: картинка-ссылка на страницу товара (+ избранное
-     и бейдж рейтинга Untappd поверх неё, см. ниже) → плашка «Новинка»
-     (если is_new) → производитель (mono) → заголовок brand ?: name
-     (2 строки) → плашка стиля (только пиво) → строка «объём · тара» →
-     mono-строка ABV/IBU/°P/EBC (только пиво) → чип «нет в наличии» →
-     .actions (цена + «Купить»/«Сообщить»).
+     Анатомия сверху вниз: картинка-ссылка на страницу товара (+ избранное,
+     бейдж «Новинка» и бейдж рейтинга Untappd поверх неё, см. ниже) →
+     производитель (mono) → заголовок brand ?: name (2 строки) → плашка
+     стиля (только пиво) → строка «объём · тара» → mono-строка
+     ABV/IBU/°P/EBC (только пиво) → чип «нет в наличии» → .actions (цена +
+     «Купить»/«Сообщить»).
+
+     «Новинка» и рейтинг — оба варианта .tag-over/.rate-solid из брендбука
+     (design-system.html §06, карточка F «Витринная»), не .ribbon (карточка
+     B) и не .rate (карточка A): полноширинной плашки под картинкой больше
+     нет, оба бейджа сидят прямо на нижнем крае картинки, «прилипшие»
+     каждый к своей боковой стороне.
 
      Кликабельна только картинка — как в брендбуке (design-system.html §06,
      <a class="thumb" href="#">), но не вся карточка целиком: <article>
@@ -60,13 +66,14 @@
      'beerDetails.beerStyle' и 'beerDetails.untappdBeer' — без этого N+1 на
      каждую карточку.
 
-     Бейдж рейтинга Untappd (design-system.html §06 .card .rate) — поверх
-     картинки, absolute в правом нижнем углу (favorite-toggle — в правом
-     верхнем, см. ниже), не чип в общем ряду под спеками: тот теперь несёт
-     только «нет в наличии». Свой цвет (text-untappd, tailwind.config.js) —
-     не warn/gold, ни один из них не совпадает с брендбучным rgb(251,188,4);
-     иконка — новый залитый @case('untappd') в icon.blade.php (марка
-     Untappd, не звезда), не x-ui.icon name="star" из старого вида.
+     Бейдж рейтинга Untappd (design-system.html §06 .card .rate-solid) —
+     поверх картинки, absolute в правом нижнем углу (favorite-toggle — в
+     правом верхнем, см. ниже), не чип в общем ряду под спеками: тот теперь
+     несёт только «нет в наличии». Свой цвет (text-untappd,
+     tailwind.config.js) — не warn/gold, ни один из них не совпадает с
+     брендбучным rgb(251,188,4); иконка — новый залитый @case('untappd') в
+     icon.blade.php (марка Untappd, не звезда), не x-ui.icon name="star" из
+     старого вида.
 
      $product->hasOwnImage() отличает настоящую медиа-картинку от
      заглушки Untappd (badge-beer-default-thumb) — при false рендерится
@@ -171,23 +178,27 @@
 
         <x-ui.favorite-toggle :product="$product" class="absolute right-2 top-2 z-10" />
 
-        {{-- Рейтинг Untappd — design-system.html §06 .card .rate: бейдж
-             поверх фото, не чип в общем ряду ниже (там теперь только
-             «нет в наличии», см. ниже). --}}
+        {{-- «Новинка» — design-system.html §06 .card .tag-over (карточка F):
+             бейдж прямо на картинке, прижат к левому краю у нижней кромки,
+             скруглён только справа — не полноширинная плашка .ribbon под
+             картинкой (карточка B). --}}
+        @if ($product->is_new)
+            <span class="absolute bottom-2 left-0 z-10 inline-flex items-center rounded-r-sm bg-cream-200 px-3 pb-[5px] pt-1.5 font-mono text-badge font-medium uppercase leading-none tracking-label text-tan-600">
+                {{ __('catalog.new') }}
+            </span>
+        @endif
+
+        {{-- Рейтинг Untappd — design-system.html §06 .card .rate-solid
+             (карточка F): та же нижняя кромка, что у «Новинки», но
+             прижат к правому краю и скруглён только слева. --}}
         @if ($rating)
-            <span class="absolute bottom-1.5 right-1.5 z-10 inline-flex items-center gap-1 rounded-sm bg-cream-50/90 px-[5px] py-0.5 font-mono text-[11px] font-medium leading-none tracking-[0.02em] text-untappd">
-                <x-ui.icon-untappd :size="12" />{{ $rating }}
+            <span class="absolute bottom-2 right-0 z-10 inline-flex items-center gap-1 rounded-l-sm bg-cream-50/90 px-2.5 pb-1 pt-[5px] font-mono text-xs font-medium leading-none tracking-[0.02em] text-untappd">
+                <x-ui.icon-untappd :size="13" />{{ $rating }}
             </span>
         @endif
     </div>
 
-    @if ($product->is_new)
-        <div class="border-b border-hairline bg-cream-200 px-2 py-1 font-mono text-[10px] uppercase leading-[14px] tracking-label text-tan-600 xl:px-5 xl:pb-1.5 xl:pt-[7px]">
-            {{ __('catalog.new') }}
-        </div>
-    @endif
-
-    <div class="flex flex-1 flex-col px-2 pb-2.5 pt-2 xl:px-5 xl:pb-5 xl:pt-4.5">
+    <div class="flex flex-1 flex-col px-3.5 pt-[13px] pb-[15px]">
         @if ($product->manufacturer)
             <div @class(['font-mono text-badge uppercase text-ink-300', 'opacity-60' => ! $available])>{{ $product->manufacturer->name }}</div>
         @endif
@@ -232,8 +243,8 @@
                      чипа. Ограничиваем важность до xl (max-xl:), чтобы на
                      xl вернулся обычный, ничем не переопределённый дефолт
                      компонента. Рейтинг сюда больше не входит — он бейджем
-                     на фото (см. выше); «Новинка» — отдельная плашка под
-                     картинкой, тоже выше. --}}
+                     на фото (см. выше); «Новинка» — тоже бейдж на самой
+                     картинке, там же. --}}
                 <x-ui.chip tone="cream" class="max-xl:!px-1.5 max-xl:!py-1">{{ __('catalog.out_of_stock') }}</x-ui.chip>
             </div>
         @endif
