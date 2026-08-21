@@ -46,9 +46,17 @@ class BuildOrderXmlTest extends TestCase
         $this->assertSame($order->number, (string) $xml->Order->OrderNumber);
         $this->assertCount(2, $xml->Order->Items->Item);
 
+        $productCodes = [];
+
         foreach ($xml->Order->Items->Item as $item) {
             $this->assertMatchesRegularExpression('/^\d+\.\d{2}$/', (string) $item->Price);
+            $productCodes[] = (string) $item->ProductCode;
         }
+
+        $this->assertEqualsCanonicalizing(
+            $order->orderItems->pluck('product.external_code')->all(),
+            $productCodes
+        );
     }
 
     /**

@@ -102,9 +102,11 @@ class BuildOrderXml
         foreach ($orderItems as $orderItem) {
             $itemElement = $itemsElement->addChild('Item');
 
-            // Код товара — у Product нет отдельного SKU-поля, ближайший
-            // аналог — article (артикул из 1С).
-            $productCode = $orderItem->product?->article ?? '';
+            // Код товара — external_code, уникальный код номенклатуры из 1С
+            // (products.external_code, unique + NOT NULL): по нему 1С находит
+            // товар при разборе заказа. article (артикул) для этого не годится —
+            // он не уникален и может быть пустым.
+            $productCode = $orderItem->product?->external_code ?? '';
             $this->addTextChild($itemElement, 'ProductCode', $productCode);
 
             $quantity = (int) $orderItem->quantity;
