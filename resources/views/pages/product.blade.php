@@ -88,7 +88,7 @@
                         @endif
                         @if ($rating)
                             <x-ui.chip tone="warn">
-                                <x-ui.icon name="star" :size="12" class="mr-1"/>{{ $rating }}
+                                <x-ui.icon-untappd :size="12" class="mr-1"/>{{ $rating }}
                                 {{--                                @if ($ratingCount)--}}
                                 {{--                                    <span class="ml-1 text-ink-500">({{ $ratingCount }})</span>--}}
                                 {{--                                @endif--}}
