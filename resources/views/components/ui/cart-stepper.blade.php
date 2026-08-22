@@ -50,7 +50,7 @@
         @if ($showBuyButton)
             <div x-show="quantity === 0" class="h-full">
                 <x-ui.btn type="button" variant="primary" size="md" block class="h-full px-2 xl:px-[22px]" disabled>
-                    {{ __('catalog.buy') }}
+                    {{ __('catalog.notify') }}
                 </x-ui.btn>
             </div>
         @endif

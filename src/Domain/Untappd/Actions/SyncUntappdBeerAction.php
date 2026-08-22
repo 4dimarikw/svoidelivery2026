@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Domain\Untappd\Actions;
 
+use App\Events\UntappdBeerSynced;
 use App\Events\UntappdBeerSyncFailed;
 use Domain\Untappd\Models\UntappdBeer;
 use Services\Untappd\DTOs\BeerResponseDTO;
@@ -42,17 +43,17 @@ final class SyncUntappdBeerAction
             // Некоторые записи Untappd не отдают beer_image — тогда падаем на beer_label
             // (см. UntappdBeerFormPage::resync).
             'label' => $beerDto->beer_image ?: $beerDto->beer_label,
-            'url' => config('project.untappd_base_url') . '/b/' . $beerDto->beer_slug . '/' . $beerDto->bid,
+            'url' => config('project.untappd_base_url').'/b/'.$beerDto->beer_slug.'/'.$beerDto->bid,
             'synced_at' => now(),
         ])->save();
 
-//        event(new UntappdBeerSynced(
-//            beerId: $beer->beer_id,
-//            name: $beer->name,
-//            brewery: $beer->brewery,
-//            ratingCount: $beer->rating_count,
-//            ratingScore: (float) $beer->rating_score,
-//        ));
+        event(new UntappdBeerSynced(
+            beerId: $beer->beer_id,
+            name: $beer->name,
+            brewery: $beer->brewery,
+            ratingCount: $beer->rating_count,
+            ratingScore: (float) $beer->rating_score,
+        ));
 
         return true;
     }

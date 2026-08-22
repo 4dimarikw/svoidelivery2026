@@ -47,7 +47,23 @@ final class SiteMenuItemIndexPage extends IndexPage
             ID::make(),
             BelongsTo::make('Меню', 'menu', formatted: static fn (SiteMenu $menu) => $menu->title, resource: SiteMenuResource::class),
             Text::make('Ключ', 'key')->canSee(fn () => $isSuperUser),
-            BelongsTo::make('Родитель', 'parent', formatted: static fn (SiteMenuItem $item) => $item->label ?: '#'.$item->getKey(), resource: SiteMenuItemResource::class)->canSee(fn () => $isSuperUser),
+            // formatted получает не null, а $relation->getModel() (см. NodeTrait::parent()
+            // — ->setModel($this) подменяет модель relation-запроса на текущую строку),
+            // так что у корневого пункта (parent_id = null) сюда прилетал бы сам $item
+            // текущей строки, а не пустое значение. Проверяем реальный parent_id строки
+            // через $field->getData() (DataWrapper текущей строки таблицы, не связи).
+            BelongsTo::make(
+                'Родитель',
+                'parent',
+                formatted: static function (SiteMenuItem $item, int $index, BelongsTo $field): string {
+                    $row = $field->getData()?->getOriginal();
+
+                    return $row instanceof SiteMenuItem && $row->parent_id !== null
+                        ? ($item->label ?: '#'.$item->getKey())
+                        : '';
+                },
+                resource: SiteMenuItemResource::class,
+            )->canSee(fn () => $isSuperUser),
             Text::make('Подпись', 'label'),
             BelongsTo::make('Раздел', 'section', formatted: static fn (SiteSection $section) => $section->title, resource: SiteSectionResource::class),
             Url::make('Внешний URL', 'external_url'),

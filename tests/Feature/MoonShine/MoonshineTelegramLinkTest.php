@@ -161,6 +161,7 @@ class MoonshineTelegramLinkTest extends TestCase
             'post_type' => 'post',
             'posted_at' => now(),
             'text' => 'Новость',
+            'message_text' => 'Новость',
             'images' => [],
             'raw' => [],
             'status' => VkPostStatus::READY,
