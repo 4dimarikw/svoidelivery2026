@@ -52,6 +52,7 @@ final class CreateTestOrder
                 'first_name' => $profile?->first_name ?? 'Тест',
                 'last_name' => $profile?->last_name ?? 'Тестов',
                 'phone' => $profile?->phone ?? '79990000000',
+                'messenger_url' => array_values($profile?->socialLinks() ?? [])[0]['url'] ?? 'https://t.me/test',
                 'city' => $address?->city,
                 'address' => $address?->address,
                 'comment' => $address?->comment,

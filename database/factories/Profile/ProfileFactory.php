@@ -24,8 +24,10 @@ class ProfileFactory extends Factory
             'last_name' => fake()->lastName(),
             'patronymic' => fake()->optional()->firstName(),
             'phone' => fake()->optional()->phoneNumber(),
-            'vk_url' => fake()->optional()->url(),
-            'telegram_url' => fake()->optional()->url(),
+            'social_links' => fake()->optional()->passthrough(array_filter([
+                'telegram' => fake()->optional()->url(),
+                'vk' => fake()->optional()->url(),
+            ])),
             'default_order_comment' => fake()->optional()->sentence(),
         ];
     }

@@ -22,6 +22,7 @@ final class CustomerDTO
         public readonly string $firstName,
         public readonly string $lastName,
         public readonly string $phone,
+        public readonly string $messengerUrl,
     ) {}
 
     public static function fromArray(array $data): self
@@ -33,6 +34,7 @@ final class CustomerDTO
             firstName: $data['first_name'],
             lastName: $data['last_name'],
             phone: $data['phone'],
+            messengerUrl: $data['messenger_url'],
         );
     }
 
@@ -48,6 +50,7 @@ final class CustomerDTO
             firstName: $request->input('first_name'),
             lastName: $request->input('last_name'),
             phone: $request->input('phone'),
+            messengerUrl: $request->input('messenger_url'),
         );
     }
 
@@ -58,6 +61,7 @@ final class CustomerDTO
             'first_name' => $this->firstName,
             'last_name' => $this->lastName,
             'phone' => $this->phone,
+            'messenger_url' => $this->messengerUrl,
         ];
     }
 

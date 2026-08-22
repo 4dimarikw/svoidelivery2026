@@ -40,6 +40,8 @@ class OrderCustomerIndexPage extends IndexPage
 
             Text::make(__('moonshine.order_customer.fields.phone'), 'phone'),
 
+            Text::make(__('moonshine.order_customer.fields.messenger_url'), 'messenger_url'),
+
             Text::make(__('moonshine.order_customer.fields.city'), 'city'),
 
             Text::make(__('moonshine.order_customer.fields.address'), 'address'),

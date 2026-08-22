@@ -97,8 +97,18 @@
                         :help="__('account.field.phone_help')"
                         :value="$profile?->phone"
                     />
-                    <x-ui.input-field name="vk_url" type="url" :label="__('account.field.vk_url')" :value="$profile?->vk_url" placeholder="https://vk.com/..." />
-                    <x-ui.input-field name="telegram_url" type="url" :label="__('account.field.telegram_url')" :value="$profile?->telegram_url" placeholder="https://t.me/..." />
+                    {{-- Одно поле на сеть из config('social.networks') — новая
+                         сеть добавляется строкой в конфиге, без правки этого
+                         вида (см. Profile::socialLink()). --}}
+                    @foreach (config('social.networks') as $slug => $network)
+                        <x-ui.input-field
+                            :name="'social_'.$slug"
+                            type="url"
+                            :label="$network['label']"
+                            :value="$profile?->socialLink($slug)"
+                            :placeholder="$network['placeholder']"
+                        />
+                    @endforeach
                     <x-ui.textarea-field name="default_order_comment" :label="__('account.field.default_order_comment')" :value="$profile?->default_order_comment" />
 
                     <x-ui.form-actions>

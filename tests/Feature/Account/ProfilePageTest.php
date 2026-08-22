@@ -46,15 +46,32 @@ class ProfilePageTest extends TestCase
         $this->assertSame('Пётр', $user->fresh()->profile->first_name);
     }
 
-    public function test_vk_url_must_be_a_valid_url(): void
+    public function test_social_vk_must_be_a_valid_url(): void
     {
         $user = User::factory()->create();
 
         $response = $this->actingAs($user)
             ->from(route('account.profile.edit'))
-            ->put(route('account.profile.update'), ['vk_url' => 'not a url']);
+            ->put(route('account.profile.update'), ['social_vk' => 'not a url']);
 
-        $response->assertSessionHasErrors('vk_url');
+        $response->assertSessionHasErrors('social_vk');
+    }
+
+    public function test_update_stores_social_links_as_json_and_omits_blank_ones(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)->put(route('account.profile.update'), [
+            'social_telegram' => 'https://t.me/ivan',
+            'social_max' => 'https://max.ru/u/ivan',
+            'social_vk' => '',
+        ]);
+
+        $profile = $user->fresh()->profile;
+
+        $this->assertSame('https://t.me/ivan', $profile->socialLink('telegram'));
+        $this->assertSame('https://max.ru/u/ivan', $profile->socialLink('max'));
+        $this->assertNull($profile->socialLink('vk'));
     }
 
     public function test_ajax_update_returns_blank_200_without_x_redirect(): void

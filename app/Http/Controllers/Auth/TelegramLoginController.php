@@ -214,12 +214,13 @@ class TelegramLoginController extends Controller
         event(new Registered($user));
 
         // @username в Telegram не обязателен — без него ссылку строить не из
-        // чего, поле telegram_url остаётся пустым и редактируемым как раньше.
-        // Только при СОЗДАНИИ аккаунта: повторный вход (см. loginTelegramUser
-        // выше — тогда register() вообще не вызывается) не должен затирать
-        // то, что пользователь мог сам поменять в профиле.
+        // чего, social_links['telegram'] остаётся незаполненным и
+        // редактируемым как раньше. Только при СОЗДАНИИ аккаунта: повторный
+        // вход (см. loginTelegramUser выше — тогда register() вообще не
+        // вызывается) не должен затирать то, что пользователь мог сам
+        // поменять в профиле.
         if ($username !== null && $username !== '') {
-            $user->profile()->updateOrCreate([], ['telegram_url' => "https://t.me/{$username}"]);
+            $user->profile()->updateOrCreate([], ['social_links' => ['telegram' => "https://t.me/{$username}"]]);
         }
 
         ($chat ?? new TelegramChat(['chat_id' => $chatId, 'telegraph_bot_id' => $bot->id]))

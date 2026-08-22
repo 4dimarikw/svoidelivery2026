@@ -51,6 +51,13 @@
     // ниже подменяется на лету через Alpine (addressComments).
     $selectedAddress = $addresses->firstWhere('id', (int) $selectedAddressId);
 
+    // Ссылки на мессенджеры из профиля (Domain\Profile\Models\Profile::
+    // socialLinks(), config/social.php) — источник для селекта «взять из
+    // профиля» ниже. Пусто, если профиля нет или ни одна сеть не заполнена:
+    // тогда рендерится только текстовое поле, без селекта.
+    $messengerLinks = $profile?->socialLinks() ?? [];
+    $defaultMessengerUrl = old('messenger_url', reset($messengerLinks)['url'] ?? '');
+
     // Товары, выбывшие из наличия уже после добавления в корзину — плашка
     // над кнопкой оформления (см. ниже) и приглушение строки (cart-line.blade.php).
     // Кнопку «Оформить заказ» это не блокирует — единственный надёжный барьер
@@ -102,7 +109,10 @@
                     :action="route('checkout.store')"
                     method="POST"
                     mode="ajax"
-                    :state="['comment' => old('comment', $selectedAddress?->comment)]"
+                    :state="[
+                        'comment' => old('comment', $selectedAddress?->comment),
+                        'messenger_url' => $defaultMessengerUrl,
+                    ]"
                     x-effect="$store.checkout.submitting = submitting; $store.checkout.error = errorFor('checkout')"
                     class="grid gap-8"
                 >
@@ -162,6 +172,37 @@
                                 :label="__('account.field.phone')"
                                 :help="__('account.field.phone_help')"
                                 :value="old('phone', $profile?->phone)"
+                                required
+                            />
+                            {{-- Мессенджер для связи — обязателен. Селект «взять из
+                                 профиля» рендерится только если там есть хоть одна
+                                 заполненная ссылка (Profile::socialLinks()); иначе в
+                                 нём остался бы один пункт «Другое» — мусор. Сам
+                                 селект ничего не валидируется и никуда не
+                                 отправляется, только подставляет значение в
+                                 текстовое поле — тот же приём, что уже применён
+                                 для addressComments выше (радио-кнопки адреса). --}}
+                            @if ($messengerLinks !== [])
+                                <div x-data="{ messengerLinks: @js(collect($messengerLinks)->map(fn ($link) => $link['url'])) }">
+                                    <x-ui.select-field
+                                        name="messenger_source"
+                                        :label="__('order.messenger_source')"
+                                        :options="[
+                                            ...collect($messengerLinks)->map(fn ($link) => $link['label'].' — '.$link['url'])->all(),
+                                            'other' => __('order.messenger_other'),
+                                        ]"
+                                        :value="array_key_first($messengerLinks)"
+                                        x-on:change="state.messenger_url = messengerLinks[$el.value] ?? ''"
+                                    />
+                                </div>
+                            @endif
+                            <x-ui.input-field
+                                name="messenger_url"
+                                type="url"
+                                :label="__('order.messenger')"
+                                :help="__('order.messenger_help')"
+                                :value="$defaultMessengerUrl"
+                                x-model="state.messenger_url"
                                 required
                             />
                             <x-ui.textarea-field

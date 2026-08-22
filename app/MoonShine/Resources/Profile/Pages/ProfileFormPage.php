@@ -13,6 +13,7 @@ use MoonShine\Laravel\Pages\Crud\FormPage;
 use MoonShine\UI\Components\Layout\Box;
 use MoonShine\UI\Fields\Date;
 use MoonShine\UI\Fields\ID;
+use MoonShine\UI\Fields\Json;
 use MoonShine\UI\Fields\Switcher;
 use MoonShine\UI\Fields\Text;
 use MoonShine\UI\Fields\Textarea;
@@ -35,8 +36,19 @@ final class ProfileFormPage extends FormPage
                 Text::make(__('moonshine.profile.fields.first_name'), 'first_name'),
                 Text::make(__('moonshine.profile.fields.patronymic'), 'patronymic'),
                 Text::make(__('moonshine.profile.fields.phone'), 'phone'),
-                Text::make(__('moonshine.profile.fields.vk_url'), 'vk_url'),
-                Text::make(__('moonshine.profile.fields.telegram_url'), 'telegram_url'),
+
+                // Одно текстовое поле на сеть из config('social.networks') —
+                // тот же приём, что Json::make(...)->fields(...) у
+                // ProductFormPage::$flags, новая сеть не требует правки этой
+                // страницы.
+                Json::make(__('moonshine.profile.fields.social_links'), 'social_links')
+                    ->fields(collect(config('social.networks'))
+                        ->map(fn (array $network, string $slug) => Text::make($network['label'], $slug))
+                        ->values()
+                        ->all())
+                    ->object()
+                    ->stopFilteringEmpty(),
+
                 Textarea::make(__('moonshine.profile.fields.default_order_comment'), 'default_order_comment'),
 
                 // Только чтение — заполняются CheckTelegramBotAvailabilityAction
@@ -57,8 +69,7 @@ final class ProfileFormPage extends FormPage
             'last_name' => ['nullable', 'string', 'max:255'],
             'patronymic' => ['nullable', 'string', 'max:255'],
             'phone' => ['nullable', 'string', 'max:32'],
-            'vk_url' => ['nullable', 'url', 'max:255'],
-            'telegram_url' => ['nullable', 'url', 'max:255'],
+            'social_links.*' => ['nullable', 'string', 'max:255'],
             'default_order_comment' => ['nullable', 'string', 'max:1000'],
         ];
     }

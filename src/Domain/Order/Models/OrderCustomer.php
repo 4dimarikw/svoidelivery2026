@@ -25,6 +25,7 @@ class OrderCustomer extends Model
         'first_name',
         'last_name',
         'phone',
+        'messenger_url',
         'city',
         'address',
         'comment',

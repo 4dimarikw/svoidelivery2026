@@ -83,8 +83,8 @@ class TelegramWebAppLoginTest extends TestCase
         $this->assertSame('Иван Петров', $user->name);
         $this->assertNotNull($user->profile);
         // signedInitData() кладёт username => 'ivan_petrov' в user-JSON — при
-        // регистрации это должно сразу попасть в telegram_url профиля.
-        $this->assertSame('https://t.me/ivan_petrov', $user->profile->telegram_url);
+        // регистрации это должно сразу попасть в social_links['telegram'] профиля.
+        $this->assertSame('https://t.me/ivan_petrov', $user->profile->socialLink('telegram'));
 
         Notification::assertNothingSent();
     }
@@ -103,13 +103,13 @@ class TelegramWebAppLoginTest extends TestCase
 
         $user = User::query()->whereHas('telegramChat', fn ($q) => $q->where('chat_id', 987654321))->sole();
 
-        $this->assertNull($user->profile->telegram_url);
+        $this->assertNull($user->profile->socialLink('telegram'));
     }
 
     public function test_repeat_login_reuses_the_same_user(): void
     {
         $existing = User::factory()->telegram()->create();
-        $profile = Profile::factory()->for($existing)->create(['telegram_url' => null]);
+        $profile = Profile::factory()->for($existing)->create(['social_links' => null]);
         TelegramChat::create([
             'chat_id' => '987654321',
             'telegraph_bot_id' => $this->bot->id,
@@ -117,13 +117,13 @@ class TelegramWebAppLoginTest extends TestCase
         ]);
 
         // signedInitData() шлёт username => 'ivan_petrov' — повторный вход не
-        // должен затирать telegram_url существующего профиля (register() на
-        // этом пути вообще не вызывается).
+        // должен затирать social_links['telegram'] существующего профиля
+        // (register() на этом пути вообще не вызывается).
         $this->post(route('auth.telegram.webapp'), ['init_data' => $this->signedInitData()]);
 
         $this->assertAuthenticatedAs($existing);
         $this->assertSame(1, User::query()->count());
-        $this->assertNull($profile->fresh()->telegram_url);
+        $this->assertNull($profile->fresh()->socialLink('telegram'));
     }
 
     public function test_tampered_hash_is_rejected(): void

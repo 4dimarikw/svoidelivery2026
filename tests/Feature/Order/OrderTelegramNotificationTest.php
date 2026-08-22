@@ -120,6 +120,7 @@ class OrderTelegramNotificationTest extends TestCase
             'first_name' => 'Иван',
             'last_name' => 'Иванов',
             'phone' => '+79991234567',
+            'messenger_url' => 'https://t.me/ivan',
         ]);
 
         Telegraph::assertSentData(TelegraphClient::ENDPOINT_MESSAGE, [

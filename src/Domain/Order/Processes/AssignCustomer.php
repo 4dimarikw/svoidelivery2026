@@ -48,6 +48,7 @@ final class AssignCustomer implements OrderProcessContract
             'first_name' => $this->customer->firstName,
             'last_name' => $this->customer->lastName,
             'phone' => $this->customer->phone,
+            'messenger_url' => $this->customer->messengerUrl,
             ...$addressData,
         ]);
 

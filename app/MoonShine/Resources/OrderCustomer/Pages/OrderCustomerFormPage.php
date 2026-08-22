@@ -36,6 +36,7 @@ class OrderCustomerFormPage extends FormPage
                             Text::make(__('moonshine.order_customer.fields.last_name'), 'last_name'),
                         ]),
                         Text::make(__('moonshine.order_customer.fields.phone'), 'phone'),
+                        Text::make(__('moonshine.order_customer.fields.messenger_url'), 'messenger_url')->nullable(),
                     ]),
                     Box::make('Адрес доставки', [
                         Flex::make([
@@ -66,6 +67,9 @@ class OrderCustomerFormPage extends FormPage
             'first_name' => ['string', 'required'],
             'last_name' => ['string', 'required'],
             'phone' => ['string', 'required'],
+            // nullable в админке — старые заказы созданы до появления этого
+            // поля и не обязаны иметь значение задним числом.
+            'messenger_url' => ['nullable', 'string', 'max:255'],
             'city' => $addressRule,
             'address' => $addressRule,
             'comment' => ['nullable', 'string'],

@@ -65,6 +65,13 @@ class OrderRequest extends FormRequest
             'last_name' => ['required', new FIORule],
             'phone' => ['required', 'string', new RussianPhoneNumber],
 
+            // Обязательная ссылка на мессенджер для связи по заказу — тот же
+            // формат, что и ссылки в профиле (config/social.php), но не
+            // привязан к конкретной сети: пользователь либо берёт готовую
+            // ссылку из профиля (JS-подстановка на клиенте), либо вписывает
+            // «Другое» вручную. Ничего из этого профиль не меняет.
+            'messenger_url' => ['required', 'url', 'max:255'],
+
             'comment' => ['nullable', 'string', 'max:1000'],
         ];
     }
@@ -76,6 +83,7 @@ class OrderRequest extends FormRequest
             'last_name' => 'Фамилия',
             'phone' => 'Телефон',
             'address_id' => 'Адрес',
+            'messenger_url' => 'Мессенджер для связи',
             'comment' => 'Комментарий',
         ];
     }

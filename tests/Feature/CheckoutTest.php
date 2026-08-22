@@ -131,6 +131,7 @@ class CheckoutTest extends TestCase
             'first_name' => 'Иван',
             'last_name' => 'Иванов',
             'phone' => '+79991234567',
+            'messenger_url' => 'https://t.me/ivan',
             'comment' => 'Позвоните за час',
         ]);
 
@@ -154,6 +155,7 @@ class CheckoutTest extends TestCase
             'first_name' => 'Иван',
             'last_name' => 'Иванов',
             'phone' => '+79991234567',
+            'messenger_url' => 'https://t.me/ivan',
             'city' => $address->city,
             'address' => $address->address,
         ]);
@@ -206,6 +208,7 @@ class CheckoutTest extends TestCase
             'first_name' => 'Иван',
             'last_name' => 'Иванов',
             'phone' => '8 (999) 123-45-67',
+            'messenger_url' => 'https://t.me/ivan',
         ]);
 
         $order = Order::query()->where('user_id', $user->id)->firstOrFail();
@@ -279,6 +282,7 @@ class CheckoutTest extends TestCase
             'first_name' => 'Иван',
             'last_name' => 'Иванов',
             'phone' => '+79991234567',
+            'messenger_url' => 'https://t.me/ivan',
         ]);
 
         $order = Order::query()->where('user_id', $user->id)->firstOrFail();
@@ -303,6 +307,51 @@ class CheckoutTest extends TestCase
 
         $response->assertSessionHasErrors('address_id');
         $this->assertDatabaseMissing('orders', ['user_id' => $user->id]);
+    }
+
+    public function test_messenger_url_is_required(): void
+    {
+        $user = User::factory()->create();
+        $address = Address::factory()->for($user)->create();
+        $product = Product::factory()->create(['price' => 12000, 'stock_quantity' => 5, 'in_stock' => true]);
+
+        $cart = Cart::factory()->create(['user_id' => $user->id]);
+        CartItem::factory()->create(['cart_id' => $cart->id, 'product_id' => $product->id, 'quantity' => 1, 'price' => 12000]);
+
+        $response = $this->actingAs($user)->post(route('checkout.store'), [
+            'address_id' => $address->id,
+            'first_name' => 'Иван',
+            'last_name' => 'Иванов',
+            'phone' => '+79991234567',
+        ]);
+
+        $response->assertSessionHasErrors('messenger_url');
+        $this->assertDatabaseMissing('orders', ['user_id' => $user->id]);
+    }
+
+    public function test_messenger_url_is_saved_on_order_customer(): void
+    {
+        $user = User::factory()->create();
+        $address = Address::factory()->for($user)->create();
+        $product = Product::factory()->create(['price' => 12000, 'stock_quantity' => 5, 'in_stock' => true]);
+
+        $cart = Cart::factory()->create(['user_id' => $user->id]);
+        CartItem::factory()->create(['cart_id' => $cart->id, 'product_id' => $product->id, 'quantity' => 1, 'price' => 12000]);
+
+        $this->actingAs($user)->post(route('checkout.store'), [
+            'address_id' => $address->id,
+            'first_name' => 'Иван',
+            'last_name' => 'Иванов',
+            'phone' => '+79991234567',
+            'messenger_url' => 'https://max.ru/u/ivan',
+        ]);
+
+        $order = Order::query()->where('user_id', $user->id)->firstOrFail();
+
+        $this->assertDatabaseHas('order_customers', [
+            'order_id' => $order->id,
+            'messenger_url' => 'https://max.ru/u/ivan',
+        ]);
     }
 
     public function test_cannot_use_another_users_address(): void
@@ -344,6 +393,7 @@ class CheckoutTest extends TestCase
             'first_name' => 'Иван',
             'last_name' => 'Иванов',
             'phone' => '+79991234567',
+            'messenger_url' => 'https://t.me/ivan',
         ]);
 
         $response->assertSessionHasErrors('checkout');
@@ -377,6 +427,7 @@ class CheckoutTest extends TestCase
             'first_name' => 'Иван',
             'last_name' => 'Иванов',
             'phone' => '+79991234567',
+            'messenger_url' => 'https://t.me/ivan',
         ]);
 
         $response->assertSessionHasErrors('checkout');
@@ -403,6 +454,7 @@ class CheckoutTest extends TestCase
             'first_name' => 'Иван',
             'last_name' => 'Иванов',
             'phone' => '+79991234567',
+            'messenger_url' => 'https://t.me/ivan',
         ]);
 
         $fresh = $product->fresh();

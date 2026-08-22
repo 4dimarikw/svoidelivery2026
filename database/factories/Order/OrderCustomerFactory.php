@@ -24,6 +24,7 @@ class OrderCustomerFactory extends Factory
             'first_name' => fake()->firstName(),
             'last_name' => fake()->lastName(),
             'phone' => fake()->numerify('+7 9## ###-##-##'),
+            'messenger_url' => 'https://t.me/'.fake()->userName(),
             'city' => fake()->city(),
             'address' => fake()->streetAddress(),
             'comment' => null,
