@@ -1,6 +1,10 @@
 <x-layouts.auth :title="__('account.register.title')">
     <x-ui.auth-card :title="__('account.register.title')" :subtitle="__('account.register.subtitle')">
         <x-ui.form :action="route('register.store')" mode="default">
+            {{-- Вне grid-контейнера ниже — чтобы никогда не стать grid-item
+                 и не повлиять на раскладку. См. Infrastructure\Rules\HoneypotRule. --}}
+            <x-ui.honeypot />
+
             <div class="grid gap-3.5">
                 <x-ui.input-field
                     name="name"
@@ -41,6 +45,8 @@
                      ever persisted to `users`. --}}
                 <x-ui.checkbox-field name="age_confirmed" :label="__('account.register.age_gate')" />
                 <x-ui.checkbox-field name="terms_accepted" :label="__('account.register.terms_gate')" />
+
+                <x-ui.smart-captcha />
 
                 <x-ui.form-actions>
                     <x-ui.btn type="submit" size="lg" block>{{ __('account.register.submit') }}</x-ui.btn>

@@ -73,6 +73,18 @@ return [
             'replace_placeholders' => true,
         ],
 
+        // Срабатывания защиты форм входа/регистрации (honeypot, троттлы,
+        // SmartCaptchaRule) — отдельный файл, не 'stack', чтобы события не
+        // тонули в общем логе и хранились дольше 14 дней 'daily' (разбор
+        // инцидента обычно задним числом).
+        'security' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/security.log'),
+            'level' => env('LOG_SECURITY_LEVEL', 'info'),
+            'days' => env('LOG_SECURITY_DAYS', 90),
+            'replace_placeholders' => true,
+        ],
+
         'slack' => [
             'driver' => 'slack',
             'url' => env('LOG_SLACK_WEBHOOK_URL'),

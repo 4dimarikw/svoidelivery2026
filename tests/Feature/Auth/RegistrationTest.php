@@ -4,6 +4,7 @@ namespace Tests\Feature\Auth;
 
 use Domain\Auth\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Crypt;
 use Tests\TestCase;
 
 class RegistrationTest extends TestCase
@@ -19,6 +20,12 @@ class RegistrationTest extends TestCase
             'password_confirmation' => 'password123',
             'age_confirmed' => '1',
             'terms_accepted' => '1',
+            // Honeypot включён по умолчанию (config/security.php) — без
+            // этих двух полей Infrastructure\Rules\HoneypotRule отклонял бы
+            // каждую отправку ниже как бота. Таймер "заряжен" в прошлое, а
+            // не в момент вызова — min_seconds уже позади.
+            'website_url' => '',
+            'form_loaded_at' => Crypt::encryptString((string) now()->subMinutes(2)->timestamp),
         ], $overrides);
     }
 

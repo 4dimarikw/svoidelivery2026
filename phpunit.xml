@@ -36,5 +36,12 @@
         <env name="PULSE_ENABLED" value="false"/>
         <env name="TELESCOPE_ENABLED" value="false"/>
         <env name="NIGHTWATCH_ENABLED" value="false"/>
+        <!-- Капча выключена явно и детерминированно — тесты, которым она
+             нужна, включают её через config()->set() сами. Honeypot/throttle
+             НЕ выключаются здесь: их дефолты (3 попытки/10 мин) не задевают
+             существующие тесты (каждый шлёт один POST за метод), а
+             RegistrationTest/PasswordResetTest дополнены нужными полями —
+             так дефолтная защита проверяется по-настоящему, а не в обход. -->
+        <env name="SMART_CAPTCHA_ENABLED" value="false"/>
     </php>
 </phpunit>

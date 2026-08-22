@@ -83,5 +83,83 @@ class FortifyServiceProvider extends ServiceProvider
                 ($credentialId ?: $request->session()->getId()).'|'.$request->ip()
             );
         });
+
+        // register/password-reset: не в config('fortify.limiters') — Fortify
+        // не даёт эти маршруты троттлить штатно, поэтому подключены через
+        // App\Http\Middleware\ThrottleAuthForms (config('fortify.middleware')
+        // ниже). По identity и по IP отдельными Limit — один атакующий не
+        // обходит лимит сотней разных email с одного хоста.
+        RateLimiter::for('register', fn (Request $request) => [
+            Limit::perMinutes(
+                config('security.register_throttle.decay_minutes'),
+                config('security.register_throttle.per_identity'),
+            )->by(self::identityKey($request).'|'.$request->ip())
+                ->response(self::throttleResponse('email', 'account.security.register_throttled')),
+
+            Limit::perMinutes(
+                config('security.register_throttle.decay_minutes'),
+                config('security.register_throttle.per_ip'),
+            )->by($request->ip())
+                ->response(self::throttleResponse('email', 'account.security.register_throttled')),
+        ]);
+
+        RateLimiter::for('password-reset', fn (Request $request) => [
+            Limit::perMinutes(
+                config('security.password_reset_throttle.decay_minutes'),
+                config('security.password_reset_throttle.per_identity'),
+            )->by(self::identityKey($request).'|'.$request->ip())
+                ->response(self::throttleResponse('email', 'account.security.password_throttled')),
+
+            Limit::perMinutes(
+                config('security.password_reset_throttle.decay_minutes'),
+                config('security.password_reset_throttle.per_ip'),
+            )->by($request->ip())
+                ->response(self::throttleResponse('email', 'account.security.password_throttled')),
+        ]);
+
+        // Единственный из четырёх лимитер, который Fortify поддерживает
+        // штатно (vendor/laravel/fortify/routes/routes.php:40,98-100,
+        // config('fortify.limiters.verification', '6,1')) — middleware не
+        // нужен, достаточно назвать лимитер в config/fortify.php.
+        RateLimiter::for('verification', fn (Request $request) => Limit::perMinutes(
+            config('security.verification_throttle.decay_minutes'),
+            config('security.verification_throttle.per_user'),
+        )->by($request->user()?->getAuthIdentifier().'|'.$request->ip())->response(
+            fn () => back()->with('status', 'verification-throttled')
+        ));
+
+        // POST /user/confirm-password — ключ по user_id (email в этой форме
+        // не передаётся), ошибка на поле 'password' (то же поле, на которое
+        // ConfirmablePasswordController кладёт ошибку неверного пароля).
+        RateLimiter::for('password-confirm', fn (Request $request) => Limit::perMinutes(
+            config('security.password_confirm_throttle.decay_minutes'),
+            config('security.password_confirm_throttle.per_user'),
+        )->by($request->user()?->getAuthIdentifier().'|'.$request->ip())
+            ->response(self::throttleResponse('password', 'account.security.password_throttled')));
+    }
+
+    /**
+     * Ключ троттла по email — транслитерация та же, что у лимитера 'login'
+     * (FortifyServiceProvider выше), для единообразия регистронезависимого
+     * ключа.
+     */
+    private static function identityKey(Request $request): string
+    {
+        return Str::transliterate(Str::lower((string) $request->input('email')));
+    }
+
+    /**
+     * Общий ->response() для register/password-reset — тот же приём, что у
+     * лимитера 'login': без него троттлинг отдал бы голый 429. Свой
+     * переводной ключ на каждый лимитер, не auth.throttle — тот текст
+     * («Слишком много попыток входа») был бы неверен на этих формах.
+     */
+    private static function throttleResponse(string $field, string $translationKey): \Closure
+    {
+        return fn (Request $request, array $headers) => back()
+            ->withInput($request->except(['password', 'password_confirmation']))
+            ->withErrors([$field => __($translationKey, [
+                'seconds' => $headers['Retry-After'] ?? 60,
+            ])]);
     }
 }

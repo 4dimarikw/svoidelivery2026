@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\ThrottleAuthForms;
 use Laravel\Fortify\Features;
 
 return [
@@ -101,7 +102,14 @@ return [
     |
     */
 
-    'middleware' => ['web'],
+    // ThrottleAuthForms троттлит register.store/password.email/password.update
+    // именованными лимитерами — Fortify не даёт троттлить эти три маршрута
+    // штатно (см. FortifyServiceProvider::boot()). Подключено здесь, а не в
+    // bootstrap/app.php: это единственное место, где Fortify реально читает
+    // этот ключ (vendor/laravel/fortify/routes/routes.php:27) — middleware
+    // отрабатывает ровно на маршрутах Fortify, ни на одной публичной
+    // странице каталога/корзины оно не висит.
+    'middleware' => ['web', ThrottleAuthForms::class],
 
     /*
     |--------------------------------------------------------------------------
@@ -118,6 +126,10 @@ return [
         'login' => 'login',
         'two-factor' => 'two-factor',
         'passkeys' => 'passkeys',
+        // Единственный из наших четырёх лимитеров, который Fortify реально
+        // подключает штатно (routes.php:40,98-100) — register/password-reset
+        // идут через ThrottleAuthForms выше, этот ключ Fortify не даёт.
+        'verification' => 'verification',
     ],
 
     /*

@@ -89,6 +89,18 @@ return [
         'resend' => 'Resend verification email',
     ],
 
+    // Registration/password-reset honeypot & throttling, SmartCaptcha — see
+    // config/security.php, Infrastructure\Rules\HoneypotRule/SmartCaptchaRule.
+    'security' => [
+        'form_rejected' => 'Could not submit the form. Please reload the page and try again.',
+        'form_expired' => 'This form has expired. Please reload the page and fill it in again.',
+        'captcha_required' => 'Please confirm you are not a robot.',
+        'captcha_failed' => 'Captcha verification failed. Please try again.',
+        'register_throttled' => 'Too many registration attempts. Please try again in :seconds s.',
+        'password_throttled' => 'Too many requests. Please try again in :seconds s.',
+        'verification_throttled' => 'Too many requests. Please try again in a minute.',
+    ],
+
     'nav' => [
         'profile' => 'Profile',
         'orders' => 'My orders',

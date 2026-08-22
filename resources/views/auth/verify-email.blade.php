@@ -6,6 +6,11 @@
              technique as resources/views/account/profile.blade.php). --}}
         @if (session('status') === 'verification-link-sent')
             <x-ui.alert tone="ok" class="mb-5">{{ __('account.verify.sent') }}</x-ui.alert>
+        @elseif (session('status') === 'verification-throttled')
+            {{-- RateLimiter::for('verification') в FortifyServiceProvider —
+                 сюда попадает вместо голого 429, когда исчерпан лимит на
+                 повторную отправку письма. --}}
+            <x-ui.alert tone="warn" class="mb-5">{{ __('account.security.verification_throttled') }}</x-ui.alert>
         @endif
 
         <x-ui.resend-button
