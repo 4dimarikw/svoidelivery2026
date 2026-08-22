@@ -1,6 +1,7 @@
 {{-- Степпер количества (Domain\Cart, CLAUDE.md), воспроизводит .qty из
      брендбука (design-system.html §06/§10): при qty=0 и $showBuyButton — видна
-     обычная кнопка «Купить»/задизейбленное «Сообщить», при qty>0 — блок
+     кнопка «Купить» (задизейбленная, но с тем же текстом, если товара нет в
+     наличии — см. третье состояние ниже), при qty>0 — блок
      −/N/+; минус на количестве 1 убирает товар и возвращает «Купить»
      ($showBuyButton) либо просто убирает строку (cart-line.blade.php,
      $showBuyButton=false — на странице корзины товар уже в ней, состояния
@@ -50,7 +51,7 @@
         @if ($showBuyButton)
             <div x-show="quantity === 0" class="h-full">
                 <x-ui.btn type="button" variant="primary" size="md" block class="h-full px-2 xl:px-[22px]" disabled>
-                    {{ __('catalog.notify') }}
+                    {{ __('catalog.buy') }}
                 </x-ui.btn>
             </div>
         @endif

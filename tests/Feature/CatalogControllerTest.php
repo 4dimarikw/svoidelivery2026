@@ -313,15 +313,19 @@ class CatalogControllerTest extends TestCase
         $response->assertDontSee('EBC');
     }
 
-    public function test_product_card_shows_report_button_when_out_of_stock(): void
+    public function test_product_card_shows_disabled_buy_button_when_out_of_stock(): void
     {
         Product::factory()->create(['brand' => 'Закончилось', 'in_stock' => false]);
 
         $response = $this->actingAs(User::factory()->create())->get(route('home'));
 
         $response->assertOk();
-        $response->assertSee('Сообщить');
-        $response->assertDontSee('>Купить<', false);
+        $response->assertSee('Купить');
+        $response->assertDontSee('Сообщить');
+        // Единственный товар на странице и он не в наличии — disabled в
+        // ответе может относиться только к этой кнопке (в наличии не
+        // рендерится степпер −/+ со своим disabled на «+»).
+        $response->assertSee('disabled', false);
     }
 
     public function test_product_card_thumbnail_links_to_the_product_page(): void
@@ -396,7 +400,6 @@ class CatalogControllerTest extends TestCase
         $response->assertOk();
         $response->assertDontSee('₽ 1 234');
         $response->assertDontSee(__('catalog.buy'));
-        $response->assertDontSee(__('catalog.notify'));
     }
 
     public function test_authenticated_user_sees_price_and_buy_button(): void

@@ -43,10 +43,9 @@ return [
     'new' => 'New',
     'out_of_stock' => 'Out of stock',
     // "Buy" is wired up (Domain\Cart) — turns into a quantity stepper after
-    // the first click, see product-card.blade.php. "Notify me" is still
-    // decorative — the product is out of stock.
+    // the first click, see product-card.blade.php. Out of stock: the same
+    // button is just disabled (cart-stepper.blade.php), text stays the same.
     'buy' => 'Buy',
-    'notify' => 'Notify me',
     'add_to_favorites' => 'Add to favorites',
     'remove_from_favorites' => 'Remove from favorites',
     'load_more' => 'Load more',
