@@ -13,3 +13,7 @@ Schedule::command('queue:work --stop-when-empty')->everyMinute();
 Schedule::command('vk:sync-posts')->everyThirtyMinutes();
 
 Schedule::command('catalog:import')->everyThirtyMinutes();
+
+Schedule::command('untappd:sync-beers')->everyThreeHours();
+
+
