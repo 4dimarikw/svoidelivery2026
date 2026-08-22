@@ -5,12 +5,24 @@ namespace App\Listeners;
 use App\Events\LoggableEvent;
 use Domain\Logging\Models\EventLog;
 use Illuminate\Support\Str;
+use Infrastructure\Settings\EventLoggingSettings;
 use Throwable;
 
 class PersistEventLog
 {
+    public function __construct(
+        private readonly EventLoggingSettings $settings,
+    ) {}
+
     public function handle(LoggableEvent $event): void
     {
+        // Управляется страницей "Система → Логирование событий"
+        // (App\MoonShine\Pages\EventLoggingSettingsPage) — тип события,
+        // выключенный там, вообще не попадает в event_logs.
+        if ($this->settings->isDisabled($event->eventType())) {
+            return;
+        }
+
         [$userId, $causerType] = $this->resolveCauser();
 
         try {

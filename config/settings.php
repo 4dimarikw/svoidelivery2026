@@ -1,6 +1,7 @@
 <?php
 
 use Infrastructure\Settings\CatalogImportSettings;
+use Infrastructure\Settings\EventLoggingSettings;
 use Infrastructure\Settings\SiteSettings;
 use Infrastructure\Settings\VKSyncSettings;
 use Spatie\LaravelSettings\SettingsCasts\DataCast;
@@ -24,6 +25,7 @@ return [
         // запрос. Обнаружилось после того, как <x-ui.telegram-autologin>
         // добавил второе чтение SiteSettings на странице каталога.
         SiteSettings::class,
+        EventLoggingSettings::class,
     ],
 
     /*

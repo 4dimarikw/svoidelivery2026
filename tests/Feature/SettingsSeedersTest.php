@@ -3,10 +3,12 @@
 namespace Tests\Feature;
 
 use Database\Seeders\CatalogImportSettingsSeeder;
+use Database\Seeders\EventLoggingSettingsSeeder;
 use Database\Seeders\SiteSettingsSeeder;
 use Database\Seeders\VkSyncSettingsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Infrastructure\Settings\CatalogImportSettings;
+use Infrastructure\Settings\EventLoggingSettings;
 use Infrastructure\Settings\SiteSettings;
 use Infrastructure\Settings\VKSyncSettings;
 use ReflectionClass;
@@ -79,6 +81,11 @@ class SettingsSeedersTest extends TestCase
     public function test_site_settings_seeder_defaults_cover_every_property(): void
     {
         $this->assertSeederCoversAllProperties(SiteSettings::class, SiteSettingsSeeder::class);
+    }
+
+    public function test_event_logging_settings_seeder_defaults_cover_every_property(): void
+    {
+        $this->assertSeederCoversAllProperties(EventLoggingSettings::class, EventLoggingSettingsSeeder::class);
     }
 
     public function test_site_settings_repair_adds_missing_property(): void

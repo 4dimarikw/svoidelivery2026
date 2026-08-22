@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\MoonShine\Layouts;
 
 use App\MoonShine\Pages\CatalogImportSettingsPage;
+use App\MoonShine\Pages\EventLoggingSettingsPage;
 use App\MoonShine\Pages\SiteSettingsPage;
 use App\MoonShine\Pages\VkSyncSettingsPage;
 use App\MoonShine\Resources\BeerStyle\BeerStyleResource;
@@ -70,13 +71,13 @@ final class MoonShineLayout extends AppLayout
                 MenuItem::make(DeliveryTypeResource::class),
                 MenuItem::make(PaymentMethodResource::class),
                 MenuItem::make(OrderItemResource::class),
-            ], 'shopping-cart')->canSee(fn() => $isAdmin),
+            ], 'shopping-cart')->canSee(fn () => $isAdmin),
 
             MenuItem::make(UserResource::class),
 
             MenuGroup::make(__('moonshine.group.users'), [
                 MenuItem::make(FavoriteResource::class),
-            ], 'users')->canSee(fn() => $isAdmin),
+            ], 'users')->canSee(fn () => $isAdmin),
 
             MenuItem::make(VkPostResource::class),
 
@@ -88,9 +89,9 @@ final class MoonShineLayout extends AppLayout
                 MenuItem::make(VolumeResource::class),
                 MenuItem::make(ContainerResource::class),
                 MenuItem::make(UntappdBeerResource::class),
-                MenuItem::make(PropertyResource::class)->canSee(fn() => $isAdmin),
-                MenuItem::make(CatalogImportSettingsPage::class)->canSee(fn() => $isAdmin),
-                MenuItem::make(SeoResource::class)->canSee(fn() => $isAdmin),
+                MenuItem::make(PropertyResource::class)->canSee(fn () => $isAdmin),
+                MenuItem::make(CatalogImportSettingsPage::class)->canSee(fn () => $isAdmin),
+                MenuItem::make(SeoResource::class)->canSee(fn () => $isAdmin),
 
             ], 'squares-2x2'),
 
@@ -101,7 +102,7 @@ final class MoonShineLayout extends AppLayout
                 MenuItem::make(ContentBlockResource::class),
                 MenuItem::make(ContentBlockItemResource::class),
                 MenuItem::make(SiteSettingsPage::class),
-                MenuItem::make(VkSyncSettingsPage::class)->canSee(fn() => $isAdmin),
+                MenuItem::make(VkSyncSettingsPage::class)->canSee(fn () => $isAdmin),
 
             ], 'document-text'),
 
@@ -110,15 +111,16 @@ final class MoonShineLayout extends AppLayout
                 MenuItem::make(MoonShineUserRoleResource::class),
                 MenuItem::make(MoonshinePermissionResource::class),
                 MenuItem::make(EventLogResource::class),
+                MenuItem::make(EventLoggingSettingsPage::class),
                 MenuItem::make(SchedulingPage::class, icon: 'clock'),
 
-            ], 'users')->canSee(fn() => $isAdmin),
+            ], 'users')->canSee(fn () => $isAdmin),
 
         ];
     }
 
     /**
-     * @param ColorManager $colorManager
+     * @param  ColorManager  $colorManager
      */
     protected function colors(ColorManagerContract $colorManager): void
     {

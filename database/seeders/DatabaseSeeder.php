@@ -26,6 +26,7 @@ class DatabaseSeeder extends Seeder
             CatalogImportSettingsSeeder::class,
             VkSyncSettingsSeeder::class,
             SiteSettingsSeeder::class,
+            EventLoggingSettingsSeeder::class,
         ]);
     }
 }
