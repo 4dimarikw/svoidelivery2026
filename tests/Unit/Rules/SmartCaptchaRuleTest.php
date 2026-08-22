@@ -2,7 +2,9 @@
 
 namespace Tests\Unit\Rules;
 
+use App\Events\Security\CaptchaFailOpen;
 use Illuminate\Http\Client\ConnectionException;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
@@ -111,5 +113,37 @@ class SmartCaptchaRuleTest extends TestCase
         Log::shouldReceive('error')->once();
 
         $this->assertTrue($this->validate('any-token')->passes());
+    }
+
+    /**
+     * security.log никто не читает — CaptchaFailOpen делает fail-open заметным
+     * в event_logs. Cache::add душит повтор на 5 минут: правило срабатывает на
+     * каждую регистрацию, событие в журнале не должно плодиться так же часто.
+     */
+    public function test_fail_open_without_server_key_dispatches_a_deduped_event(): void
+    {
+        Event::fake([CaptchaFailOpen::class]);
+        config(['security.smart_captcha.enabled' => true, 'security.smart_captcha.server_key' => '']);
+        Http::fake();
+
+        $this->validate('token-one')->passes();
+        $this->validate('token-two')->passes();
+
+        Event::assertDispatchedTimes(CaptchaFailOpen::class, 1);
+        Event::assertDispatched(CaptchaFailOpen::class, fn (CaptchaFailOpen $e) => $e->reason === 'no_server_key');
+    }
+
+    public function test_fail_open_on_connection_exception_dispatches_event_with_error_message(): void
+    {
+        Event::fake([CaptchaFailOpen::class]);
+        config(['security.smart_captcha.enabled' => true, 'security.smart_captcha.server_key' => 'k']);
+        Http::fake(function () {
+            throw new ConnectionException('timed out');
+        });
+
+        $this->validate('any-token')->passes();
+
+        Event::assertDispatched(CaptchaFailOpen::class, fn (CaptchaFailOpen $e) => $e->reason === 'request_failed'
+            && $e->errorMessage === 'timed out');
     }
 }

@@ -35,6 +35,18 @@ class ImportContext
 
     public bool $skip = false;
 
+    /**
+     * Класс стадии, установившей $skip = true — используется для разбивки
+     * "по стадии" в CatalogImportRowsSkipped. Не заполняется, если стадия
+     * решила пропустить строку без addWarning() (см. FilterCategoryStage —
+     * это намеренная фильтрация, а не дефект данных).
+     */
+    public ?string $skipStage = null;
+
+    public bool $priceCoerced = false;
+
+    public bool $stockCoerced = false;
+
     public bool $imageAttachedThisRow = false;
 
     public function __construct(

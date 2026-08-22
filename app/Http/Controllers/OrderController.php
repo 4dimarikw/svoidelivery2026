@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\Order\OrderCreationFailed;
 use Domain\Order\DTO\CustomerDTO;
 use Domain\Order\Exceptions\OrderProcessException;
 use Domain\Order\Models\DeliveryType;
@@ -46,6 +47,10 @@ class OrderController extends Controller
             'comment' => $request->input('comment'),
         ]);
 
+        // До пайплайна — ClearCart в его конце очищает корзину, а PersistOrder
+        // может частично изменить состояние ещё до броска исключения.
+        $cartItemsCount = cart()->count();
+
         try {
             $order = new OrderProcess($order)
                 ->processes([
@@ -60,6 +65,16 @@ class OrderController extends Controller
                 ])
                 ->run();
         } catch (OrderProcessException $e) {
+            // Отказ по бизнес-правилу (мин. сумма, нет в наличии) — раньше
+            // нигде не логировался, хотя это единственная точка, где
+            // накапливается статистика отказов оформления.
+            event(new OrderCreationFailed(
+                userId: $request->user()->id,
+                reason: 'business_rejected',
+                cartItemsCount: $cartItemsCount,
+                errorMessage: $e->getMessage(),
+            ));
+
             // Не per-field ошибка валидации, а общий бизнес-сбой пайплайна
             // (мин. сумма, нет в наличии) — тот же {errors:{field:[msg]}}
             // формат, что uiForm.submit() уже понимает у 422 от FormRequest,
@@ -69,6 +84,19 @@ class OrderController extends Controller
             }
 
             return back()->withErrors(['checkout' => $e->getMessage()])->withInput();
+        } catch (Throwable $e) {
+            // Любой другой сбой (дедлок БД, удалённый в корзине товар и т.п.)
+            // раньше уходил на общий 500 без единой записи о заказе — событие
+            // здесь, исключение пробрасывается дальше как раньше.
+            event(new OrderCreationFailed(
+                userId: $request->user()->id,
+                reason: 'unexpected',
+                cartItemsCount: $cartItemsCount,
+                errorMessage: $e->getMessage(),
+                exceptionClass: $e::class,
+            ));
+
+            throw $e;
         }
 
         if ($request->wantsJson()) {

@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Events\CatalogImportFtpDownloadFailed;
 use Domain\Catalog\Models\Category;
 use Illuminate\Console\Command;
 use Infrastructure\Ftp\Catalog1cFtpClient;
@@ -254,6 +255,18 @@ class CatalogImportCommand extends Command
             return $ftp->download($file, storage_path(config('catalog_import.download_dir').basename($file)));
         } catch (Throwable $e) {
             $this->error("Загрузка с FTP не удалась: {$e->getMessage()}");
+
+            // catalog:import планируется каждые 30 минут (routes/console.php) — без
+            // этого события постоянно сломанный FTP не оставляет в event_logs ни
+            // одной записи (CatalogImportFailed диспатчится позже, из CsvParserService,
+            // до которого выполнение в этой ветке не доходит).
+            event(new CatalogImportFtpDownloadFailed(
+                host: $host,
+                port: $port,
+                file: $file,
+                exceptionClass: $e::class,
+                errorMessage: $e->getMessage(),
+            ));
 
             return null;
         }

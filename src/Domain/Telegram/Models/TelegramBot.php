@@ -2,6 +2,7 @@
 
 namespace Domain\Telegram\Models;
 
+use App\Events\TelegramBotUsernameFetchFailed;
 use DefStudio\Telegraph\Models\TelegraphBot;
 use Illuminate\Support\Facades\Cache;
 use Throwable;
@@ -49,9 +50,13 @@ class TelegramBot extends TelegraphBot
 
             try {
                 $username = $bot->info()['username'] ?? null;
-            } catch (Throwable) {
+            } catch (Throwable $e) {
                 // Невалидный токен или Telegram недоступен — не блокируем
-                // создание/сохранение бота из-за этого.
+                // создание/сохранение бота из-за этого, но бот сохранится с
+                // username = null, что тихо ломает виджет входа и deep-link
+                // привязки — событие в event_logs делает это заметным.
+                event(new TelegramBotUsernameFetchFailed($bot->id, $e::class, $e->getMessage()));
+
                 return;
             }
 

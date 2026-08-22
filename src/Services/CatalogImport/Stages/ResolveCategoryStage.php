@@ -33,6 +33,7 @@ final readonly class ResolveCategoryStage implements ImportStage
         if ($ctx->category === null) {
             $ctx->addWarning(self::class, "category '{$slug}' not found in database", '');
             $ctx->skip = true;
+            $ctx->skipStage = self::class;
 
             return $ctx;
         }

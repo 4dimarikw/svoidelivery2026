@@ -22,6 +22,17 @@ final class ResolvePriceStage implements ImportStage
         $stockRaw = $ctx->row->get(config('catalog_import.columns.stock'));
 
         $price = str_replace([',', ' '], ['.', ''], $priceRaw);
+
+        if (! is_numeric($price)) {
+            $ctx->addWarning(self::class, 'price not numeric, coerced to 0', $priceRaw);
+            $ctx->priceCoerced = true;
+        }
+
+        if (! is_numeric($stockRaw)) {
+            $ctx->addWarning(self::class, 'stock not numeric, coerced to 0', $stockRaw);
+            $ctx->stockCoerced = true;
+        }
+
         $ctx->attributes['price'] = is_numeric($price) ? (float) $price : 0.0;
         $ctx->attributes['stock'] = is_numeric($stockRaw) ? (int) $stockRaw : 0;
 

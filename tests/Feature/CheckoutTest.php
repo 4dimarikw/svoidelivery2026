@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Feature;
 
+use App\Events\Order\OrderCreationFailed;
 use Domain\Auth\Models\User;
 use Domain\Cart\Models\Cart;
 use Domain\Cart\Models\CartItem;
@@ -14,6 +15,7 @@ use Domain\Order\Models\Order;
 use Domain\Order\Models\PaymentMethod;
 use Domain\Profile\Models\Address;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use Infrastructure\Settings\SiteSettings;
@@ -377,6 +379,8 @@ class CheckoutTest extends TestCase
 
     public function test_rejects_when_item_went_out_of_stock_after_being_added_to_cart(): void
     {
+        Event::fake([OrderCreationFailed::class]);
+
         $user = User::factory()->create();
         $address = Address::factory()->for($user)->create();
         $product = Product::factory()->create(['price' => 12000, 'stock_quantity' => 5, 'in_stock' => true]);
@@ -398,6 +402,16 @@ class CheckoutTest extends TestCase
 
         $response->assertSessionHasErrors('checkout');
         $this->assertDatabaseMissing('orders', ['user_id' => $user->id]);
+
+        // Раньше отказ по бизнес-правилу нигде не логировался — единственная
+        // точка, где накапливается статистика отказов оформления.
+        Event::assertDispatched(OrderCreationFailed::class, function (OrderCreationFailed $event) use ($user): bool {
+            $this->assertSame($user->id, $event->userId);
+            $this->assertSame('business_rejected', $event->reason);
+            $this->assertSame(1, $event->cartItemsCount);
+
+            return true;
+        });
     }
 
     /**

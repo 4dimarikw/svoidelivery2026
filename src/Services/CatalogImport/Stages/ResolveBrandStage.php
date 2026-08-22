@@ -39,6 +39,7 @@ final class ResolveBrandStage implements ImportStage
             if ($name === null) {
                 $ctx->addWarning(self::class, 'empty brand', '');
                 $ctx->skip = true;
+                $ctx->skipStage = self::class;
 
                 return $ctx;
             }

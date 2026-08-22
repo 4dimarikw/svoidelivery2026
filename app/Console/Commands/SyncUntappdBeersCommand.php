@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Console\Commands;
 
+use App\Events\UntappdBeerSyncBatchCompleted;
 use Domain\Untappd\Actions\SyncUntappdBeerAction;
 use Domain\Untappd\Models\UntappdBeer;
 use Illuminate\Console\Command;
@@ -62,6 +63,7 @@ class SyncUntappdBeersCommand extends Command
 
         $synced = 0;
         $failed = 0;
+        $errors = [];
 
         foreach ($beers as $beer) {
             try {
@@ -69,6 +71,7 @@ class SyncUntappdBeersCommand extends Command
             } catch (Throwable $e) {
                 $failed++;
                 $this->warn("beer_id {$beer->beer_id}: {$e->getMessage()}");
+                $errors[] = ['beer_id' => $beer->beer_id, 'error_message' => $e->getMessage()];
             }
         }
 
@@ -77,6 +80,16 @@ class SyncUntappdBeersCommand extends Command
             ['Обновлено', $synced],
             ['Ошибок', $failed],
         ]);
+
+        // Раньше команда всегда возвращала SUCCESS без единой записи в
+        // журнале, даже при 100% ошибок — единственный след оставался в
+        // выводе консоли планировщика, который никто не читает.
+        event(new UntappdBeerSyncBatchCompleted(
+            candidates: $beers->count(),
+            synced: $synced,
+            failed: $failed,
+            errors: array_slice($errors, 0, 10),
+        ));
 
         return self::SUCCESS;
     }

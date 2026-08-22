@@ -38,7 +38,7 @@ final class ResolveBeerStyleStage implements ImportStage
     {
         // Step 1: parse UntappdRef
         $raw = $ctx->row->get(config('catalog_import.columns.untappd_ref'));
-        $untappdRef = $raw !== '' && is_numeric($raw) ? (int)$raw : null;
+        $untappdRef = $raw !== '' && is_numeric($raw) ? (int) $raw : null;
         $ctx->attributes['untappd_ref'] = $untappdRef;
 
         // Step 2: Untappd-first style resolution (cache-first)
@@ -49,7 +49,7 @@ final class ResolveBeerStyleStage implements ImportStage
 
             // Cache-miss, или cache-запись без description (синкана до появления колонки) —
             // дозапрашиваем; при ошибке API держимся ранее найденной cache-записи.
-            if (($beer === null || $beer->description === null) && !$ctx->dryRun) {
+            if (($beer === null || $beer->description === null) && ! $ctx->dryRun) {
                 $beer = $this->fetchAndStore($untappdRef, $ctx) ?? $beer;
             }
 
@@ -66,7 +66,7 @@ final class ResolveBeerStyleStage implements ImportStage
         }
 
         // Step 4: resolve BeerStyle model
-        if (!blank($styleName)) {
+        if (! blank($styleName)) {
             $normalized = normalize_name($styleName);
 
             $ctx->beerStyle = BeerStyle::firstOrCreate(
@@ -85,7 +85,7 @@ final class ResolveBeerStyleStage implements ImportStage
 
         if ($beerDto === null || $result?->meta?->code !== 200) {
             $detail = $result?->meta?->error_detail ?? 'no beer in response';
-            $ctx->addWarning(self::class, 'untappd sync failed: ' . $detail, (string)$beerId);
+            $ctx->addWarning(self::class, 'untappd sync failed: '.$detail, (string) $beerId);
             event(new UntappdBeerSyncFailed($beerId, 'UntappdApiError', $detail));
 
             return null;
@@ -101,17 +101,14 @@ final class ResolveBeerStyleStage implements ImportStage
                 'rating_count' => $beerDto->rating_count,
                 'rating_score' => $beerDto->rating_score,
                 'label' => $beerDto->beer_image,
-                'url' => config('project.untappd_base_url') . '/b/' . $beerDto->beer_slug . '/' . $beerDto->bid,
+                'url' => config('project.untappd_base_url').'/b/'.$beerDto->beer_slug.'/'.$beerDto->bid,
             ],
         );
 
-//        event(new UntappdBeerSynced(
-//            beerId: $model->beer_id,
-//            name: $model->name,
-//            brewery: $model->brewery,
-//            ratingCount: $model->rating_count,
-//            ratingScore: (float) $model->rating_score,
-//        ));
+        // UntappdBeerSynced здесь намеренно не диспатчится — событие на
+        // каждый товар с пивом стало бы флудом при полном импорте. Итог
+        // прогона агрегирует UntappdBeerSyncBatchCompleted (untappd:sync-beers),
+        // точечный синк внутри catalog:import покрывает CatalogImportCompleted.
 
         return $model;
     }

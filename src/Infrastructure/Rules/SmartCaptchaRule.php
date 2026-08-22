@@ -2,8 +2,10 @@
 
 namespace Infrastructure\Rules;
 
+use App\Events\Security\CaptchaFailOpen;
 use Closure;
 use Illuminate\Contracts\Validation\ValidationRule;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Translation\PotentiallyTranslatedString;
@@ -55,6 +57,8 @@ class SmartCaptchaRule implements ValidationRule
                 'route' => request()->route()?->getName(),
             ]);
 
+            $this->reportFailOpen('no_server_key');
+
             return;
         }
 
@@ -76,6 +80,8 @@ class SmartCaptchaRule implements ValidationRule
                 'route' => request()->route()?->getName(),
             ]);
 
+            $this->reportFailOpen('request_failed', errorMessage: $e->getMessage());
+
             return;
         }
 
@@ -88,6 +94,8 @@ class SmartCaptchaRule implements ValidationRule
                 'route' => request()->route()?->getName(),
             ]);
 
+            $this->reportFailOpen('bad_status', httpStatus: $response->status());
+
             return;
         }
 
@@ -99,6 +107,19 @@ class SmartCaptchaRule implements ValidationRule
                 'route' => request()->route()?->getName(),
             ]);
             $fail(__('account.security.captcha_failed'));
+        }
+    }
+
+    /**
+     * security.log никто не читает — постоянно сломанный server_key даёт
+     * молчаливое отключение защиты от ботов. Cache::add душит повтор на 5
+     * минут по причине: правило срабатывает на каждую регистрацию, событие
+     * в event_logs не должно.
+     */
+    private function reportFailOpen(string $reason, ?int $httpStatus = null, ?string $errorMessage = null): void
+    {
+        if (Cache::add("captcha-fail-open:{$reason}", true, now()->addMinutes(5))) {
+            event(new CaptchaFailOpen($reason, $httpStatus, $errorMessage));
         }
     }
 }

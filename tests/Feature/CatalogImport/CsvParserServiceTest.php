@@ -2,11 +2,16 @@
 
 namespace Tests\Feature\CatalogImport;
 
+use App\Events\CatalogImportPriceCoerced;
+use App\Events\CatalogImportRowsSkipped;
+use Domain\Catalog\Models\Category;
 use Domain\Catalog\Models\Container;
 use Domain\Catalog\Models\Product;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Event;
 use Services\CatalogImport\CsvParserService;
 use Services\CatalogImport\Dto\ImportOptions;
+use Services\CatalogImport\Stages\ResolveProductIdentityStage;
 use Tests\Support\BuildsCatalogCsv;
 use Tests\TestCase;
 
@@ -150,6 +155,89 @@ class CsvParserServiceTest extends TestCase
 
         $this->assertSame(3, $report->warningsTotal);
         $this->assertCount(1, $report->warnings);
+    }
+
+    /**
+     * Раньше пропуски строк были видны только в консоли/файле отчёта —
+     * CatalogImportRowsSkipped агрегирует их в одно событие на прогон
+     * (не на строку, иначе построчный цикл завалил бы event_logs).
+     */
+    public function test_skipped_rows_fire_one_aggregated_event_with_a_breakdown_by_stage(): void
+    {
+        Event::fake([CatalogImportRowsSkipped::class]);
+
+        // Пустая "Марка" у категории без name_from_article — ResolveProductIdentityStage
+        // отдаёт skip (см. её докблок).
+        $rows = array_map(
+            fn (int $i) => $this->validCatalogRow(['product_code' => "CODE-SKIP{$i}", 'brand' => '']),
+            range(1, 2),
+        );
+        $path = $this->writeCatalogCsv($rows);
+
+        $report = $this->import($path);
+
+        $this->assertSame(2, $report->skipped);
+        $this->assertSame(2, $report->skippedByStage[ResolveProductIdentityStage::class] ?? 0);
+
+        Event::assertDispatched(CatalogImportRowsSkipped::class, function (CatalogImportRowsSkipped $event): bool {
+            $this->assertSame(2, $event->skippedTotal);
+            $this->assertSame(0, $event->malformedRows);
+            $this->assertSame(2, $event->byStage[ResolveProductIdentityStage::class] ?? 0);
+
+            return true;
+        });
+    }
+
+    public function test_no_skip_event_when_nothing_was_skipped(): void
+    {
+        Event::fake([CatalogImportRowsSkipped::class]);
+
+        $path = $this->writeCatalogCsv([$this->validCatalogRow()]);
+        $this->import($path);
+
+        Event::assertNotDispatched(CatalogImportRowsSkipped::class);
+    }
+
+    /**
+     * ResolvePriceStage приводит нечисловые Цену/Остаток к 0 без явного
+     * сигнала — прямой денежный эффект (товар остаётся в каталоге с нулевой
+     * ценой). CatalogImportPriceCoerced делает это заметным в event_logs.
+     *
+     * price_exempt=true обходит NormalizeRowStage::priceBelowMinimum() —
+     * та парсит Цену тем же способом (non-numeric → 0.0) и без этого исключила
+     * бы строку раньше, чем она дойдёт до ResolvePriceStage.
+     */
+    public function test_non_numeric_price_and_stock_fire_price_coerced_event(): void
+    {
+        Event::fake([CatalogImportPriceCoerced::class]);
+        Category::query()->where('slug', 'beer')->update(['price_exempt' => true]);
+
+        $path = $this->writeCatalogCsv([
+            $this->validCatalogRow(['product_code' => 'CODE-BADPRICE', 'price' => 'н/д', 'stock' => 'abc']),
+        ]);
+
+        $this->import($path);
+
+        $product = Product::query()->firstWhere('external_code', 'CODE-BADPRICE');
+        $this->assertSame(0.0, $product->price->major());
+        $this->assertSame(0, $product->stock_quantity);
+
+        Event::assertDispatched(CatalogImportPriceCoerced::class, function (CatalogImportPriceCoerced $event): bool {
+            $this->assertSame(1, $event->coercedPriceCount);
+            $this->assertSame(1, $event->coercedStockCount);
+
+            return true;
+        });
+    }
+
+    public function test_no_price_coerced_event_when_price_and_stock_are_numeric(): void
+    {
+        Event::fake([CatalogImportPriceCoerced::class]);
+
+        $path = $this->writeCatalogCsv([$this->validCatalogRow(['price' => '100', 'stock' => '5'])]);
+        $this->import($path);
+
+        Event::assertNotDispatched(CatalogImportPriceCoerced::class);
     }
 
     public function test_chunk_transaction_mode_gives_same_result_as_row_mode(): void

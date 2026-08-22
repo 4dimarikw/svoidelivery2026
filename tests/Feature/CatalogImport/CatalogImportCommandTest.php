@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\CatalogImport;
 
+use App\Events\CatalogImportFtpDownloadFailed;
 use App\Events\CatalogVolumeDiscrepanciesDetected;
 use Domain\Catalog\Enums\CategoryMatchType;
 use Domain\Catalog\Enums\CategoryMatchWhen;
@@ -10,6 +11,8 @@ use Domain\Catalog\Models\CategoryMatchRule;
 use Domain\Catalog\Models\Product;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Event;
+use Infrastructure\Ftp\Catalog1cFtpClient;
+use RuntimeException;
 use Tests\Support\BuildsCatalogCsv;
 use Tests\TestCase;
 
@@ -98,6 +101,35 @@ class CatalogImportCommandTest extends TestCase
     {
         $this->artisan('catalog:import', ['path' => sys_get_temp_dir().'/does-not-exist-'.uniqid().'.csv'])
             ->assertExitCode(1);
+    }
+
+    /**
+     * catalog:import планируется каждые 30 минут (routes/console.php) — без
+     * этого события постоянно сломанный FTP не оставляет в event_logs ни
+     * одной записи (CatalogImportFailed диспатчится позже, из CsvParserService,
+     * до которого выполнение здесь не доходит).
+     */
+    public function test_ftp_download_failure_fires_event_and_does_not_throw(): void
+    {
+        Event::fake([CatalogImportFtpDownloadFailed::class]);
+        config(['catalog_import.base_ftp_file' => 'export.csv']);
+
+        $this->app->bind(Catalog1cFtpClient::class, fn () => new class extends Catalog1cFtpClient
+        {
+            public function download(string $remoteFile, string $localPath): string
+            {
+                throw new RuntimeException('FTP connection failed: test-host:21');
+            }
+        });
+
+        $this->artisan('catalog:import')->assertExitCode(1);
+
+        Event::assertDispatched(CatalogImportFtpDownloadFailed::class, function (CatalogImportFtpDownloadFailed $event): bool {
+            $this->assertSame('export.csv', $event->file);
+            $this->assertSame(RuntimeException::class, $event->exceptionClass);
+
+            return true;
+        });
     }
 
     public function test_volume_mismatch_between_package_and_name_fires_event(): void

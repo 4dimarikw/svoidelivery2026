@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Auth;
 
+use App\Events\Auth\TelegramSignatureInvalid;
 use App\Http\Controllers\Controller;
 use Domain\Auth\Models\User;
 use Domain\Telegram\Models\TelegramBot;
@@ -12,6 +13,8 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Validator;
 use Laravel\Socialite\Contracts\User as SocialiteUser;
 use Laravel\Socialite\Facades\Socialite;
 
@@ -55,13 +58,17 @@ class TelegramLoginController extends Controller
         $bot = TelegramBot::current();
 
         if ($bot === null) {
+            $this->logAuthFailure($request, 'widget', 'no_active_bot');
+
             return redirect()->route('login')
                 ->withErrors(['email' => __('account.telegram.failed')]);
         }
 
-        $telegramUser = $this->resolveTelegramUser($request, $bot);
+        [$telegramUser, $reason] = $this->resolveTelegramUser($request, $bot);
 
         if ($telegramUser === null) {
+            $this->logAuthFailure($request, 'widget', $reason ?? 'unknown');
+
             // Ключ 'email' — тот же, что у формы входа, чтобы ошибку показал
             // уже стоящий там <x-ui.error name="email">.
             return redirect()->route('login')
@@ -92,11 +99,21 @@ class TelegramLoginController extends Controller
     {
         $bot = TelegramBot::current();
 
-        $data = $bot ? WebAppInitData::verify((string) $request->input('init_data'), $bot->token) : null;
+        if ($bot === null) {
+            $this->logAuthFailure($request, 'webapp', 'no_active_bot');
+
+            return redirect()->route('login')
+                ->withErrors(['email' => __('account.telegram.failed')]);
+        }
+
+        $reason = null;
+        $data = WebAppInitData::verify((string) $request->input('init_data'), $bot->token, $reason);
 
         if ($data === null) {
             // Тот же ключ ошибки, что у callback() — тот же <x-ui.error> на
             // форме входа его покажет.
+            $this->logAuthFailure($request, 'webapp', $reason ?? 'unknown');
+
             return redirect()->route('login')
                 ->withErrors(['email' => __('account.telegram.failed')]);
         }
@@ -107,7 +124,7 @@ class TelegramLoginController extends Controller
         // залогиненный посреди обычной страницы, должен на неё и
         // вернуться, а не на fortify.home. Кнопка на /login redirect_to не
         // шлёт, так что для неё поведение не меняется.
-        $target = $this->safeRedirectTarget($request->input('redirect_to'));
+        $target = $this->safeRedirectTarget($request, $request->input('redirect_to'));
 
         return $target !== null
             ? redirect()->to($target)
@@ -140,26 +157,57 @@ class TelegramLoginController extends Controller
      * protocol-relative URL на чужой хост, оба отсекаются тем же regex.
      * Любое отклонение от формата — null, тихий откат на fortify.home, не
      * ошибка (значение приходит из скрытой формы, а не от пользователя).
+     * Строку в security-канал пишем только когда значение реально было
+     * передано и отклонено — обычный случай "redirect_to не передан" не
+     * должен засорять журнал.
      */
-    private function safeRedirectTarget(mixed $redirectTo): ?string
+    private function safeRedirectTarget(Request $request, mixed $redirectTo): ?string
     {
-        if (! is_string($redirectTo) || $redirectTo === '' || mb_strlen($redirectTo) > 255) {
+        if (! is_string($redirectTo) || $redirectTo === '') {
             return null;
         }
 
-        return preg_match('#^/[^/\\\\]#', $redirectTo) === 1 ? $redirectTo : null;
+        if (mb_strlen($redirectTo) <= 255 && preg_match('#^/[^/\\\\]#', $redirectTo) === 1) {
+            return $redirectTo;
+        }
+
+        Log::channel('security')->warning('telegram autologin redirect_to rejected', [
+            'ip' => $request->ip(),
+            'route' => $request->route()?->getName(),
+        ]);
+
+        return null;
     }
 
     /**
-     * Проверяет подпись Telegram. null — payload невалиден или протух.
+     * Проверяет подпись Telegram.
+     *
+     * @return array{0: ?SocialiteUser, 1: ?string} [пользователь, причина отказа]
+     *                                              Причина: 'stale_auth_date' | 'field_validation_failed' | 'hash_mismatch'.
+     *                                              Provider::user() (vendor) кидает один и тот же голый
+     *                                              \InvalidArgumentException и на непрошедшей валидации полей, и на
+     *                                              несовпадении HMAC — чтобы различить их без правки vendor-кода,
+     *                                              та же валидация полей прогоняется здесь заранее: если она
+     *                                              проходит, а драйвер всё равно бросает, единственная оставшаяся
+     *                                              причина — несовпадение подписи.
      */
-    private function resolveTelegramUser(Request $request, TelegramBot $bot): ?SocialiteUser
+    private function resolveTelegramUser(Request $request, TelegramBot $bot): array
     {
         // auth_date проверяется до драйвера: тот пропускает целые сутки.
         $authDate = (int) $request->input('auth_date');
 
         if ($authDate <= 0 || now()->timestamp - $authDate > self::AUTH_DATE_TTL) {
-            return null;
+            return [null, 'stale_auth_date'];
+        }
+
+        $fieldsValid = ! Validator::make($request->all(), [
+            'id' => 'required|numeric',
+            'auth_date' => 'required|date_format:U|before:1 day',
+            'hash' => 'required|size:64',
+        ])->fails();
+
+        if (! $fieldsValid) {
+            return [null, 'field_validation_failed'];
         }
 
         // config('services.telegram.*') читает SocialiteProviders\Manager —
@@ -173,11 +221,29 @@ class TelegramLoginController extends Controller
         ]);
 
         try {
-            // Provider::user() кидает голый \InvalidArgumentException и на
-            // непрошедшей валидации полей, и на несовпадении HMAC.
-            return Socialite::driver('telegram')->user();
+            return [Socialite::driver('telegram')->user(), null];
         } catch (\InvalidArgumentException) {
-            return null;
+            return [null, 'hash_mismatch'];
+        }
+    }
+
+    /**
+     * Отказ входа через Telegram — всегда в security-канал; hash_mismatch
+     * дополнительно попадает в event_logs (App\Events\Auth\TelegramSignatureInvalid) —
+     * единственная причина здесь, которая законно не должна встречаться при
+     * нормальной работе (протухшая auth_date/отсутствующий бот — обычный шум).
+     */
+    private function logAuthFailure(Request $request, string $source, string $reason): void
+    {
+        Log::channel('security')->warning('telegram login rejected', [
+            'source' => $source,
+            'reason' => $reason,
+            'ip' => $request->ip(),
+            'route' => $request->route()?->getName(),
+        ]);
+
+        if ($reason === 'hash_mismatch') {
+            event(new TelegramSignatureInvalid($source, $request->ip()));
         }
     }
 

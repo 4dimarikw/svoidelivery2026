@@ -158,7 +158,9 @@ class HandleOrderCreated
         }
 
         $lines[] = '';
-        $lines[] = '<code>Комментарий: </code> '.blank($order->comment) ? $escape($order->comment) : '<i>отсутствует</i>';
+        // Скобки обязательны: '.' связывает крепче '?:', без них условие всегда
+        // было truthy-строкой и ветка "отсутствует" была недостижима.
+        $lines[] = '<code>Комментарий: </code> '.(blank($order->comment) ? '<i>отсутствует</i>' : $escape($order->comment));
 
         $lines[] = '';
         $lines[] = "<blockquote expandable>Состав заказа\n";

@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Events\TelegramActivityCheckCompleted;
 use Domain\Auth\Models\User;
 use Domain\Telegram\Actions\CheckTelegramBotAvailabilityAction;
 use Domain\Telegram\Models\TelegramBot;
@@ -60,8 +61,9 @@ class CheckTelegramBotActivityCommand extends Command
         $inactive = 0;
         $inactiveList = [];
         $errors = [];
+        $eventErrors = [];
 
-        $query->chunkById($chunkSize, function ($users) use ($action, $delayMs, &$processed, &$active, &$inactive, &$inactiveList, &$errors): void {
+        $query->chunkById($chunkSize, function ($users) use ($action, $delayMs, &$processed, &$active, &$inactive, &$inactiveList, &$errors, &$eventErrors): void {
             foreach ($users as $user) {
                 $processed++;
 
@@ -74,6 +76,9 @@ class CheckTelegramBotActivityCommand extends Command
                     }
                 } catch (Throwable $e) {
                     $errors[] = "Пользователь #{$user->id}: {$e->getMessage()}";
+                    if (count($eventErrors) < 10) {
+                        $eventErrors[] = ['user_id' => $user->id, 'error_message' => $e->getMessage()];
+                    }
                 }
 
                 if ($delayMs > 0) {
@@ -110,6 +115,16 @@ class CheckTelegramBotActivityCommand extends Command
                 $this->line('  ... и ещё '.(count($errors) - 50));
             }
         }
+
+        // Раньше команда всегда возвращала SUCCESS без единой записи в
+        // журнале — результат прогона напрямую сужает аудиторию VK-рассылки
+        // (BroadcastVkPostJob фильтрует по profiles.is_bot_active).
+        event(new TelegramActivityCheckCompleted(
+            processed: $processed,
+            active: $active,
+            inactive: $inactive,
+            errors: $eventErrors,
+        ));
 
         return self::SUCCESS;
     }

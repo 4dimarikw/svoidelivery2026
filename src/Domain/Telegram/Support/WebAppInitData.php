@@ -29,22 +29,37 @@ final class WebAppInitData
 
     /**
      * null — initData отсутствует, подпись не совпала или auth_date протух.
+     *
+     * $reason — заполняется причиной отказа (out-параметр), когда возвращён
+     * null: 'empty_init_data' | 'missing_fields' | 'stale_auth_date' |
+     * 'hash_mismatch' | 'invalid_user_payload'. Нужен вызывающему коду
+     * (TelegramLoginController), чтобы отличить подделку подписи от
+     * протухшей/неполной сессии — раньше все причины схлопывались в один
+     * null без возможности их различить.
      */
-    public static function verify(string $initData, string $botToken): ?self
+    public static function verify(string $initData, string $botToken, ?string &$reason = null): ?self
     {
+        $reason = null;
+
         if ($initData === '') {
+            $reason = 'empty_init_data';
+
             return null;
         }
 
         parse_str($initData, $params);
 
         if (! isset($params['hash'], $params['auth_date'], $params['user']) || ! is_string($params['hash'])) {
+            $reason = 'missing_fields';
+
             return null;
         }
 
         $authDate = (int) $params['auth_date'];
 
         if ($authDate <= 0 || now()->timestamp - $authDate > self::AUTH_DATE_TTL) {
+            $reason = 'stale_auth_date';
+
             return null;
         }
 
@@ -60,12 +75,16 @@ final class WebAppInitData
         $expectedHash = hash_hmac('sha256', $dataCheckString, $secretKey);
 
         if (! hash_equals($expectedHash, $hash)) {
+            $reason = 'hash_mismatch';
+
             return null;
         }
 
         $user = json_decode((string) $params['user'], true);
 
         if (! is_array($user) || ! isset($user['id']) || ! is_numeric($user['id'])) {
+            $reason = 'invalid_user_payload';
+
             return null;
         }
 

@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Auth;
 
+use App\Events\Auth\TelegramSignatureInvalid;
 use DefStudio\Telegraph\Facades\Telegraph;
 use Domain\Auth\Models\User;
 use Domain\Profile\Models\Profile;
@@ -9,6 +10,7 @@ use Domain\Telegram\Models\TelegramBot;
 use Domain\Telegram\Models\TelegramChat;
 use Domain\Telegram\Support\TelegramLinkCode;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\RateLimiter;
@@ -152,6 +154,8 @@ class TelegramLoginTest extends TestCase
 
     public function test_tampered_hash_is_rejected(): void
     {
+        Event::fake([TelegramSignatureInvalid::class]);
+
         $payload = $this->signedPayload();
         $payload['first_name'] = 'Мимо';
 
@@ -162,16 +166,24 @@ class TelegramLoginTest extends TestCase
         $response->assertSessionHasErrors('email');
         $this->assertGuest();
         $this->assertSame(0, User::query()->count());
+
+        // Единственная причина отказа входа, которая законно не должна
+        // встречаться при нормальной работе — попадает в event_logs
+        // (см. App\Http\Controllers\Auth\TelegramLoginController::logAuthFailure()).
+        Event::assertDispatched(TelegramSignatureInvalid::class, fn (TelegramSignatureInvalid $e) => $e->source === 'widget');
     }
 
     public function test_payload_signed_with_a_foreign_token_is_rejected(): void
     {
+        Event::fake([TelegramSignatureInvalid::class]);
+
         $payload = $this->signedPayload(token: 'someone-elses-token');
 
         $this->get(route('auth.telegram.callback', $payload));
 
         $this->assertGuest();
         $this->assertSame(0, User::query()->count());
+        Event::assertDispatched(TelegramSignatureInvalid::class);
     }
 
     public function test_stale_auth_date_is_rejected(): void

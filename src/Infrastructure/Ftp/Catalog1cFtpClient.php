@@ -45,7 +45,10 @@ class Catalog1cFtpClient
 
         try {
             if (! ftp_login($conn, $username, $password)) {
-                throw new RuntimeException("FTP login failed for user '{$username}' on {$host}:{$port}");
+                // Имя пользователя намеренно не попадает в текст исключения —
+                // оно доходит до event_logs (CatalogImportFtpDownloadFailed)
+                // и файла отчёта импорта, оба не место для FTP-логина.
+                throw new RuntimeException("FTP login failed on {$host}:{$port}");
             }
 
             ftp_pasv($conn, true);

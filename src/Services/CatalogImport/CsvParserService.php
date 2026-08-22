@@ -4,6 +4,8 @@ namespace Services\CatalogImport;
 
 use App\Events\CatalogImportCompleted;
 use App\Events\CatalogImportFailed;
+use App\Events\CatalogImportPriceCoerced;
+use App\Events\CatalogImportRowsSkipped;
 use App\Events\CatalogVolumeDiscrepanciesDetected;
 use Illuminate\Pipeline\Pipeline;
 use Illuminate\Support\Facades\DB;
@@ -93,6 +95,34 @@ readonly class CsvParserService
 
                     if ($report->volumeDiscrepancies !== []) {
                         event(new CatalogVolumeDiscrepanciesDetected($path, $report->volumeDiscrepancies));
+                    }
+
+                    // Одно событие на прогон, не на строку — см. докблоки
+                    // CatalogImportRowsSkipped/CatalogImportPriceCoerced.
+                    if ($report->skipped > 0) {
+                        event(new CatalogImportRowsSkipped(
+                            path: $path,
+                            skippedTotal: $report->skipped,
+                            malformedRows: $report->malformedRows,
+                            byStage: $report->skippedByStage,
+                            examples: array_slice($report->warnings, 0, 10),
+                        ));
+                    }
+
+                    if ($report->priceCoerced > 0 || $report->stockCoerced > 0) {
+                        event(new CatalogImportPriceCoerced(
+                            path: $path,
+                            coercedPriceCount: $report->priceCoerced,
+                            coercedStockCount: $report->stockCoerced,
+                            examples: array_slice(
+                                array_values(array_filter(
+                                    $report->warnings,
+                                    fn (array $w): bool => $w['stage'] === Stages\ResolvePriceStage::class,
+                                )),
+                                0,
+                                10,
+                            ),
+                        ));
                     }
                 }
 
@@ -250,8 +280,18 @@ readonly class CsvParserService
         $report->addWarnings($ctx->row->lineNumber, $ctx->warnings, $warningLimit);
         $report->addVolumeDiscrepancies($ctx->row->lineNumber, $ctx->attributes['volume_discrepancies'] ?? []);
 
+        if ($ctx->priceCoerced) {
+            $report->priceCoerced++;
+        }
+
+        if ($ctx->stockCoerced) {
+            $report->stockCoerced++;
+        }
+
         if ($ctx->skip) {
             $report->skipped++;
+            $report->skippedByStage[$ctx->skipStage ?? 'unknown'] ??= 0;
+            $report->skippedByStage[$ctx->skipStage ?? 'unknown']++;
 
             return;
         }

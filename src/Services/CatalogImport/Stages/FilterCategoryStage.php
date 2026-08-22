@@ -24,7 +24,11 @@ final class FilterCategoryStage implements ImportStage
         }
 
         if (! in_array($ctx->category?->slug, $ctx->categoryFilter, true)) {
+            // Без addWarning() — намеренная фильтрация по --categories, не
+            // дефект данных (см. докблок класса). CsvParserService бакетирует
+            // такие строки отдельно от реальных потерь по $ctx->skipStage.
             $ctx->skip = true;
+            $ctx->skipStage = self::class;
 
             return $ctx;
         }

@@ -22,6 +22,19 @@ class ImportReport
 
     public int $imagesAttached = 0;
 
+    public int $priceCoerced = 0;
+
+    public int $stockCoerced = 0;
+
+    /**
+     * Класс стадии, отдавшей skip → количество строк — см. ImportContext::$skipStage.
+     * Строки без известной стадии (FilterCategoryStage — намеренная фильтрация
+     * по --categories) бакетируются под 'filtered'.
+     *
+     * @var array<string, int>
+     */
+    public array $skippedByStage = [];
+
     /**
      * true, если CsvParserService вёл catalog_import_seen_codes для этого
      * прогона (не dry-run и без --categories) — CatalogImportCommand решает

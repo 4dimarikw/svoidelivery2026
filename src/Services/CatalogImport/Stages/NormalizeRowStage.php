@@ -37,6 +37,7 @@ final class NormalizeRowStage implements ImportStage
         if ($reason !== null) {
             $ctx->addWarning(self::class, "row excluded: $reason", $ctx->row->get(config('catalog_import.columns.object_id')));
             $ctx->skip = true;
+            $ctx->skipStage = self::class;
 
             return $ctx;
         }

@@ -44,7 +44,9 @@ final class PersistProductStage implements ImportStage
     public function __invoke(ImportContext $ctx, Closure $next): ImportContext
     {
         if ($ctx->brand === null || $ctx->category === null) {
+            $ctx->addWarning(self::class, 'missing brand or category, product skipped', '');
             $ctx->skip = true;
+            $ctx->skipStage = self::class;
 
             return $ctx;
         }
@@ -55,6 +57,7 @@ final class PersistProductStage implements ImportStage
         if ($externalCode === '') {
             $ctx->addWarning(self::class, 'empty external_code (КодТовара), product skipped', '');
             $ctx->skip = true;
+            $ctx->skipStage = self::class;
 
             return $ctx;
         }

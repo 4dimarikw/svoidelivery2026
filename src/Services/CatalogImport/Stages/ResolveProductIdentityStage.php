@@ -39,6 +39,7 @@ final class ResolveProductIdentityStage implements ImportStage
             if ($name === '') {
                 $ctx->addWarning(self::class, 'empty product name (Марка)', '');
                 $ctx->skip = true;
+                $ctx->skipStage = self::class;
 
                 return $ctx;
             }
