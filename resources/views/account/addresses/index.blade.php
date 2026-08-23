@@ -20,7 +20,7 @@
 
         @forelse ($addresses as $address)
             <x-ui.surface tone="paper-2" class="rounded-sm border border-hairline p-5">
-                <div class="flex items-start justify-between">
+                <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between">
                     <div>
                         <div class="flex items-center">
                             @if ($address->label)
@@ -38,7 +38,7 @@
                         @endif
                     </div>
 
-                    <div class="flex items-center space-x-4">
+                    <div class="mt-3 flex items-center space-x-4 sm:mt-0">
                         <x-ui.link :href="route('account.addresses.edit', $address)">{{ __('account.address.edit') }}</x-ui.link>
 
                         <form method="POST" action="{{ route('account.addresses.destroy', $address) }}" onsubmit="return confirm(@js(__('account.address.delete_confirm')))">
