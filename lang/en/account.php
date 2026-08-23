@@ -121,7 +121,7 @@ return [
         'address' => 'Address',
         'comment' => 'Note',
         'is_default' => 'Make this the default address',
-        'add' => 'Add address',
+        'add' => 'Add',
         'edit' => 'Edit',
         'delete' => 'Delete',
         'delete_confirm' => 'Delete this address?',
