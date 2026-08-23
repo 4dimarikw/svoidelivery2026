@@ -19,10 +19,12 @@
             <h2 class="font-display text-heading-s uppercase text-ink-900">{{ __('account.favorites.title') }}</h2>
 
             @if ($products->isNotEmpty())
-                <form method="POST" action="{{ route('account.favorites.destroy') }}" onsubmit="return confirm(@js(__('account.favorites.clear_confirm')))">
+                <form method="POST" action="{{ route('account.favorites.destroy') }}"
+                      onsubmit="return confirm(@js(__('account.favorites.clear_confirm')))">
                     @csrf
                     @method('DELETE')
-                    <button type="submit" class="text-caption text-rust hover:underline">{{ __('account.favorites.clear') }}</button>
+                    <button type="submit"
+                            class="text-caption text-rust hover:underline">{{ __('account.favorites.clear') }}</button>
                 </form>
             @endif
         </div>
@@ -34,7 +36,7 @@
         @else
             {{-- Та же сетка и та же карточка, что на главной (pages/catalog/_cards.blade.php)
                  — разметка карточки существует в одном месте. --}}
-            <div class="grid grid-cols-3 gap-2 sm:gap-4 md:grid-cols-4 lg:grid-cols-5 xl:gap-6">
+            <div class="grid grid-cols-2 gap-1 sm:gap-4 md:grid-cols-4 lg:grid-cols-5 xl:gap-4">
                 @include('pages.catalog._cards')
             </div>
 
