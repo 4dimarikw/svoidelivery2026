@@ -1,17 +1,26 @@
 <x-layouts.site>
-    <div class="mx-auto max-w-page px-6 py-10" x-data="{ filtersOpen: false }">
+    <div
+        class="mx-auto max-w-page px-6 py-10"
+        x-data="{ filtersOpen: false }"
+        x-on:catalog:filters-toggle.window="filtersOpen = !filtersOpen"
+    >
         <div class="mb-6 flex items-start justify-between">
             <div>
                 <h1 class="font-display text-heading-m uppercase text-ink-900 sm:text-display-l">{{ __('catalog.title') }}</h1>
                 <span
                     class="mt-1 block text-body-m text-ink-500">{{ __('catalog.found', ['count' => $products->total()]) }}</span>
             </div>
-            {{-- Только мобиль — на lg панель всегда видна, кнопка не нужна. --}}
+            {{-- Ниже md эту роль берёт кнопка "Фильтры" в <x-ui.mobile-nav>
+                 (window-событие catalog:filters-toggle, см. выше) — здесь
+                 скрыта, чтобы не дублировать её. На lg панель всегда видна
+                 (lg:block ниже), кнопка тоже не нужна. Между md и lg — ни
+                 нижнего меню, ни постоянной панели, поэтому кнопка остаётся
+                 видимой. --}}
             <x-ui.btn
                 type="button"
                 variant="ghost"
                 size="sm"
-                class="lg:hidden"
+                class="hidden md:inline-flex lg:hidden"
                 x-on:click="filtersOpen = !filtersOpen"
                 ::aria-expanded="filtersOpen"
                 aria-controls="catalog-filters-panel"

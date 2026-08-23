@@ -29,12 +29,11 @@
     $isActive = fn (string ...$patterns) => request()->routeIs(...$patterns);
     // FavoriteManager/CartManager сами возвращают 0 гостю без запроса —
     // отдельная проверка auth()->check() тут не нужна.
-    $favoritesCount = favorites()->count();
     $cartCount = cart()->count();
 @endphp
 
 <nav
-    class="fixed inset-x-0 bottom-0 z-40 grid gap-1.5 border-t border-hairline bg-cream-50 px-3.5 pb-5 pt-2.5 md:hidden {{ auth()->check() ? 'grid-cols-5' : 'grid-cols-3' }}"
+    class="fixed inset-x-0 bottom-0 z-40 grid gap-1.5 border-t border-hairline bg-cream-50 px-3.5 pb-5 pt-2.5 md:hidden {{ auth()->check() ? 'grid-cols-5' : 'grid-cols-4' }}"
     aria-label="{{ __('layout.nav.primary') }}"
 >
     @php $active = $isActive('home'); @endphp
@@ -47,24 +46,39 @@
         {{ __('layout.nav.catalog') }}
     </a>
 
-    @auth
-        @php $active = $isActive('account.favorites.*'); @endphp
-        <a
-            href="{{ route('account.favorites.index') }}"
-            @if ($active) aria-current="page" @endif
-            class="relative grid min-h-[52px] justify-items-center gap-1.5 py-2 font-mono text-badge uppercase tracking-badge {{ $active ? 'text-teal-700' : 'text-ink-300 hover:text-ink-700' }}"
+    {{-- Фильтры — не завязаны на @auth (гость тоже фильтрует каталог, тот
+         же принцип, что у самой кнопки фильтров на странице каталога).
+         На странице каталога (route home) клик переключает то же локальное
+         Alpine-состояние filtersOpen, что и кнопка на самой странице
+         (pages/home.blade.php) — но <x-ui.mobile-nav> рендерится сиблингом
+         <main>, а не потомком x-data, так что достать до filtersOpen напрямую
+         нельзя (Alpine резолвит scope только по предкам). Мост — window
+         CustomEvent, тот же приём, что у cart:item-removed/cart:item-updated
+         (resources/js/cart.js, cart-stepper.blade.php). На любой другой
+         странице панели фильтров просто нет — пункт ведёт на /. --}}
+    @php $onCatalogPage = $isActive('home'); @endphp
+    @if ($onCatalogPage)
+        <button
+            type="button"
+            x-data
+            x-on:click="window.dispatchEvent(new CustomEvent('catalog:filters-toggle'))"
+            aria-current="page"
+            class="grid min-h-[52px] justify-items-center gap-1.5 py-2 font-mono text-badge uppercase tracking-badge text-teal-700"
         >
-            <x-ui.icon name="heart" :size="18" />
-            {{ __('layout.nav.favorites') }}
-            <span
-                x-data
-                x-show="$store.favorites.count > 0"
-                x-text="$store.favorites.count"
-                class="absolute right-[calc(50%-24px)] top-0.5 min-w-[17px] rounded-sm bg-rust px-1 text-center font-mono text-[9px] leading-[17px] text-cream-100"
-                @if ($favoritesCount === 0) style="display:none" @endif
-            >{{ $favoritesCount }}</span>
+            <x-ui.icon name="sliders" :size="18" />
+            {{ __('layout.nav.filters') }}
+        </button>
+    @else
+        <a
+            href="{{ route('home') }}"
+            class="grid min-h-[52px] justify-items-center gap-1.5 py-2 font-mono text-badge uppercase tracking-badge text-ink-300 hover:text-ink-700"
+        >
+            <x-ui.icon name="sliders" :size="18" />
+            {{ __('layout.nav.filters') }}
         </a>
+    @endif
 
+    @auth
         @php $active = $isActive('cart.*'); @endphp
         <a
             href="{{ route('cart.index') }}"

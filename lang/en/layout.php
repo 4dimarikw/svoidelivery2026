@@ -16,6 +16,7 @@ return [
         'catalog' => 'Catalog',
         'profile' => 'Profile',
         'about' => 'About',
+        'filters' => 'Filters',
         'primary' => 'Primary navigation',
     ],
 ];
