@@ -16,6 +16,15 @@ return [
     'submit' => 'Place order',
     'submitting' => 'Placing order…',
 
+    'recipient' => [
+        'title' => 'Recipient details',
+        'name' => 'Recipient',
+        'phone' => 'Phone',
+        'city' => 'City',
+        'address' => 'Address',
+        'not_set' => 'not set',
+    ],
+
     'statuses' => [
         'new' => 'New',
         'pending' => 'Pending',

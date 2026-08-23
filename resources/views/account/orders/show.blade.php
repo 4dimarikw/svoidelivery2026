@@ -4,10 +4,6 @@
      deliveryType/paymentMethod (Account\OrderController::show()). --}}
 @php
     $customer = $order->orderCustomer;
-    $addressLine = $customer ? collect([
-        $customer->city,
-        $customer->address,
-    ])->filter()->implode(', ') : null;
 @endphp
 
 <x-layouts.account active="orders" :title="$order->number">
@@ -37,25 +33,33 @@
         </x-ui.surface>
 
         <x-ui.surface tone="paper-2" class="rounded-sm border border-hairline p-6">
-            <h3 class="mb-3 text-caption uppercase tracking-meta text-ink-500">{{ __('order.delivery_type') }}</h3>
-            <p class="text-body-m text-ink-900">{{ $order->deliveryType->title }}</p>
+            <h3 class="mb-3 text-caption uppercase tracking-meta text-ink-500">{{ __('order.recipient.title') }}</h3>
 
-            @if ($order->deliveryType->with_address)
-                <p class="mt-2 text-body-m text-ink-900">{{ $addressLine ?: '—' }}</p>
-            @endif
+            <div class="grid gap-2 text-body-m text-ink-900">
+                <p><span class="text-ink-500">{{ __('order.delivery_type') }}: </span>{{ $order->deliveryType->title }}</p>
 
-            @if ($customer)
-                <p class="mt-3 text-caption text-ink-500">
-                    {{ trim($customer->last_name.' '.$customer->first_name) }} &middot; {{ $customer->phone }}
-                </p>
-            @endif
+                @if ($customer)
+                    <p><span class="text-ink-500">{{ __('order.recipient.name') }}: </span>{{ trim($customer->last_name.' '.$customer->first_name) }}</p>
+                    <p><span class="text-ink-500">{{ __('order.recipient.phone') }}: </span>{{ $customer->phone }}</p>
+                    <p>
+                        <span class="text-ink-500">{{ __('order.messenger') }}: </span>
+                        @if ($customer->messenger_url)
+                            <x-ui.link :href="$customer->messenger_url" size="body-m">{{ $customer->messenger_url }}</x-ui.link>
+                        @else
+                            {{ __('order.recipient.not_set') }}
+                        @endif
+                    </p>
+                @endif
+
+                @if ($order->deliveryType->with_address)
+                    <p><span class="text-ink-500">{{ __('order.recipient.city') }}: </span>{{ $customer?->city ?: '—' }}</p>
+                    <p><span class="text-ink-500">{{ __('order.recipient.address') }}: </span>{{ $customer?->address ?: '—' }}</p>
+                @endif
+
+                @if ($order->comment)
+                    <p><span class="text-ink-500">{{ __('order.comment') }}: </span>{{ $order->comment }}</p>
+                @endif
+            </div>
         </x-ui.surface>
-
-        @if ($order->comment)
-            <x-ui.surface tone="paper-2" class="rounded-sm border border-hairline p-6">
-                <h3 class="mb-2 text-caption uppercase tracking-meta text-ink-500">{{ __('order.comment') }}</h3>
-                <p class="text-body-m text-ink-900">{{ $order->comment }}</p>
-            </x-ui.surface>
-        @endif
     </div>
 </x-layouts.account>
