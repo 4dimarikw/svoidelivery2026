@@ -1,7 +1,7 @@
 <x-layouts.site>
     <div
         class="mx-auto max-w-page px-6 py-10"
-        x-data="{ filtersOpen: false }"
+        x-data="{ filtersOpen: {{ request()->boolean('open_filters') ? 'true' : 'false' }} }"
         x-on:catalog:filters-toggle.window="filtersOpen = !filtersOpen"
     >
         <div class="mb-6 flex items-start justify-between">

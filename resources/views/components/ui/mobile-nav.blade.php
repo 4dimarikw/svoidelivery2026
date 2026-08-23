@@ -69,8 +69,11 @@
             {{ __('layout.nav.filters') }}
         </button>
     @else
+        {{-- open_filters=1 — читается сервером в pages/home.blade.php при
+             сидировании filtersOpen: с другой страницы панель должна
+             открыться сразу, не просто перейти на каталог закрытой. --}}
         <a
-            href="{{ route('home') }}"
+            href="{{ route('home', ['open_filters' => 1]) }}"
             class="grid min-h-[52px] justify-items-center gap-1.5 py-2 font-mono text-badge uppercase tracking-badge text-ink-300 hover:text-ink-700"
         >
             <x-ui.icon name="sliders" :size="18" />
