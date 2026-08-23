@@ -53,23 +53,28 @@
     class="grid grid-cols-[56px_1fr_auto] items-center gap-x-4 gap-y-3 border-b border-hairline py-3.5 last:border-b-0 sm:grid-cols-[56px_1fr_auto_auto_auto] sm:gap-y-0"
 >
     <div @class(['row-span-2 h-14 w-14 shrink-0 overflow-hidden rounded-sm border border-hairline bg-cream-100 sm:row-span-1', 'grayscale opacity-50' => ! $available])>
-        @if ($product->hasOwnImage())
-            <img
-                src="{{ $product->thumb }}"
-                alt="{{ $product->name }}"
-                loading="lazy"
-                class="h-full w-full object-cover"
-            >
-        @else
-            <x-ui.product-placeholder :product="$product" />
-        @endif
+        {{-- product-card-thumb (app.css) — тот же ховер-хатчинг, что и у
+             картинки карточки каталога (product-card.blade.php), класс не
+             привязан к размеру карточки. --}}
+        <a href="{{ route('product.show', $product) }}" aria-label="{{ __('catalog.go_to_product') }}" class="product-card-thumb block h-full w-full">
+            @if ($product->hasOwnImage())
+                <img
+                    src="{{ $product->thumb }}"
+                    alt="{{ $product->name }}"
+                    loading="lazy"
+                    class="h-full w-full object-cover"
+                >
+            @else
+                <x-ui.product-placeholder :product="$product" />
+            @endif
+        </a>
     </div>
 
     <div @class(['col-start-2 row-start-1 min-w-0', 'opacity-60' => ! $available])>
         @if ($product->manufacturer)
             <div class="truncate font-mono text-badge uppercase text-ink-300">{{ $product->manufacturer->name }}</div>
         @endif
-        <div class="truncate font-display text-btn-lg font-bold uppercase text-ink-900">{{ $product->brand ?: $product->name }}</div>
+        <div class="truncate font-display text-btn-lg font-bold uppercase text-ink-900"><a href="{{ route('product.show', $product) }}" class="hover:underline">{{ $product->brand ?: $product->name }}</a></div>
         @if ($spec->isNotEmpty())
             <div class="truncate text-caption text-ink-500">{{ $spec->implode(' · ') }}</div>
         @endif
