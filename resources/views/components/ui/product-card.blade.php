@@ -1,3 +1,4 @@
+@php use Domain\Cart\CartManager; @endphp
 {{-- Карточка товара для каталога (главная, route `home`). Воспроизводит .card
      из брендбука (data/design-system/project/design-system.html, §06) в
      токенах Tailwind.
@@ -150,7 +151,7 @@
     // Аналогично избранному (<x-ui.favorite-toggle>) — только для
     // авторизованных, мемоизировано в CartManager на один HTTP-запрос (см.
     // Domain\Cart\CartManager::items()).
-    $cartQuantity = auth()->check() ? app(\Domain\Cart\CartManager::class)->quantityOf($product) : 0;
+    $cartQuantity = auth()->check() ? app(CartManager::class)->quantityOf($product) : 0;
     $available = $product->isAvailable();
 @endphp
 
@@ -163,8 +164,9 @@
          «нет в наличии» (ниже) и кнопка «Удалить из корзины»
          (cart-stepper.blade.php) намеренно НЕ затемнены — они и есть
          единственный контраст, который должен привлекать внимание. --}}
-    <div @class(['relative aspect-square overflow-hidden border-b border-hairline bg-cream-100', 'grayscale opacity-50' => ! $available])>
-        <a href="{{ route('product.show', $product) }}" aria-label="{{ __('catalog.go_to_product') }}" class="product-card-thumb block h-full w-full">
+    <div @class(['relative aspect-square overflow-hidden bg-cream-100', 'grayscale opacity-50' => ! $available])>
+        <a href="{{ route('product.show', $product) }}" aria-label="{{ __('catalog.go_to_product') }}"
+           class="product-card-thumb block h-full w-full">
             @if ($product->hasOwnImage())
                 <img
                     src="{{ $product->thumb }}"
@@ -173,18 +175,19 @@
                     class="h-full w-full object-cover"
                 >
             @else
-                <x-ui.product-placeholder :product="$product" />
+                <x-ui.product-placeholder :product="$product"/>
             @endif
         </a>
 
-        <x-ui.favorite-toggle :product="$product" class="absolute right-2 top-2 z-10" />
+        <x-ui.favorite-toggle :product="$product" class="absolute right-2 top-2 z-10"/>
 
         {{-- «Новинка» — design-system.html §06 .card .tag-over (карточка F):
              бейдж прямо на картинке, прижат к левому краю у нижней кромки,
              скруглён только справа — не полноширинная плашка .ribbon под
              картинкой (карточка B). --}}
         @if ($product->is_new)
-            <span class="absolute bottom-2 left-0 z-10 inline-flex items-center rounded-r-sm bg-cream-200 px-3 pb-[5px] pt-1.5 font-mono text-badge font-medium uppercase leading-none tracking-label text-tan-600">
+            <span
+                class="absolute bottom-2 left-0 z-10 inline-flex items-center rounded-r-sm bg-cream-200 px-3 pb-[5px] pt-1.5 font-mono text-badge font-medium uppercase leading-none tracking-label text-tan-600">
                 {{ __('catalog.new') }}
             </span>
         @endif
@@ -193,8 +196,9 @@
              (карточка F): та же нижняя кромка, что у «Новинки», но
              прижат к правому краю и скруглён только слева. --}}
         @if ($rating)
-            <span class="absolute bottom-2 right-0 z-10 inline-flex items-center gap-1 rounded-l-sm bg-cream-50/90 px-2.5 pb-1 pt-[5px] font-mono text-xs font-medium leading-none tracking-[0.02em] text-untappd">
-                <x-ui.icon-untappd :size="13" />{{ $rating }}
+            <span
+                class="absolute bottom-2 right-0 z-10 inline-flex items-center gap-1 rounded-l-sm bg-cream-50/90 px-2.5 pb-1 pt-[5px] font-mono text-xs font-medium leading-none tracking-[0.02em] text-untappd">
+                <x-ui.icon-untappd :size="13"/>{{ $rating }}
             </span>
         @endif
     </div>
@@ -268,7 +272,7 @@
             <div class="mt-2.5 border-t border-hairline pt-2.5 xl:mt-3.5 xl:pt-3.5">
                 <span @class(['block whitespace-nowrap font-display text-btn-lg font-bold tracking-brand-body text-ink-900 xl:text-heading-s', 'opacity-60' => ! $available])>{{ $product->price }}</span>
 
-                <x-ui.cart-stepper :product="$product" :quantity="$cartQuantity" class="mt-2 h-[41px]" />
+                <x-ui.cart-stepper :product="$product" :quantity="$cartQuantity" class="mt-2 h-[41px]"/>
             </div>
         @endauth
     </div>
