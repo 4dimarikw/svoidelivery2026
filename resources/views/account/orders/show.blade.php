@@ -36,8 +36,6 @@
             <h3 class="mb-3 text-caption uppercase tracking-meta text-ink-500">{{ __('order.recipient.title') }}</h3>
 
             <div class="grid gap-2 text-body-m text-ink-900">
-                <p><span class="text-ink-500">{{ __('order.delivery_type') }}: </span>{{ $order->deliveryType->title }}</p>
-
                 @if ($customer)
                     <p><span class="text-ink-500">{{ __('order.recipient.name') }}: </span>{{ trim($customer->last_name.' '.$customer->first_name) }}</p>
                     <p><span class="text-ink-500">{{ __('order.recipient.phone') }}: </span>{{ $customer->phone }}</p>
