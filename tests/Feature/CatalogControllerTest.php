@@ -375,11 +375,27 @@ class CatalogControllerTest extends TestCase
         $response = $this->actingAs($user)->get(route('home'));
 
         $response->assertOk();
-        $response->assertSee('uiFavoriteToggle(true)', false);
-        $response->assertSee(':class="favorited ? \'text-rust\' : \'text-tan-500\'"', false);
+        $response->assertSee('uiFavoriteToggle(true, '.$product->id.')', false);
+        $response->assertSee(':class="favorited ? \'text-rust\' : \'text-tan-500 hover:text-rust\'"', false);
     }
 
     public function test_non_favorited_product_seeds_alpine_state_as_not_favorited(): void
+    {
+        $user = User::factory()->create();
+        $product = Product::factory()->create();
+
+        $response = $this->actingAs($user)->get(route('home'));
+
+        $response->assertOk();
+        $response->assertSee('uiFavoriteToggle(false, '.$product->id.')', false);
+    }
+
+    /**
+     * Каталог — не список избранного: снятие с избранного не должно убирать
+     * карточку из сетки (removeOnUnfavorite=false по умолчанию), в отличие
+     * от /account/favorites — см. FavoritesTest::test_index_page_wires_up_card_removal_on_unfavorite.
+     */
+    public function test_home_page_does_not_remove_cards_on_unfavorite(): void
     {
         $user = User::factory()->create();
         Product::factory()->create();
@@ -387,7 +403,7 @@ class CatalogControllerTest extends TestCase
         $response = $this->actingAs($user)->get(route('home'));
 
         $response->assertOk();
-        $response->assertSee('uiFavoriteToggle(false)', false);
+        $response->assertDontSee('favorite:removed', false);
     }
 
     public function test_guest_does_not_see_price_or_action_buttons(): void

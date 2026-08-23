@@ -21,7 +21,7 @@ document.addEventListener('alpine:init', () => {
      * обычным POST, back() возвращает на ту же страницу с уже актуальным
      * состоянием (пересчитанным заново на сервере).
      */
-    Alpine.data('uiFavoriteToggle', (favorited = false) => ({
+    Alpine.data('uiFavoriteToggle', (favorited = false, productId) => ({
         favorited,
         pending: false,
 
@@ -46,6 +46,13 @@ document.addEventListener('alpine:init', () => {
                 const body = await response.json();
                 this.favorited = body.favorited;
                 Alpine.store('favorites').count = body.count;
+
+                // Не в избранном — сигнал странице избранного убрать карточку
+                // из сетки (тот же приём, что у cart:item-removed в cart.js).
+                // На других страницах слушателей нет, диспатч безвреден.
+                if (!body.favorited) {
+                    window.dispatchEvent(new CustomEvent('favorite:removed', { detail: { productId } }));
+                }
             } catch (e) {
                 // Сеть недоступна — откатываемся к обычной отправке формы.
                 el.submit();

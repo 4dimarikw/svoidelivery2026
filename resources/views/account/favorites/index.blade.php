@@ -35,7 +35,10 @@
             </x-ui.surface>
         @else
             {{-- Та же сетка и та же карточка, что на главной (pages/catalog/_cards.blade.php)
-                 — разметка карточки существует в одном месте. --}}
+                 — разметка карточки существует в одном месте. $removeOnUnfavorite
+                 расшарен в partial через @include (общий scope переменных) —
+                 только здесь снятие с избранного убирает карточку из сетки. --}}
+            @php $removeOnUnfavorite = true; @endphp
             <div class="grid grid-cols-2 gap-1 sm:gap-4 md:grid-cols-4 lg:grid-cols-5 xl:gap-4">
                 @include('pages.catalog._cards')
             </div>

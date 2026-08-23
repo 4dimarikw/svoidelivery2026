@@ -121,7 +121,7 @@
      себе высокое. overflow, отличный от visible, обнуляет этот
      автоматический минимум — без него превью тянется выше квадрата вслед
      за высокими фотографиями, несмотря на aspect-square. --}}
-@props(['product'])
+@props(['product', 'removeOnUnfavorite' => false])
 
 @php
     $beer = $product->beerDetails;
@@ -155,9 +155,20 @@
     $available = $product->isAvailable();
 @endphp
 
+{{-- $removeOnUnfavorite — только со страницы /account/favorites (см.
+     account/favorites/index.blade.php, форвардится через
+     pages/catalog/_cards.blade.php). На каталоге снятие с избранного не
+     должно убирать карточку из сетки, поэтому x-data/x-show/listener ниже
+     добавляются только в этом режиме, тот же приём, что у cart-line.blade.php
+     для cart:item-removed. --}}
 <article
     title="{{ $product->name }}"
     class="flex h-full flex-col overflow-hidden rounded-sm border border-hairline bg-cream-50 transition hover:-translate-y-0.5 hover:shadow-md"
+    @if ($removeOnUnfavorite)
+        x-data="{ removed: false }"
+        x-show="! removed"
+        x-on:favorite:removed.window="if ($event.detail.productId === {{ $product->id }}) removed = true"
+    @endif
 >
     {{-- ! $available — фото и текст карточки приглушены (grayscale/opacity),
          чтобы состояние читалось с первого взгляда без наведения на чип; чип

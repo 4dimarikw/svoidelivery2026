@@ -48,7 +48,7 @@
         class="flex items-center justify-between rounded-sm px-3.5 py-2.5 text-body-m {{ $itemClass($active === 'favorites') }}"
     >
         {{ __('account.favorites.title') }}
-        <span class="font-mono text-micro" x-text="$store.favorites.count">{{ favorites()->count() }}</span>
+        <span class="font-mono text-micro" x-data x-text="$store.favorites.count">{{ favorites()->count() }}</span>
     </a>
 
     <div class="my-1.5 h-px bg-hairline"></div>
