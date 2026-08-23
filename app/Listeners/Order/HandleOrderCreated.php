@@ -152,6 +152,14 @@ class HandleOrderCreated
             '<code>Телефон: </code>'.$escape($order->orderCustomer?->phone),
         ];
 
+        $messengerUrl = $order->orderCustomer?->messenger_url;
+        // Не указан только у заказов до a94b602 (требование ссылки на
+        // checkout) или созданных в обход формы — тот же паттерн, что у
+        // Комментария ниже.
+        $lines[] = '<code>Мессенджер: </code>'.(blank($messengerUrl)
+            ? '<i>не указан</i>'
+            : '<a href="'.$escape($messengerUrl).'">'.$escape($messengerUrl).'</a>');
+
         if ($order->deliveryType?->with_address) {
             $lines[] = '<code>Город: </code>'.$escape($order->orderCustomer?->city);
             $lines[] = '<code>Адрес: </code>'.$escape($order->orderCustomer?->address);

@@ -15,6 +15,9 @@
 ### Данные получателя:
 **Имя и Фамилия:** {{ $order->orderCustomer?->first_name }} {{ $order->orderCustomer?->last_name }}<br>
 **Телефон:** {{ $order->orderCustomer?->phone }}<br>
+@if($order->orderCustomer?->messenger_url)
+**Мессенджер:** [{{ $order->orderCustomer->messenger_url }}]({{ $order->orderCustomer->messenger_url }})<br>
+@endif
 @if($order->deliveryType?->with_address)
 **Город:** {{ $order->orderCustomer?->city }}<br>
 **Адрес:** {{ $order->orderCustomer?->address }}

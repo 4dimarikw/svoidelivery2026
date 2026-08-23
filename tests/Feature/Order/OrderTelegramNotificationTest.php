@@ -126,6 +126,39 @@ class OrderTelegramNotificationTest extends TestCase
         Telegraph::assertSentData(TelegraphClient::ENDPOINT_MESSAGE, [
             'text' => 'Сумма: ₽ 12 000',
         ], false);
+        Telegraph::assertSentData(TelegraphClient::ENDPOINT_MESSAGE, [
+            'text' => 'https://t.me/ivan',
+        ], false);
+    }
+
+    /**
+     * order_customers.messenger_url — nullable для заказов до a94b602
+     * (требование ссылки на checkout) или созданных в обход формы (как
+     * Order::create([]) в этом файле). Сообщение должно уйти без ссылки,
+     * а не с битым <a href=""> или исключением.
+     */
+    public function test_message_shows_a_placeholder_when_messenger_url_is_missing(): void
+    {
+        config([
+            'services.telegram_notify.manage_group' => '-100123456789',
+            'services.telegram_notify.new_order_thread_id' => 42,
+        ]);
+
+        Telegraph::fake();
+
+        TelegramBot::create([
+            'token' => 'test-bot-token',
+            'name' => 'Test Bot',
+            'username' => 'svoi_test_bot',
+        ]);
+
+        $order = Order::create([]);
+
+        $this->callHandler($order);
+
+        Telegraph::assertSentData(TelegraphClient::ENDPOINT_MESSAGE, [
+            'text' => 'Мессенджер: </code><i>не указан</i>',
+        ], false);
     }
 
     /**

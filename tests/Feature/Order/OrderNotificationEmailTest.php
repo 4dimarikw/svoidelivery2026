@@ -6,10 +6,15 @@ namespace Tests\Feature\Order;
 
 use App\Events\Order\OrderCreated;
 use App\Listeners\Order\HandleOrderCreated;
+use Domain\Auth\Models\User;
+use Domain\Cart\Models\Cart;
+use Domain\Cart\Models\CartItem;
+use Domain\Catalog\Models\Product;
 use Domain\Logging\Models\EventLog;
 use Domain\Order\Actions\UploadOrderToFTP;
 use Domain\Order\Mail\NewOrderCreated;
 use Domain\Order\Models\Order;
+use Domain\Profile\Models\Address;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
@@ -171,6 +176,65 @@ class OrderNotificationEmailTest extends TestCase
         $this->callHandler($order);
 
         Mail::assertQueued(NewOrderCreated::class, fn (NewOrderCreated $mail) => $mail->hasTo('a@example.test'));
+    }
+
+    /**
+     * order_customers.messenger_url — обязателен на checkout с a94b602,
+     * письмо должно показывать его кликабельной markdown-ссылкой в блоке
+     * "Данные получателя".
+     */
+    public function test_messenger_link_is_rendered_after_a_real_checkout(): void
+    {
+        Mail::fake();
+        Storage::fake('ftp');
+
+        $settings = app(SiteSettings::class);
+        $settings->notify_email = 'admin@example.test';
+        $settings->save();
+
+        $user = User::factory()->create();
+        $address = Address::factory()->for($user)->create();
+        $product = Product::factory()->create(['price' => 12000, 'stock_quantity' => 5, 'in_stock' => true]);
+
+        $cart = Cart::factory()->create(['user_id' => $user->id]);
+        CartItem::factory()->create(['cart_id' => $cart->id, 'product_id' => $product->id, 'quantity' => 1, 'price' => 12000]);
+
+        $this->actingAs($user)->post(route('checkout.store'), [
+            'address_id' => $address->id,
+            'first_name' => 'Иван',
+            'last_name' => 'Иванов',
+            'phone' => '+79991234567',
+            'messenger_url' => 'https://t.me/ivan',
+        ]);
+
+        Mail::assertQueued(NewOrderCreated::class, function (NewOrderCreated $mail): bool {
+            $html = $mail->render();
+
+            return str_contains($html, 'https://t.me/ivan');
+        });
+    }
+
+    /**
+     * order_customers.messenger_url — nullable для заказов до a94b602 или
+     * созданных в обход формы (как Order::create([]) ниже, без orderCustomer
+     * вообще). Письмо должно рендериться без ссылки, а не бросать исключение
+     * на $order->orderCustomer->messenger_url без null-safe оператора.
+     */
+    public function test_email_renders_without_a_messenger_link_when_customer_is_missing(): void
+    {
+        Mail::fake();
+
+        $settings = app(SiteSettings::class);
+        $settings->notify_email = 'admin@example.test';
+        $settings->save();
+
+        $order = Order::create([]);
+
+        $this->callHandler($order);
+
+        Mail::assertQueued(NewOrderCreated::class, function (NewOrderCreated $mail): bool {
+            return ! str_contains($mail->render(), 'Мессенджер');
+        });
     }
 
     /**
