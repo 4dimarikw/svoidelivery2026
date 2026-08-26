@@ -40,14 +40,17 @@ final class EventLogIndexPage extends IndexPage
         return [
             ID::make()->sortable(),
             Date::make('Время', 'created_at')->format('d.m.Y H:i:s')->sortable(),
-            Text::make('Уровень', 'level')->badge(fn (string $level) => match ($level) {
+            Text::make('Уровень', 'level')->badge(fn(string $level) => match ($level) {
                 'error' => 'red',
                 'warning' => 'yellow',
                 default => 'green',
             }),
-            Text::make('Тип события', 'event_type')->sortable(),
-            Text::make('Сообщение', formatted: fn (EventLog $item) => Str::limit($item->message, 80)),
-            Text::make('Инициатор', formatted: fn (EventLog $item) => $item->causer?->name ?? $item->caused_by_type),
+            Text::make('Тип события', 'event_type')
+                ->sortable()
+                ->withoutTextWrap(),
+            Text::make('Сообщение', formatted: fn(EventLog $item) => Str::limit($item->message, 80))
+                ->withoutTextWrap(),
+            Text::make('Инициатор', formatted: fn(EventLog $item) => $item->causer?->name ?? $item->caused_by_type),
         ];
     }
 
@@ -58,10 +61,10 @@ final class EventLogIndexPage extends IndexPage
     {
         return [
             Select::make('Уровень', 'level')
-                ->options(fn () => EventLog::query()->distinct()->orderBy('level')->pluck('level', 'level')->all())
+                ->options(fn() => EventLog::query()->distinct()->orderBy('level')->pluck('level', 'level')->all())
                 ->nullable(),
             Select::make('Тип события', 'event_type')
-                ->options(fn () => EventLog::query()->distinct()->orderBy('event_type')->pluck('event_type', 'event_type')->all())
+                ->options(fn() => EventLog::query()->distinct()->orderBy('event_type')->pluck('event_type', 'event_type')->all())
                 ->nullable(),
             DateRange::make('Период', 'created_at'),
         ];
@@ -73,8 +76,8 @@ final class EventLogIndexPage extends IndexPage
     protected function queryTags(): array
     {
         return [
-            QueryTag::make('Ошибки', fn (Builder $query) => $query->where('level', 'error')),
-            QueryTag::make('Предупреждения', fn (Builder $query) => $query->where('level', 'warning')),
+            QueryTag::make('Ошибки', fn(Builder $query) => $query->where('level', 'error')),
+            QueryTag::make('Предупреждения', fn(Builder $query) => $query->where('level', 'warning')),
         ];
     }
 
@@ -102,7 +105,7 @@ final class EventLogIndexPage extends IndexPage
     }
 
     /**
-     * @param  TableBuilder  $component
+     * @param TableBuilder $component
      * @return TableBuilder
      */
     protected function modifyListComponent(ComponentContract $component): ComponentContract
