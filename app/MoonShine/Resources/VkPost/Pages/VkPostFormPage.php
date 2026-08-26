@@ -29,6 +29,7 @@ use MoonShine\UI\Fields\Date;
 use MoonShine\UI\Fields\Enum;
 use MoonShine\UI\Fields\ID;
 use MoonShine\UI\Fields\Json;
+use MoonShine\UI\Fields\Text;
 use MoonShine\UI\Fields\Textarea;
 use MoonShine\UI\Fields\Url;
 use Throwable;
@@ -51,7 +52,7 @@ final class VkPostFormPage extends FormPage
                 Url::make('Ссылка на VK', formatted: fn (?VkPost $item) => $item?->vkUrl ?? '')
                     ->title(fn () => 'Ссылка на пост VK')
                     ->previewMode(),
-                Date::make('Опубликован', 'posted_at')->withTime()->locked(),
+                Date::make('Опубликован в VK', 'posted_at')->withTime()->locked(),
                 Enum::make('Статус', 'status')->attach(VkPostStatus::class),
             ]),
             Box::make('Рассылка', [
@@ -61,7 +62,10 @@ final class VkPostFormPage extends FormPage
                     ]),
                 ]),
                 Textarea::make('Текст для рассылки', 'message_text')
-                    ->hint('Пусто — пост не рассылается. Перенесите нужное из исходного текста VK.'),
+                    ->hint('Пусто — пост не рассылается. Перенесите нужное из исходного текста VK.')
+                    ->customAttributes([
+                        'rows' => 20,
+                    ]),
                 Collapse::make('Описание синтаксиса для форматирования текста сообщения Telegram', [
                     FlexibleRender::make(
                         view('pages.telegram-standard-html-tags')
@@ -111,6 +115,32 @@ final class VkPostFormPage extends FormPage
     }
 
     /**
+     * Данные о рассылке (только просмотр) — когда пост разослан
+     * и с каким результатом. Пишутся только BroadcastVkPostJob,
+     * на форме недоступны для редактирования.
+     */
+    private function broadcastInfoBox(): ComponentContract
+    {
+        $item = $this->getItem();
+
+        if (! $item instanceof VkPost || $item->broadcast_at === null) {
+            return Box::make('Данные рассылки', [
+                Heading::make('Пост ещё не рассылался')->h(5),
+            ]);
+        }
+
+        return Box::make('Данные рассылки', [
+            Date::make('Разослан', 'broadcast_at')->withTime()->fillData($item)->previewMode(),
+            Text::make('Статистика', 'broadcast_stats', formatted: fn (?VkPost $item) => sprintf(
+                'Отправлено: %d, ошибок: %d, пропущено: %d',
+                (int) data_get($item?->broadcast_stats, 'sent', 0),
+                (int) data_get($item?->broadcast_stats, 'failed', 0),
+                (int) data_get($item?->broadcast_stats, 'skipped', 0),
+            ))->fillData($item)->previewMode(),
+        ]);
+    }
+
+    /**
      * @return list<ComponentContract>
      *
      * @throws Throwable
@@ -120,7 +150,7 @@ final class VkPostFormPage extends FormPage
         return [
             Grid::make([
                 Column::make(parent::mainLayer(), colSpan: 8, adaptiveColSpan: 12),
-                Column::make([$this->imagesBox()], colSpan: 4, adaptiveColSpan: 12),
+                Column::make([$this->broadcastInfoBox(), $this->imagesBox()], colSpan: 4, adaptiveColSpan: 12),
             ]),
         ];
     }

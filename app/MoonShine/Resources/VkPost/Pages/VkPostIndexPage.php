@@ -53,7 +53,7 @@ final class VkPostIndexPage extends IndexPage
         return [
             ID::make()->sortable(),
 
-            Date::make('Опубликован', 'posted_at')->format('d.m.Y H:i')->sortable()->canSee(fn () => $isAdmin),
+            Date::make('Опубликован в VK', 'posted_at')->format('d.m.Y H:i')->sortable()->canSee(fn () => $isAdmin),
 
             Text::make('Текст', formatted: fn (VkPost $item) => Str::limit((string) ($item->message_text ?: $item->text), 80)),
             Image::make('Картинки', 'images')->changePreview(fn ($value) => Thumbnails::make($value)),

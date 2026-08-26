@@ -40,6 +40,8 @@ class VkPostResource extends ModelResource
         return 'Посты VK';
     }
 
+    protected string $sortColumn = 'posted_at';
+
     protected function activeActions(): ListOf
     {
         return parent::activeActions()->except(Action::CREATE);
