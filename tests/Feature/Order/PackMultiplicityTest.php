@@ -40,6 +40,7 @@ class PackMultiplicityTest extends TestCase
         $address = Address::factory()->for($user)->create();
 
         return $this->actingAs($user)->post(route('checkout.store'), array_merge([
+            'checkout_key' => cart()->checkoutToken(),
             'address_id' => $address->id,
             'first_name' => 'Иван',
             'last_name' => 'Иванов',

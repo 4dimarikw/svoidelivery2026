@@ -4,10 +4,14 @@ declare(strict_types=1);
 
 namespace Domain\Cart;
 
+use Closure;
+use Domain\Auth\Models\User;
 use Domain\Cart\Models\Cart;
 use Domain\Cart\Models\CartItem;
 use Domain\Catalog\Models\Product;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Support\ValueObjects\Price;
 
 /**
@@ -23,6 +27,57 @@ use Support\ValueObjects\Price;
 final class CartManager
 {
     private ?Collection $items = null;
+
+    private ?Cart $lockedCart = null;
+
+    private ?Collection $lockedProducts = null;
+
+    /**
+     * Единый порядок блокировок для оформления и любых изменений корзины.
+     * На каждой попытке транзакции читаем модели заново, включая прогретый кеш.
+     */
+    public function transaction(Closure $callback, array $productIds = []): mixed
+    {
+        if ($this->lockedCart !== null) {
+            return $callback($this->lockedCart, $this->lockedProducts);
+        }
+
+        return DB::transaction(function () use ($callback, $productIds) {
+            $this->items = null;
+
+            try {
+                User::query()->whereKey(auth()->id())->lockForUpdate()->firstOrFail();
+                $cart = Cart::query()->firstOrCreate(['user_id' => auth()->id()]);
+                $this->lockedCart = Cart::query()->whereKey($cart->id)->lockForUpdate()->firstOrFail();
+                $this->items = $cart->cartItems()->orderBy('id')->lockForUpdate()->get()->keyBy('product_id');
+                $ids = $this->items->keys()->merge($productIds)->unique()->sort()->values();
+                $this->lockedProducts = Product::query()->whereKey($ids->all())
+                    ->orderBy('id')->lockForUpdate()->get()->keyBy('id');
+
+                foreach ($this->items as $item) {
+                    $item->setRelation('product', $this->lockedProducts->get($item->product_id));
+                }
+
+                return $callback($this->lockedCart, $this->lockedProducts);
+            } finally {
+                $this->items = null;
+                $this->lockedCart = null;
+                $this->lockedProducts = null;
+            }
+        }, 3);
+    }
+
+    public function checkoutToken(): string
+    {
+        return $this->transaction(function (Cart $cart): string {
+            if ($cart->checkout_token === null) {
+                $cart->checkout_token = (string) Str::uuid();
+                $cart->save();
+            }
+
+            return $cart->checkout_token;
+        });
+    }
 
     private function items(): Collection
     {
@@ -87,30 +142,34 @@ final class CartManager
             return null;
         }
 
-        $cart = Cart::query()->firstOrCreate(['user_id' => auth()->id()]);
-
-        $item = CartItem::query()->firstOrNew([
-            'cart_id' => $cart->id,
-            'product_id' => $product->getKey(),
-        ]);
-
-        $newQuantity = $this->clampQuantity($product, ($item->exists ? $item->quantity : 0) + $by);
-
-        $this->items = null;
-
-        if ($newQuantity <= 0) {
-            if ($item->exists) {
-                $item->delete();
+        return $this->transaction(function (Cart $cart, Collection $products) use ($product, $by): ?CartItem {
+            $freshProduct = $products->get($product->getKey());
+            if ($freshProduct === null) {
+                return null;
             }
 
-            return null;
-        }
+            $item = $this->items->get($product->getKey()) ?? new CartItem([
+                'cart_id' => $cart->id,
+                'product_id' => $product->getKey(),
+            ]);
+            $newQuantity = $this->clampQuantity($freshProduct, ($item->exists ? $item->quantity : 0) + $by);
 
-        $item->quantity = $newQuantity;
-        $item->price = $product->price;
-        $item->save();
+            if ($newQuantity <= 0) {
+                if ($item->exists) {
+                    $item->delete();
+                }
+                $this->items->forget($product->getKey());
 
-        return $item;
+                return null;
+            }
+
+            $item->quantity = $newQuantity;
+            $item->price = $freshProduct->price;
+            $item->save();
+            $this->items->put($product->getKey(), $item);
+
+            return $item;
+        }, [$product->getKey()]);
     }
 
     public function decrement(Product $product, int $by = 1): ?CartItem
@@ -126,12 +185,10 @@ final class CartManager
 
         $productId = $product instanceof Product ? $product->getKey() : $product;
 
-        CartItem::query()
-            ->where('product_id', $productId)
-            ->whereHas('cart', fn ($query) => $query->where('user_id', auth()->id()))
-            ->delete();
-
-        $this->items = null;
+        $this->transaction(function (Cart $cart) use ($productId): void {
+            $cart->cartItems()->where('product_id', $productId)->delete();
+            $this->items = null;
+        });
     }
 
     public function truncate(): void
@@ -140,11 +197,10 @@ final class CartManager
             return;
         }
 
-        CartItem::query()
-            ->whereHas('cart', fn ($query) => $query->where('user_id', auth()->id()))
-            ->delete();
-
-        $this->items = null;
+        $this->transaction(function (Cart $cart): void {
+            $cart->cartItems()->delete();
+            $this->items = null;
+        });
     }
 
     /**

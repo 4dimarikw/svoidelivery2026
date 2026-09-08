@@ -4,6 +4,7 @@ namespace Domain\Order\Requests;
 
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use Infrastructure\Rules\FIORule;
 use Support\Rules\RussianPhoneNumber;
@@ -37,6 +38,27 @@ class OrderRequest extends FormRequest
      * @return array<string, ValidationRule|array|string>
      */
     public function rules(): array
+    {
+        return ['checkout_key' => ['required', 'uuid']];
+    }
+
+    public function messages(): array
+    {
+        return [
+            'checkout_key.required' => __('order.errors.checkout_expired'),
+            'checkout_key.uuid' => __('order.errors.checkout_expired'),
+        ];
+    }
+
+    // Повтор завершённого заказа не зависит от существования прежнего адреса.
+    public function validateCustomer(): void
+    {
+        Validator::make(
+            $this->all(), $this->customerRules(), [], $this->attributes(),
+        )->validate();
+    }
+
+    private function customerRules(): array
     {
         return [
             // Способ доставки/оплаты клиент больше не выбирает — публичное

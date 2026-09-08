@@ -39,6 +39,10 @@ document.addEventListener('alpine:init', () => {
                 return true;
             }
 
+            if (this.submitting) {
+                return;
+            }
+
             this.submitting = true;
             this.errors = {};
             this.status = null;

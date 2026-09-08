@@ -200,6 +200,7 @@ class OrderNotificationEmailTest extends TestCase
         CartItem::factory()->create(['cart_id' => $cart->id, 'product_id' => $product->id, 'quantity' => 1, 'price' => 12000]);
 
         $this->actingAs($user)->post(route('checkout.store'), [
+            'checkout_key' => cart()->checkoutToken(),
             'address_id' => $address->id,
             'first_name' => 'Иван',
             'last_name' => 'Иванов',

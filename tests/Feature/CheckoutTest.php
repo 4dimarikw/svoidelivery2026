@@ -129,6 +129,7 @@ class CheckoutTest extends TestCase
         CartItem::factory()->create(['cart_id' => $cart->id, 'product_id' => $product->id, 'quantity' => 1, 'price' => 12000]);
 
         $response = $this->actingAs($user)->post(route('checkout.store'), [
+            'checkout_key' => cart()->checkoutToken(),
             'address_id' => $address->id,
             'first_name' => 'Иван',
             'last_name' => 'Иванов',
@@ -206,6 +207,7 @@ class CheckoutTest extends TestCase
         CartItem::factory()->create(['cart_id' => $cart->id, 'product_id' => $product->id, 'quantity' => 1, 'price' => 12000]);
 
         $response = $this->actingAs($user)->post(route('checkout.store'), [
+            'checkout_key' => cart()->checkoutToken(),
             'address_id' => (string) $address->id,
             'first_name' => 'Иван',
             'last_name' => 'Иванов',
@@ -234,6 +236,7 @@ class CheckoutTest extends TestCase
         CartItem::factory()->create(['cart_id' => $cart->id, 'product_id' => $product->id, 'quantity' => 1, 'price' => 12000]);
 
         $response = $this->actingAs($user)->post(route('checkout.store'), [
+            'checkout_key' => cart()->checkoutToken(),
             'address_id' => $address->id,
             'first_name' => 'Иван',
             'last_name' => 'Иванов',
@@ -254,6 +257,7 @@ class CheckoutTest extends TestCase
         CartItem::factory()->create(['cart_id' => $cart->id, 'product_id' => $product->id, 'quantity' => 1, 'price' => 12000]);
 
         $response = $this->actingAs($user)->post(route('checkout.store'), [
+            'checkout_key' => cart()->checkoutToken(),
             'address_id' => $address->id,
             'first_name' => 'Иван',
             'last_name' => 'Иванов',
@@ -278,6 +282,7 @@ class CheckoutTest extends TestCase
         $otherPaymentMethod = PaymentMethod::query()->where('title', '!=', config('order.default_payment_method'))->firstOrFail();
 
         $this->actingAs($user)->post(route('checkout.store'), [
+            'checkout_key' => cart()->checkoutToken(),
             'delivery_type_id' => $otherDeliveryType->id,
             'payment_method_id' => $otherPaymentMethod->id,
             'address_id' => $address->id,
@@ -302,6 +307,7 @@ class CheckoutTest extends TestCase
         CartItem::factory()->create(['cart_id' => $cart->id, 'product_id' => $product->id, 'quantity' => 1, 'price' => 12000]);
 
         $response = $this->actingAs($user)->post(route('checkout.store'), [
+            'checkout_key' => cart()->checkoutToken(),
             'first_name' => 'Иван',
             'last_name' => 'Иванов',
             'phone' => '+79991234567',
@@ -321,6 +327,7 @@ class CheckoutTest extends TestCase
         CartItem::factory()->create(['cart_id' => $cart->id, 'product_id' => $product->id, 'quantity' => 1, 'price' => 12000]);
 
         $response = $this->actingAs($user)->post(route('checkout.store'), [
+            'checkout_key' => cart()->checkoutToken(),
             'address_id' => $address->id,
             'first_name' => 'Иван',
             'last_name' => 'Иванов',
@@ -341,6 +348,7 @@ class CheckoutTest extends TestCase
         CartItem::factory()->create(['cart_id' => $cart->id, 'product_id' => $product->id, 'quantity' => 1, 'price' => 12000]);
 
         $this->actingAs($user)->post(route('checkout.store'), [
+            'checkout_key' => cart()->checkoutToken(),
             'address_id' => $address->id,
             'first_name' => 'Иван',
             'last_name' => 'Иванов',
@@ -367,6 +375,7 @@ class CheckoutTest extends TestCase
         CartItem::factory()->create(['cart_id' => $cart->id, 'product_id' => $product->id, 'quantity' => 1, 'price' => 12000]);
 
         $response = $this->actingAs($user)->post(route('checkout.store'), [
+            'checkout_key' => cart()->checkoutToken(),
             'address_id' => $theirAddress->id,
             'first_name' => 'Иван',
             'last_name' => 'Иванов',
@@ -393,6 +402,7 @@ class CheckoutTest extends TestCase
         $product->update(['in_stock' => false]);
 
         $response = $this->actingAs($user)->post(route('checkout.store'), [
+            'checkout_key' => cart()->checkoutToken(),
             'address_id' => $address->id,
             'first_name' => 'Иван',
             'last_name' => 'Иванов',
@@ -437,6 +447,7 @@ class CheckoutTest extends TestCase
         $product->update(['stock_quantity' => 1]);
 
         $response = $this->actingAs($user)->post(route('checkout.store'), [
+            'checkout_key' => cart()->checkoutToken(),
             'address_id' => $address->id,
             'first_name' => 'Иван',
             'last_name' => 'Иванов',
@@ -464,6 +475,7 @@ class CheckoutTest extends TestCase
         CartItem::factory()->create(['cart_id' => $cart->id, 'product_id' => $product->id, 'quantity' => 1, 'price' => 12000]);
 
         $this->actingAs($user)->post(route('checkout.store'), [
+            'checkout_key' => cart()->checkoutToken(),
             'address_id' => $address->id,
             'first_name' => 'Иван',
             'last_name' => 'Иванов',

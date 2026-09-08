@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Events\Order\OrderCreationFailed;
+use Domain\Cart\Models\Cart;
 use Domain\Order\DTO\CustomerDTO;
 use Domain\Order\Exceptions\OrderProcessException;
 use Domain\Order\Models\DeliveryType;
@@ -20,6 +21,8 @@ use Domain\Order\Processes\UpdateProductStockQuantity;
 use Domain\Order\Requests\OrderRequest;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 use Throwable;
 
 /**
@@ -34,36 +37,52 @@ class OrderController extends Controller
      */
     public function store(OrderRequest $request): RedirectResponse|JsonResponse
     {
-        $customer = CustomerDTO::fromRequest($request);
-
-        // delivery_type_id/payment_method_id — не выбор клиента: публичное
-        // оформление заказа не даёт вариантов, значения фиксированы
-        // (config/order.php). Даже если клиент пришлёт свои id в теле
-        // запроса, OrderRequest их больше не валидирует и не читает.
-        $order = new Order([
-            'user_id' => $request->user()->id,
-            'delivery_type_id' => DeliveryType::default()->id,
-            'payment_method_id' => PaymentMethod::default()->id,
-            'comment' => $request->input('comment'),
-        ]);
-
-        // До пайплайна — ClearCart в его конце очищает корзину, а PersistOrder
-        // может частично изменить состояние ещё до броска исключения.
-        $cartItemsCount = cart()->count();
+        $cartItemsCount = 0;
 
         try {
-            $order = new OrderProcess($order)
-                ->processes([
-                    new TermsOrder,
-                    new CheckProductInStock,
-                    new PersistOrder,
-                    new AssignCustomer($customer),
-                    new AssignProducts,
-                    new ChangeStateToPending,
-                    new UpdateProductStockQuantity,
-                    new ClearCart,
-                ])
-                ->run();
+            $order = cart()->transaction(function (Cart $cart) use ($request, &$cartItemsCount): Order {
+                $key = strtolower($request->input('checkout_key'));
+                $existing = Order::query()->where('user_id', $request->user()->id)
+                    ->where('checkout_key', $key)->first();
+
+                if ($existing !== null) {
+                    return $existing;
+                }
+
+                if ($cart->checkout_token === null || ! hash_equals($cart->checkout_token, $key)) {
+                    throw new OrderProcessException(__('order.errors.checkout_expired'));
+                }
+
+                $request->validateCustomer();
+                $customer = CustomerDTO::fromRequest($request);
+                $cartItemsCount = cart()->count();
+                $order = new Order([
+                    'user_id' => $request->user()->id,
+                    'checkout_key' => $key,
+                    'delivery_type_id' => DeliveryType::default()->id,
+                    'payment_method_id' => PaymentMethod::default()->id,
+                    'comment' => $request->input('comment'),
+                ]);
+
+                $order = new OrderProcess($order)
+                    ->processes([
+                        new TermsOrder,
+                        new CheckProductInStock,
+                        new PersistOrder,
+                        new AssignCustomer($customer),
+                        new AssignProducts,
+                        new ChangeStateToPending,
+                        new UpdateProductStockQuantity,
+                        new ClearCart,
+                    ])
+                    ->run();
+                $cart->checkout_token = (string) Str::uuid();
+                $cart->save();
+
+                return $order;
+            });
+        } catch (ValidationException $e) {
+            throw $e;
         } catch (OrderProcessException $e) {
             // Отказ по бизнес-правилу (мин. сумма, нет в наличии) — раньше
             // нигде не логировался, хотя это единственная точка, где

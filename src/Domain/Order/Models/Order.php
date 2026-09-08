@@ -26,6 +26,7 @@ class Order extends Model
     }
 
     protected $fillable = [
+        'checkout_key',
         'number',
         'user_id',
         'delivery_type_id',

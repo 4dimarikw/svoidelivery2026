@@ -113,9 +113,10 @@
                         'comment' => old('comment', $selectedAddress?->comment),
                         'messenger_url' => $defaultMessengerUrl,
                     ]"
-                    x-effect="$store.checkout.submitting = submitting; $store.checkout.error = errorFor('checkout')"
+                    x-effect="$store.checkout.submitting = submitting; $store.checkout.error = errorFor('checkout') || errorFor('checkout_key')"
                     class="grid gap-8"
                 >
+                    <input type="hidden" name="checkout_key" value="{{ $checkoutKey }}">
                     <x-ui.surface tone="paper-2" class="rounded-sm border border-hairline p-6">
                         <div class="mb-4 flex items-center justify-between">
                             <h2 class="font-display text-heading-s uppercase text-ink-900">{{ __('order.address') }}</h2>
@@ -248,7 +249,7 @@
                 </x-ui.cart-summary>
 
                 @php
-                    $checkoutError = $errors->first('checkout');
+                    $checkoutError = $errors->first('checkout') ?: $errors->first('checkout_key');
                 @endphp
                 {{-- Не <x-ui.error-alert> — тот читает errorFor() из
                      Alpine-scope ближайшего x-data="uiForm(...)" предка по

@@ -16,6 +16,7 @@ class CartController extends Controller
 {
     public function index(Request $request, CartManager $cart): Response
     {
+        $checkoutKey = $cart->checkoutToken();
         // CartManager::cartItems() — тот же мемоизированный на HTTP-запрос
         // $items, что читают $cart->count()/->amount() ниже и шапка
         // (header.blade.php, mobile-nav.blade.php): отдельный CartItem::query()
@@ -61,6 +62,7 @@ class CartController extends Controller
         return response()
             ->view('pages.cart', [
                 'cartItems' => $cartItems,
+                'checkoutKey' => $checkoutKey,
                 'cart' => $cart,
                 'amount' => $cart->amount(),
                 'addresses' => $addresses,
@@ -74,33 +76,35 @@ class CartController extends Controller
 
     public function increase(Request $request, Product $product, CartManager $cart): RedirectResponse|JsonResponse
     {
-        $before = $cart->quantityOf($product);
-        $item = $cart->increment($product);
+        return $cart->transaction(function () use ($request, $product, $cart) {
+            $before = $cart->quantityOf($product);
+            $item = $cart->increment($product);
 
-        // Клампинг по остатку (CartManager::clampQuantity) мог не дать ничего
-        // добавить — товар кончился уже после рендера страницы (in_stock и
-        // stock_quantity разошлись). Сравниваем количество до/после, не
-        // $item === null: у decrease() null — легитимный результат «строку
-        // убрали», здесь такой развилки нет.
-        if ($cart->quantityOf($product) === $before) {
-            return $this->rejectUnavailable($request);
-        }
+            // Сравниваем количество в одной транзакции, а не с кешем до блокировки.
+            if ($cart->quantityOf($product) === $before) {
+                return $this->rejectUnavailable($request);
+            }
 
-        return $this->respond($request, $cart, $product, 'cart-item-added', $item);
+            return $this->respond($request, $cart, $product, 'cart-item-added', $item);
+        }, [$product->getKey()]);
     }
 
     public function decrease(Request $request, Product $product, CartManager $cart): RedirectResponse|JsonResponse
     {
-        $item = $cart->decrement($product);
+        return $cart->transaction(function () use ($request, $product, $cart) {
+            $item = $cart->decrement($product);
 
-        return $this->respond($request, $cart, $product, 'cart-item-removed', $item);
+            return $this->respond($request, $cart, $product, 'cart-item-removed', $item);
+        }, [$product->getKey()]);
     }
 
     public function destroy(Request $request, Product $product, CartManager $cart): RedirectResponse|JsonResponse
     {
-        $cart->remove($product);
+        return $cart->transaction(function () use ($request, $product, $cart) {
+            $cart->remove($product);
 
-        return $this->respond($request, $cart, $product, 'cart-item-removed');
+            return $this->respond($request, $cart, $product, 'cart-item-removed');
+        });
     }
 
     public function clear(CartManager $cart): RedirectResponse
