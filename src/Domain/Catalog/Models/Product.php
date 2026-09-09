@@ -6,6 +6,7 @@ use Database\Factories\Catalog\ProductFactory;
 use Domain\Catalog\Actions\SyncProductSeoAction;
 use Domain\Catalog\Builders\ProductBuilder;
 use Domain\Catalog\Enums\ProductStatus;
+use Domain\Order\Models\OrderItem;
 use Eloquent;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -14,7 +15,9 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 use Infrastructure\Settings\CatalogImportSettings;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
@@ -94,6 +97,25 @@ class Product extends Model implements HasMedia
     use HasFactory;
     use HasSlug;
     use InteractsWithMedia;
+
+    public function delete()
+    {
+        if (! $this->exists) {
+            return parent::delete();
+        }
+
+        return DB::transaction(function () {
+            // До deleting-хуков MediaLibrary: отказ FK после них уже удалил бы фото.
+            if (! static::query()->whereKey($this->getKey())->lockForUpdate()->first()) {
+                return false;
+            }
+            if (OrderItem::query()->where('product_id', $this->getKey())->lockForUpdate()->first(['id'])) {
+                throw ValidationException::withMessages(['product' => __('order.errors.product_has_orders')]);
+            }
+
+            return parent::delete();
+        });
+    }
 
     protected $fillable = [
         'external_code',

@@ -293,6 +293,9 @@ return [
     'order_item' => [
         'title' => 'Order items',
         'fields' => [
+            'snapshot_title' => 'Product at order time',
+            'snapshot_name' => 'Name at order time',
+            'snapshot_code' => 'Code at order time',
             'price' => 'Price',
             'quantity' => 'Quantity',
             'product' => 'Product',

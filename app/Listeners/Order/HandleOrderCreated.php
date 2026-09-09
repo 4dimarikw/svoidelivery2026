@@ -64,10 +64,10 @@ class HandleOrderCreated
         }
 
         try {
-            // orderCustomer/orderItems.product/deliveryType используются и в
+            // orderCustomer/orderItems/deliveryType используются и в
             // emails.new-order, и в BuildOrderXml — грузим явно, не по одному
             // лениво (та же причина, что у Order::with() в UploadOrderToFTP::execute()).
-            $order->loadMissing(['orderCustomer', 'orderItems.product', 'deliveryType']);
+            $order->loadMissing(['orderCustomer', 'orderItems', 'deliveryType']);
 
             $xml = null;
 
@@ -113,7 +113,7 @@ class HandleOrderCreated
             // загруженные связи не перезапрашиваются), а нужен на случай,
             // если email-ветка вообще не дошла до своего loadMissing()
             // (notifyEmails() === []).
-            $order->loadMissing(['orderCustomer', 'orderItems.product', 'deliveryType']);
+            $order->loadMissing(['orderCustomer', 'orderItems', 'deliveryType']);
 
             app(SendTelegramMessage::class)(
                 (string) $chatId,
@@ -174,7 +174,7 @@ class HandleOrderCreated
         $lines[] = "<blockquote expandable>Состав заказа\n";
 
         foreach ($order->orderItems as $item) {
-            $name = $item->product?->brand ?: $item->product?->name;
+            $name = $item->product_title;
             $lines[] = $escape($name).' × '.$item->quantity.' = '.$escape((string) $item->amount);
         }
 

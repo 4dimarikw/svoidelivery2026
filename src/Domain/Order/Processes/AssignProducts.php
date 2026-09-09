@@ -17,12 +17,12 @@ final class AssignProducts implements OrderProcessContract
         // истины для суммы заказа теперь Domain\Order\Observers\OrderItemObserver
         // (пересчитывает через UpdateAmountOrder на created каждой позиции),
         // не дублируем то же самое ещё и тут.
-        $order->orderItems()
-            ->createMany(
-                cart()->cartItems()->map(function (CartItem $cartItem) {
-                    return OrderItemDTO::fromCartItem($cartItem)->toArray();
-                })->values()->all()
-            );
+        foreach (cart()->cartItems() as $cartItem) {
+            /** @var CartItem $cartItem */
+            $item = $order->orderItems()->make(OrderItemDTO::fromCartItem($cartItem)->toArray());
+            $item->setRelation('product', $cartItem->product);
+            $item->save();
+        }
 
         return $next($order);
     }

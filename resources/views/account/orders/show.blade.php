@@ -1,6 +1,6 @@
 {{-- Карточка одного заказа (/account/orders/{order}) — та же страница,
      что редирект после успешного оформления (OrderController::store()).
-     $order приходит с eager-loaded orderCustomer/orderItems.product/
+     $order приходит с eager-loaded orderCustomer/orderItems/
      deliveryType/paymentMethod (Account\OrderController::show()). --}}
 @php
     $customer = $order->orderCustomer;
@@ -18,7 +18,7 @@
                 @foreach ($order->orderItems as $item)
                     <div class="flex items-center justify-between border-b border-hairline pb-3 last:border-b-0 last:pb-0">
                         <div class="min-w-0">
-                            <div class="truncate text-body-m text-ink-900">{{ $item->product?->brand ?: $item->product?->name }}</div>
+                            <div class="truncate text-body-m text-ink-900">{{ $item->product_title }}</div>
                             <div class="text-caption text-ink-500">{{ $item->quantity }} &times; {{ $item->price }}</div>
                         </div>
                         <span class="font-mono text-body-m text-ink-900">{{ $item->amount }}</span>

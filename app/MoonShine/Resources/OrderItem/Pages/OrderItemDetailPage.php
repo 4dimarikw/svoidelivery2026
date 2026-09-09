@@ -38,6 +38,10 @@ class OrderItemDetailPage extends DetailPage
 
             Number::make(__('moonshine.order_item.fields.quantity'), 'quantity'),
 
+            Text::make(__('moonshine.order_item.fields.snapshot_title'), 'product_title'),
+            Text::make(__('moonshine.order_item.fields.snapshot_code'), 'product_external_code'),
+            Text::make(__('moonshine.order_item.fields.snapshot_name'), 'product_name'),
+
             BelongsTo::make(__('moonshine.order_item.fields.product'), 'product', resource: ProductResource::class),
 
             BelongsTo::make(__('moonshine.order_item.fields.order'), 'order', resource: OrderResource::class),

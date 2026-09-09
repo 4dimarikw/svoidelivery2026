@@ -30,7 +30,7 @@
 | Товар | Цена | Кол-во | Итого |
 |:---|:---:|:---:|:---:|
 @foreach($order->orderItems as $item)
-| {{ $item->product?->brand ?: $item->product?->name }} | {{ $item->price }} | {{ $item->quantity }} | {{ $item->amount }} |
+| {{ $item->product_title }} | {{ $item->price }} | {{ $item->quantity }} | {{ $item->amount }} |
 @endforeach
 </x-mail::table>
 

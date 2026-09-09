@@ -12,7 +12,7 @@ use SimpleXMLElement;
  * файл можно было приложить к письму-уведомлению (см.
  * HandleOrderCreated::notifyAdmin()), а не только заливать на FTP.
  *
- * Ожидает заказ с уже подгруженными orderCustomer/orderItems.product/
+ * Ожидает заказ с уже подгруженными orderCustomer/orderItems/
  * deliveryType — сам их не грузит (ответственность вызывающего, как и
  * раньше у UploadOrderToFTP::execute()).
  */
@@ -102,11 +102,14 @@ class BuildOrderXml
         foreach ($orderItems as $orderItem) {
             $itemElement = $itemsElement->addChild('Item');
 
-            // Код товара — external_code, уникальный код номенклатуры из 1С
-            // (products.external_code, unique + NOT NULL): по нему 1С находит
+            // Снимок external_code — уникального кода номенклатуры из 1С:
+            // изменение текущей карточки не меняет повторную выгрузку. По нему 1С находит
             // товар при разборе заказа. article (артикул) для этого не годится —
             // он не уникален и может быть пустым.
-            $productCode = $orderItem->product?->external_code ?? '';
+            $productCode = $orderItem->product_external_code;
+            if ($productCode === null || trim($productCode) === '') {
+                throw new RuntimeException('Не заполнен снимок кода товара позиции #'.$orderItem->id);
+            }
             $this->addTextChild($itemElement, 'ProductCode', $productCode);
 
             $quantity = (int) $orderItem->quantity;

@@ -31,7 +31,7 @@ class UploadOrderToFTP
     public function execute(int $orderId, bool $queueOnFailure = true): bool
     {
         try {
-            $order = Order::with(['orderCustomer', 'orderItems.product', 'deliveryType'])
+            $order = Order::with(['orderCustomer', 'orderItems', 'deliveryType'])
                 ->findOrFail($orderId);
         } catch (ModelNotFoundException $e) {
             // Заказа нет — уходить в очередь незачем, там его тоже не найдут.

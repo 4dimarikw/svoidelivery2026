@@ -26,7 +26,7 @@ class OrderController extends Controller
 
         $order->load([
             'orderCustomer',
-            'orderItems.product',
+            'orderItems',
             'deliveryType',
         ]);
 

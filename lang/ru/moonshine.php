@@ -293,6 +293,9 @@ return [
     'order_item' => [
         'title' => 'Позиции заказа',
         'fields' => [
+            'snapshot_title' => 'Товар на момент заказа',
+            'snapshot_name' => 'Название на момент заказа',
+            'snapshot_code' => 'Код на момент заказа',
             'price' => 'Цена',
             'quantity' => 'Количество',
             'product' => 'Товар',

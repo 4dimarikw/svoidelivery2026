@@ -43,6 +43,11 @@ class OrderItem extends Model
         return $this->belongsTo(Product::class);
     }
 
+    public function productTitle(): Attribute
+    {
+        return Attribute::make(get: fn () => $this->product_brand ?: $this->product_name);
+    }
+
     public function order(): BelongsTo
     {
         return $this->belongsTo(Order::class);
