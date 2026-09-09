@@ -945,7 +945,8 @@ class CatalogControllerTest extends TestCase
         // фиксированный запрос подвала (Domain\Content\Actions\Content\LoadSiteFooter,
         // View Composer components.layouts.footer — на каждой публичной
         // странице, не только на /about).
-        $this->assertLessThan(17, $queryCount, 'Сортировка по рейтингу не должна добавлять N+1.');
+        // F02: ещё один общий eager-load категорий для правила покупки.
+        $this->assertLessThan(18, $queryCount, 'Сортировка по рейтингу не должна добавлять N+1.');
     }
 
     public function test_partial_request_returns_only_cards_with_next_page_header(): void
@@ -1027,6 +1028,7 @@ class CatalogControllerTest extends TestCase
         // (Domain\Content\Actions\Content\LoadSiteFooter, View Composer
         // components.layouts.footer) — фиксированное небольшое число
         // запросов независимо от количества товаров.
-        $this->assertLessThan(18, $queryCount, 'Ожидались фиксированные запросы без N+1 по manufacturer/volume/container.');
+        // F02: ещё один общий eager-load категорий для правила покупки.
+        $this->assertLessThan(19, $queryCount, 'Ожидались фиксированные запросы без N+1 по manufacturer/volume/container/category.');
     }
 }

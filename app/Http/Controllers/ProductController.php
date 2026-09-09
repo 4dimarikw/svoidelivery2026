@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
-use Domain\Catalog\Enums\ProductStatus;
 use Domain\Catalog\Models\Product;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\View\View;
@@ -12,9 +11,8 @@ use Illuminate\View\View;
 class ProductController extends Controller
 {
     /**
-     * Тот же набор связей, что и каталог (CatalogController::index()) — плюс
-     * category, которой каталогу не нужно (там категория участвует только
-     * фильтром по id, здесь — ещё и хлебными крошками).
+     * Тот же набор связей, что и каталог (CatalogController::index()).
+     * Категория нужна правилу покупки и хлебным крошкам.
      */
     private const EAGER_LOAD = [
         'category', 'manufacturer', 'volume', 'container', 'media',
@@ -27,16 +25,13 @@ class ProductController extends Controller
      * актуальный URL, роуту/контроллеру ничего доделывать не нужно.
      *
      * resolveRouteBinding() внутри HasSlug идёт через newQuery() без скоупов,
-     * поэтому черновики/архив всё ещё резолвятся моделью — отсекаем их здесь
-     * же, как published() отсекает их в каталоге. «Нет в наличии» — не тот
-     * случай: такие товары каталог показывает (published(), не active()),
-     * страница товара должна быть доступна точно так же.
+     * поэтому видимость проверяем здесь: публикация и активные категория/
+     * производитель. Остаток не влияет на доступность страницы товара.
      */
     public function show(Product $product): View
     {
-        abort_unless($product->status === ProductStatus::PUBLISHED, 404);
-
-        $product->load('beerDetails');
+        $product->load(['category', 'manufacturer', 'beerDetails']);
+        abort_unless($product->isVisibleOnStorefront(), 404);
 
         $similar = $this->similar($product);
 
@@ -61,7 +56,7 @@ class ProductController extends Controller
         $styleId = $product->beerDetails?->beer_style_id;
 
         return Product::query()
-            ->published()
+            ->visibleOnStorefront()
             ->when(
                 $styleId,
                 fn ($query) => $query->ofBeerStyles([$styleId]),

@@ -6,6 +6,7 @@ namespace App\Http\Controllers;
 
 use Domain\Cart\CartManager;
 use Domain\Cart\Models\CartItem;
+use Domain\Catalog\Exceptions\ProductUnavailableException;
 use Domain\Catalog\Models\Product;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -76,17 +77,21 @@ class CartController extends Controller
 
     public function increase(Request $request, Product $product, CartManager $cart): RedirectResponse|JsonResponse
     {
-        return $cart->transaction(function () use ($request, $product, $cart) {
-            $before = $cart->quantityOf($product);
-            $item = $cart->increment($product);
+        try {
+            return $cart->transaction(function () use ($request, $product, $cart) {
+                $before = $cart->quantityOf($product);
+                $item = $cart->increment($product);
 
-            // Сравниваем количество в одной транзакции, а не с кешем до блокировки.
-            if ($cart->quantityOf($product) === $before) {
-                return $this->rejectUnavailable($request);
-            }
+                // Сравниваем количество в одной транзакции, а не с кешем до блокировки.
+                if ($cart->quantityOf($product) === $before) {
+                    return $this->rejectUnavailable($request);
+                }
 
-            return $this->respond($request, $cart, $product, 'cart-item-added', $item);
-        }, [$product->getKey()]);
+                return $this->respond($request, $cart, $product, 'cart-item-added', $item);
+            }, [$product->getKey()]);
+        } catch (ProductUnavailableException) {
+            return $this->rejectUnavailable($request);
+        }
     }
 
     public function decrease(Request $request, Product $product, CartManager $cart): RedirectResponse|JsonResponse

@@ -35,6 +35,7 @@ return [
     ],
 
     'errors' => [
+        'product_unavailable' => 'Product “:title” is no longer available to order. Remove it from your cart.',
         'checkout_expired' => 'This checkout form has expired. Reload your cart and try again.',
         'min_amount' => 'Order amount is below the minimum for delivery with an address.',
         'min_amount_1' => 'The cart is empty or the order amount is too low.',

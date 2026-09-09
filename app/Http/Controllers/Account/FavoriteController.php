@@ -17,15 +17,16 @@ class FavoriteController extends Controller
     public function index(Request $request): View
     {
         // Пагинация по Favorite, не по Product — иначе теряется порядок
-        // "недавно добавленные первыми". whereHas('product', published())
-        // прячет товары, снятые с публикации после добавления в избранное,
+        // "недавно добавленные первыми". visibleOnStorefront()
+        // прячет товары, ставшие недоступными на витрине после добавления,
         // не трогая саму запись избранного. Eager-load — тот же набор, что
         // и в CatalogController::index(), иначе N+1 на каждую карточку
         // (см. комментарий в product-card.blade.php).
         $favorites = $request->user()->favorites()
             ->latest()
-            ->whereHas('product', fn ($query) => $query->published())
+            ->whereHas('product', fn ($query) => $query->visibleOnStorefront())
             ->with([
+                'product.category',
                 'product.manufacturer',
                 'product.volume',
                 'product.container',

@@ -22,13 +22,13 @@ class CatalogController extends Controller
     {
         $products = $filters->apply(
             Product::query()
-                ->published()
+                ->visibleOnStorefront()
                 // 'media' — иначе $product->thumb (Product::resolveMediaUrl()) даёт
                 // по запросу getFirstMedia() на каждую карточку. 'beerDetails.*' —
                 // карточка показывает стиль/abv/ibu/plato/ebc/рейтинг Untappd для
                 // пива; beerDetails есть не у всех товаров (аксессуары), но
                 // eager-load всё равно нужен, иначе N+1 по каждой карточке.
-                ->with(['manufacturer', 'volume', 'container', 'media', 'beerDetails.beerStyle', 'beerDetails.untappdBeer'])
+                ->with(['category', 'manufacturer', 'volume', 'container', 'media', 'beerDetails.beerStyle', 'beerDetails.untappdBeer'])
             // Порядок сортировки задаёт SortFilter внутри пайплайна выше
             // (ProductBuilder::sorted()) — здесь больше нет хардкода.
         )

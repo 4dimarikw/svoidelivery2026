@@ -201,11 +201,8 @@ class Product extends Model implements HasMedia
     }
 
     /**
-     * Сколько штук реально можно положить в корзину. in_stock и stock_quantity
-     * могут разойтись (ручная правка в MoonShine, списание остатка при
-     * оформлении заказа) — доступность считается по обоим полям сразу, и
-     * только здесь; CartManager/CheckProductInStock/каталог/вёрстка кнопки
-     * должны опираться на этот метод, а не читать поля по отдельности.
+     * Доступный складской остаток. Возможность покупки дополнительно
+     * проверяет публикацию и справочники через canBePurchased().
      */
     public function availableStock(): int
     {
@@ -214,7 +211,25 @@ class Product extends Model implements HasMedia
 
     public function isAvailable(): bool
     {
-        return $this->availableStock() > 0;
+        return $this->canBePurchased();
+    }
+
+    /**
+     * Правило витрины независимо от остатка; SQL-эквивалент — visibleOnStorefront().
+     * Активность тары/стиля управляет справочниками, а не публикацией товара.
+     */
+    public function isVisibleOnStorefront(): bool
+    {
+        return $this->status === ProductStatus::PUBLISHED
+            && $this->category?->is_active === true
+            && ($this->manufacturer_id === null || $this->manufacturer?->is_active === true);
+    }
+
+    public function canBePurchased(int $quantity = 1): bool
+    {
+        return $quantity > 0
+            && $this->isVisibleOnStorefront()
+            && $quantity <= $this->availableStock();
     }
 
     /**

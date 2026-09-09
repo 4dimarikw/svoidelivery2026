@@ -38,6 +38,12 @@ class ProductBuilder extends Builder
         return $this->where('status', ProductStatus::PUBLISHED);
     }
 
+    /** Видимость товара без ограничения остатка, включая связанные справочники. */
+    public function visibleOnStorefront(): static
+    {
+        return $this->published()->inCategories([])->ofManufacturers([]);
+    }
+
     /**
      * category_id на Product обязателен, поэтому проверка активности безусловна —
      * товар деактивированной категории не должен попадать в выдачу вообще, вне

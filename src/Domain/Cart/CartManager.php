@@ -8,6 +8,7 @@ use Closure;
 use Domain\Auth\Models\User;
 use Domain\Cart\Models\Cart;
 use Domain\Cart\Models\CartItem;
+use Domain\Catalog\Exceptions\ProductUnavailableException;
 use Domain\Catalog\Models\Product;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -53,6 +54,13 @@ final class CartManager
                 $ids = $this->items->keys()->merge($productIds)->unique()->sort()->values();
                 $this->lockedProducts = Product::query()->whereKey($ids->all())
                     ->orderBy('id')->lockForUpdate()->get()->keyBy('id');
+
+                // Блокирующее чтение получает актуальные флаги даже после ожидания
+                // товара при REPEATABLE READ и удерживает их до фиксации операции.
+                $this->lockedProducts->load([
+                    'category' => fn ($query) => $query->orderBy('id')->sharedLock(),
+                    'manufacturer' => fn ($query) => $query->orderBy('id')->sharedLock(),
+                ]);
 
                 foreach ($this->items as $item) {
                     $item->setRelation('product', $this->lockedProducts->get($item->product_id));
@@ -100,7 +108,7 @@ final class CartManager
      */
     public function cartItems(): Collection
     {
-        return $this->items()->loadMissing('product');
+        return $this->items()->loadMissing(['product.category', 'product.manufacturer']);
     }
 
     public function quantityOf(Product|int $product): int
@@ -145,6 +153,14 @@ final class CartManager
         return $this->transaction(function (Cart $cart, Collection $products) use ($product, $by): ?CartItem {
             $freshProduct = $products->get($product->getKey());
             if ($freshProduct === null) {
+                return null;
+            }
+
+            if ($by > 0 && ! $freshProduct->canBePurchased()) {
+                if (! $freshProduct->isVisibleOnStorefront()) {
+                    throw new ProductUnavailableException(__('catalog.cart.unavailable'));
+                }
+
                 return null;
             }
 
