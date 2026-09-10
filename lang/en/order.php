@@ -35,6 +35,7 @@ return [
     ],
 
     'errors' => [
+        'cart_prices_changed' => 'Prices changed: :changes. Your cart has been updated. Check the total and submit again.',
         'product_unavailable' => 'Product “:title” is no longer available to order. Remove it from your cart.',
         'product_has_orders' => 'This product is used in orders. Archive it instead of deleting it.',
         'item_moved' => 'This item has already moved to another order. Refresh the page.',

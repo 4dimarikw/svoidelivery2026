@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Events\Order\OrderCreationFailed;
+use Domain\Cart\Actions\UpdateCartPrices;
 use Domain\Cart\Models\Cart;
 use Domain\Order\DTO\CustomerDTO;
 use Domain\Order\Exceptions\OrderProcessException;
@@ -40,7 +41,7 @@ class OrderController extends Controller
         $cartItemsCount = 0;
 
         try {
-            $order = cart()->transaction(function (Cart $cart) use ($request, &$cartItemsCount): Order {
+            $order = cart()->transaction(function (Cart $cart) use ($request, &$cartItemsCount): Order|array {
                 $key = strtolower($request->input('checkout_key'));
                 $existing = Order::query()->where('user_id', $request->user()->id)
                     ->where('checkout_key', $key)->first();
@@ -51,6 +52,11 @@ class OrderController extends Controller
 
                 if ($cart->checkout_token === null || ! hash_equals($cart->checkout_token, $key)) {
                     throw new OrderProcessException(__('order.errors.checkout_expired'));
+                }
+
+                $changes = app(UpdateCartPrices::class)->updateLocked(cart()->cartItems());
+                if ($changes !== []) {
+                    return $changes;
                 }
 
                 $request->validateCustomer();
@@ -116,6 +122,22 @@ class OrderController extends Controller
             ));
 
             throw $e;
+        }
+
+        if (is_array($order)) {
+            // Price updates must commit before returning the refusal.
+            $message = __('order.errors.cart_prices_changed', ['changes' => implode('; ', $order)]);
+            $redirect = redirect()->route('cart.index')->withErrors(['checkout' => $message])
+                ->withInput($request->except('_token'));
+            if ($request->wantsJson()) {
+                return response()->json([
+                    'errors' => ['checkout' => [$message]],
+                    'code' => 'cart_prices_changed',
+                    'redirect' => route('cart.index'),
+                ], 422);
+            }
+
+            return $redirect;
         }
 
         if ($request->wantsJson()) {

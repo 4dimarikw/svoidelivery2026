@@ -5,13 +5,11 @@ declare(strict_types=1);
 namespace Domain\Cart;
 
 use Closure;
-use Domain\Auth\Models\User;
 use Domain\Cart\Models\Cart;
 use Domain\Cart\Models\CartItem;
 use Domain\Catalog\Exceptions\ProductUnavailableException;
 use Domain\Catalog\Models\Product;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Support\ValueObjects\Price;
 
@@ -43,36 +41,24 @@ final class CartManager
             return $callback($this->lockedCart, $this->lockedProducts);
         }
 
-        return DB::transaction(function () use ($callback, $productIds) {
-            $this->items = null;
-
-            try {
-                User::query()->whereKey(auth()->id())->lockForUpdate()->firstOrFail();
-                $cart = Cart::query()->firstOrCreate(['user_id' => auth()->id()]);
-                $this->lockedCart = Cart::query()->whereKey($cart->id)->lockForUpdate()->firstOrFail();
-                $this->items = $cart->cartItems()->orderBy('id')->lockForUpdate()->get()->keyBy('product_id');
-                $ids = $this->items->keys()->merge($productIds)->unique()->sort()->values();
-                $this->lockedProducts = Product::query()->whereKey($ids->all())
-                    ->orderBy('id')->lockForUpdate()->get()->keyBy('id');
-
-                // Блокирующее чтение получает актуальные флаги даже после ожидания
-                // товара при REPEATABLE READ и удерживает их до фиксации операции.
-                $this->lockedProducts->load([
-                    'category' => fn ($query) => $query->orderBy('id')->sharedLock(),
-                    'manufacturer' => fn ($query) => $query->orderBy('id')->sharedLock(),
-                ]);
-
-                foreach ($this->items as $item) {
-                    $item->setRelation('product', $this->lockedProducts->get($item->product_id));
+        try {
+            return app(CartTransaction::class)->run((int) auth()->id(), function (Cart $cart, Collection $items, Collection $products) use ($callback) {
+                $this->lockedCart = $cart;
+                $this->items = $items;
+                $this->lockedProducts = $products;
+                try {
+                    return $callback($cart, $products);
+                } finally {
+                    $this->items = null;
+                    $this->lockedCart = null;
+                    $this->lockedProducts = null;
                 }
-
-                return $callback($this->lockedCart, $this->lockedProducts);
-            } finally {
-                $this->items = null;
-                $this->lockedCart = null;
-                $this->lockedProducts = null;
-            }
-        }, 3);
+            }, $productIds);
+        } finally {
+            $this->items = null;
+            $this->lockedCart = null;
+            $this->lockedProducts = null;
+        }
     }
 
     public function checkoutToken(): string

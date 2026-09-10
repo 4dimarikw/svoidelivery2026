@@ -7,6 +7,7 @@ namespace Tests\Feature\Order;
 use App\Events\Order\OrderCreated;
 use App\Events\Order\OrderStatusChanged;
 use Domain\Auth\Models\User;
+use Domain\Cart\Actions\UpdateCartPrices;
 use Domain\Cart\Models\Cart;
 use Domain\Catalog\Models\Product;
 use Domain\Order\Models\Order;
@@ -56,6 +57,7 @@ class CheckoutIdempotencyTest extends TestCase
         $this->address->delete();
         cart()->increment($this->product);
         $newToken = cart()->checkoutToken();
+        $this->product->update(['price' => 13000]);
 
         $this->postJson(route('checkout.store'), $this->payload)->assertOk()
             ->assertHeader('X-Redirect', $first->headers->get('X-Redirect'));
@@ -66,6 +68,7 @@ class CheckoutIdempotencyTest extends TestCase
         $this->assertSame(1, cart()->count());
         $this->assertSame(4, $this->product->fresh()->stock_quantity);
         $this->assertSame($newToken, cart()->checkoutToken());
+        $this->assertSame(1200000, cart()->cartItems()->first()->price->minor());
         $this->assertNotSame($this->payload['checkout_key'], $newToken);
         Event::assertDispatchedTimes(OrderCreated::class, 1);
         Event::assertDispatchedTimes(OrderStatusChanged::class, 1);
@@ -77,6 +80,42 @@ class CheckoutIdempotencyTest extends TestCase
             $this->get(route('cart.index'))->assertOk()
                 ->assertSee('name="checkout_key" value="'.$this->payload['checkout_key'].'"', false);
         }
+    }
+
+    public function test_changed_prices_commit_before_ajax_refusal_and_retry_succeeds(): void
+    {
+        $second = Product::factory()->create(['price' => 15000, 'stock_quantity' => 5, 'in_stock' => true]);
+        cart()->increment($second);
+        $second->update(['price' => 14000]);
+        $this->product->update(['price' => '13000.50']);
+        $response = $this->postJson(route('checkout.store'), $this->payload)
+            ->assertUnprocessable()->assertJsonPath('code', 'cart_prices_changed')
+            ->assertJsonPath('redirect', route('cart.index'))->assertSessionHasInput('first_name', 'Иван');
+        $this->assertStringContainsString($this->product->name, $response->json('errors.checkout.0'));
+        $this->assertStringContainsString($second->name, $response->json('errors.checkout.0'));
+        $this->assertSame(1300050, cart()->cartItems()->first()->price->minor());
+        $this->assertSame($this->payload['checkout_key'], cart()->checkoutToken());
+        $this->assertSame(0, Order::count());
+        $this->assertSame(5, $this->product->fresh()->stock_quantity);
+        Event::assertNotDispatched(OrderCreated::class);
+        $this->postJson(route('checkout.store'), $this->payload)->assertOk();
+    }
+
+    public function test_changed_price_plain_form_redirects_with_input(): void
+    {
+        $this->product->update(['price' => 11000]);
+        $this->post(route('checkout.store'), $this->payload)->assertRedirect(route('cart.index'))
+            ->assertSessionHasErrors('checkout')->assertSessionHasInput('checkout_key', $this->payload['checkout_key']);
+        $this->assertSame(1100000, cart()->cartItems()->first()->price->minor());
+        $this->assertSame(0, Order::count());
+    }
+
+    public function test_background_refresh_allows_checkout_without_extra_refusal(): void
+    {
+        $this->product->update(['price' => 13000]);
+        app(UpdateCartPrices::class)->handle(Cart::sole()->id);
+        $this->postJson(route('checkout.store'), $this->payload)->assertOk();
+        $this->assertSame(1300000, Order::sole()->orderItems()->first()->price->minor());
     }
 
     public function test_missing_invalid_stale_and_foreign_keys_are_rejected(): void

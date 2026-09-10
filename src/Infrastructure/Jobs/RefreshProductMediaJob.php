@@ -30,22 +30,16 @@ class RefreshProductMediaJob implements ShouldQueue
     /**
      * Execute the job.
      *
-     * addMediaFromUrl() скачивает файл во временный путь синхронно, до
-     * возврата FileAdder (см. InteractsWithMedia::addMediaFromUrl) — реальное
-     * добавление в коллекцию происходит только на toMediaCollection(). Старая
-     * коллекция теперь чистится между этими двумя шагами: если скачивание
-     * упадёт (сеть, битый URL), FileCannotBeAdded бросается раньше, чем
-     * clearMediaCollection() успевает выполниться, и товар не остаётся без
-     * картинки. Раньше порядок был обратный (clear → add) — именно это
-     * оставляло товар без изображения при сбое загрузки.
+     * Коллекция main настроена как singleFile: Media Library удаляет прежний
+     * файл только после проверки и сохранения нового файла и его конверсий.
+     * Предварительная очистка уничтожила бы старое изображение при отказе
+     * MIME/размера или записи на диск.
      *
      * @throws FileCannotBeAdded
      */
     public function handle(): void
     {
         $fileAdder = $this->product->addMediaFromUrl($this->imageUrl)->preservingOriginal();
-
-        $this->product->clearMediaCollection($this->collectionName);
 
         $fileAdder->toMediaCollection($this->collectionName);
     }

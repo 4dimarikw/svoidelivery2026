@@ -5,6 +5,7 @@ use App\Events\Order\OrderCreated;
 use App\Events\Order\OrderStatusChanged;
 use App\Http\Controllers\OrderController;
 use Domain\Auth\Models\User;
+use Domain\Cart\Actions\UpdateCartPrices;
 use Domain\Catalog\Models\Product;
 use Domain\Order\Models\OrderItem;
 use Domain\Order\Requests\OrderRequest;
@@ -15,6 +16,7 @@ use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Validation\ValidationException;
+use Infrastructure\Jobs\UpdateCartPricesJob;
 
 // Отдельный процесс и соединение MySQL: HTTP-сервер разработчика однопоточный.
 require dirname(__DIR__, 2).'/vendor/autoload.php';
@@ -53,6 +55,9 @@ try {
         $request->validateResolved();
         $response = app(OrderController::class)->store($request);
         $result = ['status' => $response->getStatusCode(), 'redirect' => $response->headers->get('X-Redirect')];
+    } elseif ($input['operation'] === 'refresh_prices') {
+        (new UpdateCartPricesJob)->handle(app(UpdateCartPrices::class));
+        $result = ['status' => 200];
     } elseif ($input['operation'] === 'item_update') {
         OrderItem::findOrFail($input['item_id'])->update($input['changes']);
         $result = ['status' => 200];

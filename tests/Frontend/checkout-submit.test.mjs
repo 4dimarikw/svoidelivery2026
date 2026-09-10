@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 import { test } from 'node:test';
 import vm from 'node:vm';
 
-function formHarness(fetch) {
+function formHarness(fetch, assign = () => {}) {
     const components = new Map();
     vm.runInNewContext(readFileSync(new URL('../../resources/js/ui.js', import.meta.url), 'utf8'), {
         document: { addEventListener: (_, callback) => callback() },
@@ -12,7 +12,7 @@ function formHarness(fetch) {
             constructor(form) { this.key = form.checkout_key; }
         },
         fetch,
-        window: { location: { assign() {} } },
+        window: { location: { assign } },
     });
     return components.get('uiForm')({ mode: 'ajax' });
 }
@@ -30,6 +30,19 @@ test('повторный submit во время отправки не созда
     assert.equal(requests, 1);
     finish({ status: 200, ok: true, headers: { get: () => '/account/orders/1' } });
     await pending;
+});
+
+test('изменение цен открывает корзину без повторной отправки', async () => {
+    let destination;
+    let requests = 0;
+    const form = formHarness(async () => {
+        requests++;
+        return { status: 422, json: async () => ({ code: 'cart_prices_changed', redirect: '/cart', errors: { checkout: ['Prices changed'] } }) };
+    }, url => { destination = url; });
+    await form.submit({ action: '/checkout', submit() { assert.fail('Unexpected resubmit'); } });
+    assert.equal(requests, 1);
+    assert.equal(destination, '/cart');
+    assert.equal(form.errorFor('checkout'), 'Prices changed');
 });
 
 test('сетевая ошибка сохраняет ключ при обычной отправке формы', async () => {

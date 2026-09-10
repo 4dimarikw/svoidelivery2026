@@ -10,8 +10,14 @@ use Domain\Catalog\Models\Category;
 use Domain\Catalog\Models\CategoryMatchRule;
 use Domain\Catalog\Models\Product;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Http;
 use Infrastructure\Ftp\Catalog1cFtpClient;
+use Infrastructure\Jobs\UpdateCartPricesJob;
+use Infrastructure\Settings\CatalogImportSettings;
+use PHPUnit\Framework\Attributes\DataProvider;
 use RuntimeException;
 use Tests\Support\BuildsCatalogCsv;
 use Tests\TestCase;
@@ -21,6 +27,30 @@ class CatalogImportCommandTest extends TestCase
     use BuildsCatalogCsv;
     use RefreshDatabase;
 
+    public static function refreshImportOptions(): array
+    {
+        return [[[]], [['--categories' => 'beer']], [['--dry-run' => true]]];
+    }
+
+    #[DataProvider('refreshImportOptions')]
+    public function test_price_refresh_dispatch_rules(array $options): void
+    {
+        Http::preventStrayRequests();
+        app(CatalogImportSettings::class)->zero_out_missing = false;
+        Bus::fake();
+        $path = $this->writeCatalogCsv([$this->validCatalogRow()]);
+        $code = Artisan::call('catalog:import', ['path' => $path] + $options);
+        $this->assertSame(0, $code, Artisan::output());
+        if (isset($options['--dry-run'])) {
+            Bus::assertNotDispatched(UpdateCartPricesJob::class);
+        } else {
+            Bus::assertDispatchedTimes(UpdateCartPricesJob::class, 1);
+        }
+        Bus::fake();
+        $this->artisan('catalog:import', ['path' => sys_get_temp_dir().'/missing-'.uniqid().'.csv'])->assertExitCode(1);
+        Bus::assertNotDispatched(UpdateCartPricesJob::class);
+    }
+
     protected function tearDown(): void
     {
         $this->cleanupCatalogCsvTmpFiles();
@@ -28,8 +58,28 @@ class CatalogImportCommandTest extends TestCase
         parent::tearDown();
     }
 
+    public function test_skipped_rows_dispatch_refresh(): void
+    {
+        Bus::fake();
+        Http::preventStrayRequests();
+        $path = $this->writeCatalogCsv([$this->validCatalogRow(['price' => 'invalid'])]);
+        $this->artisan('catalog:import', ['path' => $path])->assertExitCode(0);
+        Bus::assertDispatchedTimes(UpdateCartPricesJob::class, 1);
+    }
+
+    public function test_import_exception_does_not_dispatch_refresh(): void
+    {
+        Bus::fake();
+        config(['catalog_import.stages' => ['MissingImportStageForFailureTest']]);
+        $path = $this->writeCatalogCsv([$this->validCatalogRow()]);
+        // Full import uses TRUNCATE, which implicitly commits MySQL's test transaction.
+        $this->artisan('catalog:import', ['path' => $path, '--categories' => 'beer'])->assertExitCode(1);
+        Bus::assertNotDispatched(UpdateCartPricesJob::class);
+    }
+
     public function test_validate_registry_preflight_blocks_the_import(): void
     {
+        Bus::fake();
         // 'beer' уже несёт единственное активное alcohol/default правило —
         // второе где угодно роняет catalog:validate-registry.
         $extra = Category::query()->create([
@@ -51,15 +101,18 @@ class CatalogImportCommandTest extends TestCase
         $this->artisan('catalog:import', ['path' => $path])->assertExitCode(1);
 
         $this->assertSame(0, Product::query()->count());
+        Bus::assertNotDispatched(UpdateCartPricesJob::class);
     }
 
     public function test_explicit_path_argument_imports_without_ftp(): void
     {
+        Bus::fake();
         $path = $this->writeCatalogCsv([$this->validCatalogRow()]);
 
         $this->artisan('catalog:import', ['path' => $path])->assertExitCode(0);
 
         $this->assertSame(1, Product::query()->count());
+        Bus::assertDispatchedTimes(UpdateCartPricesJob::class, 1);
     }
 
     public function test_dry_run_flag_leaves_database_untouched(): void
@@ -111,6 +164,7 @@ class CatalogImportCommandTest extends TestCase
      */
     public function test_ftp_download_failure_fires_event_and_does_not_throw(): void
     {
+        Bus::fake();
         Event::fake([CatalogImportFtpDownloadFailed::class]);
         config(['catalog_import.base_ftp_file' => 'export.csv']);
 
@@ -123,6 +177,7 @@ class CatalogImportCommandTest extends TestCase
         });
 
         $this->artisan('catalog:import')->assertExitCode(1);
+        Bus::assertNotDispatched(UpdateCartPricesJob::class);
 
         Event::assertDispatched(CatalogImportFtpDownloadFailed::class, function (CatalogImportFtpDownloadFailed $event): bool {
             $this->assertSame('export.csv', $event->file);

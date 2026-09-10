@@ -6,6 +6,7 @@ use App\Events\CatalogImportFtpDownloadFailed;
 use Domain\Catalog\Models\Category;
 use Illuminate\Console\Command;
 use Infrastructure\Ftp\Catalog1cFtpClient;
+use Infrastructure\Jobs\UpdateCartPricesJob;
 use Infrastructure\Jobs\ZeroOutStaleProductsJob;
 use Infrastructure\Settings\CatalogImportSettings;
 use Services\CatalogImport\CsvParserService;
@@ -90,6 +91,11 @@ class CatalogImportCommand extends Command
         if ($report->seenCodesTracked && $catalogImportSettings->zero_out_missing) {
             ZeroOutStaleProductsJob::dispatch();
             $this->info('Задача обнуления пропавших товаров поставлена в очередь.');
+        }
+
+        if (! $isDryRun) {
+            UpdateCartPricesJob::dispatch();
+            $this->info('Задача обновления цен корзин поставлена в очередь.');
         }
 
         $this->writeReportLog(fn () => $logger->writeSuccess($params, $report, $isDryRun));

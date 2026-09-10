@@ -189,6 +189,32 @@ class CheckoutConcurrencyTest extends TestCase
         $this->assertSame(3, cart()->count());
     }
 
+    public function test_price_refresh_races_checkout_increment_and_clear(): void
+    {
+        foreach (['checkout', 'increment', 'clear'] as $operation) {
+            $product = Product::factory()->create(['price' => 12000, 'stock_quantity' => 10, 'in_stock' => true]);
+            $buyer = $this->buyer($product);
+            $product->update(['price' => 13000]);
+            $other = $operation === 'checkout' ? $buyer : ['operation' => $operation, 'user_id' => $buyer['user_id'], 'product_id' => $product->id];
+            $results = $this->race($product, [
+                ['operation' => 'refresh_prices', 'user_id' => $buyer['user_id']], $other,
+            ]);
+            $this->assertSame(200, $results[0]['status']);
+            if ($operation === 'checkout') {
+                $this->assertContains($results[1]['status'], [200, 422]);
+                $ordered = $results[1]['status'] === 200;
+                $this->assertSame($ordered ? 9 : 10, $product->fresh()->stock_quantity);
+                $this->assertSame($ordered ? 0 : 1, cart()->count());
+            } else {
+                $this->assertSame(200, $results[1]['status']);
+                $this->assertSame($operation === 'clear' ? 0 : 2, cart()->count());
+            }
+            foreach (cart()->cartItems() as $item) {
+                $this->assertSame(1300000, $item->price->minor());
+            }
+        }
+    }
+
     public function test_increment_during_checkout_is_ordered_and_never_lost(): void
     {
         $product = Product::factory()->create(['price' => 12000, 'stock_quantity' => 10, 'in_stock' => true]);

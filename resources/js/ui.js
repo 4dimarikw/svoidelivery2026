@@ -57,6 +57,9 @@ document.addEventListener('alpine:init', () => {
                 if (response.status === 422) {
                     const body = await response.json();
                     this.errors = body.errors ?? {};
+                    if (body.code === 'cart_prices_changed' && body.redirect) {
+                        window.location.assign(body.redirect);
+                    }
                     return;
                 }
 
