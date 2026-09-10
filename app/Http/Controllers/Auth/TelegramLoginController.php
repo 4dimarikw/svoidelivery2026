@@ -5,10 +5,11 @@ namespace App\Http\Controllers\Auth;
 use App\Events\Auth\TelegramSignatureInvalid;
 use App\Http\Controllers\Controller;
 use Domain\Auth\Models\User;
+use Domain\Telegram\Actions\FindOrRegisterTelegramUser;
+use Domain\Telegram\Actions\UnlinkTelegramAccount;
 use Domain\Telegram\Models\TelegramBot;
-use Domain\Telegram\Models\TelegramChat;
+use Domain\Telegram\Support\TelegramLinkCode;
 use Domain\Telegram\Support\WebAppInitData;
-use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -140,9 +141,8 @@ class TelegramLoginController extends Controller
     {
         // Без пароля и email Telegram — единственный способ войти. Отвязка
         // заперла бы аккаунт навсегда.
-        abort_unless($request->user()->canUnlinkTelegram(), 403);
-
-        $request->user()->telegramChat?->update(['user_id' => null]);
+        app(UnlinkTelegramAccount::class)
+            ->handle(TelegramLinkCode::SUBJECT_USER, $request->user()->id);
 
         if ($request->wantsJson()) {
             return response()->json([], 200);
@@ -253,46 +253,10 @@ class TelegramLoginController extends Controller
      */
     private function loginTelegramUser(Request $request, int $chatId, string $name, ?string $username, TelegramBot $bot): void
     {
-        $chat = TelegramChat::query()
-            ->where('chat_id', $chatId)
-            ->where('telegraph_bot_id', $bot->id)
-            ->first();
-
-        $user = $chat?->user_id ? $chat->user : $this->register($chatId, $name, $username, $bot, $chat);
+        $user = app(FindOrRegisterTelegramUser::class)
+            ->handle($bot->id, $chatId, $name, $username);
 
         Auth::login($user, true);
         $request->session()->regenerate();
-    }
-
-    /**
-     * Создаёт аккаунт без email и пароля — Telegram их не отдаёт — и
-     * привязывает (или заводит) telegraph_chats к нему.
-     */
-    private function register(int $chatId, string $name, ?string $username, TelegramBot $bot, ?TelegramChat $chat): User
-    {
-        $user = User::create(['name' => $name]);
-
-        // App\Listeners\CreateUserProfile — единственное место, которое знает,
-        // что происходит после регистрации; заводить профиль здесь руками
-        // означало бы продублировать этот контракт. Штатный
-        // SendEmailVerificationNotification на этом событии безопасен: см.
-        // User::sendEmailVerificationNotification().
-        event(new Registered($user));
-
-        // @username в Telegram не обязателен — без него ссылку строить не из
-        // чего, social_links['telegram'] остаётся незаполненным и
-        // редактируемым как раньше. Только при СОЗДАНИИ аккаунта: повторный
-        // вход (см. loginTelegramUser выше — тогда register() вообще не
-        // вызывается) не должен затирать то, что пользователь мог сам
-        // поменять в профиле.
-        if ($username !== null && $username !== '') {
-            $user->profile()->updateOrCreate([], ['social_links' => ['telegram' => "https://t.me/{$username}"]]);
-        }
-
-        ($chat ?? new TelegramChat(['chat_id' => $chatId, 'telegraph_bot_id' => $bot->id]))
-            ->fill(['user_id' => $user->id, 'name' => $name])
-            ->save();
-
-        return $user;
     }
 }

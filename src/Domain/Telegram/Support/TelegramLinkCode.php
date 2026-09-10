@@ -3,82 +3,53 @@
 namespace Domain\Telegram\Support;
 
 use Domain\Auth\Models\User;
-use Illuminate\Support\Facades\Cache;
+use Domain\Telegram\Models\TelegramBot;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use InvalidArgumentException;
 
-/**
- * Одноразовый код для привязки Telegram к уже авторизованному аккаунту:
- * выдаётся на /account/profile или странице профиля MoonShine (issue/issueFor),
- * гасится в App\Telegraph\WebhookHandler при обработке команды /start
- * (resolve/resolveSubject). Единственное место, где живёт формат ключа кеша
- * и TTL — иначе они дублировались бы в двух не связанных друг с другом
- * местах.
- *
- * Субъект (кого привязывать) хранится вместе с кодом — так один и тот же
- * механизм обслуживает и сайтового User (SUBJECT_USER), и админа MoonShine
- * (SUBJECT_MOONSHINE_USER), не заводя второй параллельный класс с той же
- * логикой TTL/одноразовости.
- */
 final class TelegramLinkCode
 {
-    private const TTL_MINUTES = 10;
-
     public const SUBJECT_USER = 'user';
 
     public const SUBJECT_MOONSHINE_USER = 'moonshine_user';
 
-    public static function issue(User $user): string
+    public static function issue(User $user, ?TelegramBot $bot = null): string
     {
-        return self::issueFor(self::SUBJECT_USER, $user->id);
+        return self::issueFor(self::SUBJECT_USER, $user->id, $bot);
     }
 
-    public static function issueFor(string $subject, int $id): string
+    public static function issueFor(string $subject, int $id, ?TelegramBot $bot = null): string
     {
+        self::subjectColumn($subject);
+        $bot ??= TelegramBot::current();
+        if ($bot === null) {
+            throw new InvalidArgumentException('Telegram bot is required');
+        }
         $code = Str::random(32);
-
-        Cache::put(self::key($code), ['subject' => $subject, 'id' => $id], now()->addMinutes(self::TTL_MINUTES));
+        DB::table('telegram_link_codes')->insert([
+            'code_hash' => hash('sha256', $code), 'subject' => $subject, 'subject_id' => $id,
+            'telegraph_bot_id' => $bot->id, 'expires_at' => now()->addMinutes(10),
+        ]);
 
         return $code;
     }
 
-    /**
-     * pull() = get + forget: код одноразовый, повторный /start с тем же
-     * значением параметра больше никого не привяжет.
-     */
-    public static function resolve(string $code): ?User
+    public static function subjectColumn(string $subject): string
     {
-        $payload = self::resolveSubject($code);
-
-        if ($payload === null || $payload['subject'] !== self::SUBJECT_USER) {
-            return null;
-        }
-
-        return User::find($payload['id']);
+        return match ($subject) {
+            self::SUBJECT_USER => 'user_id',
+            self::SUBJECT_MOONSHINE_USER => 'moonshine_user_id',
+            default => throw new InvalidArgumentException('Unknown Telegram link subject'),
+        };
     }
 
-    /**
-     * @return array{subject: string, id: int}|null
-     */
-    public static function resolveSubject(string $code): ?array
+    public static function subjectTable(string $subject): string
     {
-        $value = Cache::pull(self::key($code));
-
-        if ($value === null) {
-            return null;
-        }
-
-        // Обратная совместимость: код, выпущенный до появления субъектов,
-        // хранит голый user_id (int), а не ['subject' => ..., 'id' => ...].
-        // TTL всего 10 минут, но выкатка может попасть в это окно.
-        if (is_int($value)) {
-            return ['subject' => self::SUBJECT_USER, 'id' => $value];
-        }
-
-        return $value;
-    }
-
-    private static function key(string $code): string
-    {
-        return "telegram-link:{$code}";
+        return match ($subject) {
+            self::SUBJECT_USER => 'users',
+            self::SUBJECT_MOONSHINE_USER => 'moonshine_users',
+            default => throw new InvalidArgumentException('Unknown Telegram link subject'),
+        };
     }
 }

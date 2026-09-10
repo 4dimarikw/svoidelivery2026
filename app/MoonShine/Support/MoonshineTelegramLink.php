@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\MoonShine\Support;
 
+use Domain\Telegram\Actions\UnlinkTelegramAccount;
+use Domain\Telegram\Models\TelegramBot;
 use Domain\Telegram\Models\TelegramChat;
 use Domain\Telegram\Support\TelegramLinkCode;
 
@@ -23,15 +25,13 @@ final class MoonshineTelegramLink
         return TelegramChat::query()->forMoonshineUser($moonshineUserId)->first();
     }
 
-    public static function issueCode(int $moonshineUserId): string
+    public static function issueCode(int $moonshineUserId, ?TelegramBot $bot = null): string
     {
-        return TelegramLinkCode::issueFor(TelegramLinkCode::SUBJECT_MOONSHINE_USER, $moonshineUserId);
+        return TelegramLinkCode::issueFor(TelegramLinkCode::SUBJECT_MOONSHINE_USER, $moonshineUserId, $bot);
     }
 
     public static function unlink(int $moonshineUserId): void
     {
-        TelegramChat::query()
-            ->forMoonshineUser($moonshineUserId)
-            ->update(['moonshine_user_id' => null]);
+        app(UnlinkTelegramAccount::class)->handle(TelegramLinkCode::SUBJECT_MOONSHINE_USER, $moonshineUserId);
     }
 }

@@ -14,6 +14,6 @@ class CreateUserProfile
      */
     public function handle(Registered $event): void
     {
-        $event->user->profile()->create([]);
+        $event->user->profile()->firstOrCreate([]);
     }
 }

@@ -19,7 +19,7 @@ class ProfileController extends Controller
 
         // Код нужен только тому, кто ещё не привязан, и только когда есть
         // активный бот (иначе кнопку показывать всё равно не для чего) — не
-        // тратим кеш на код, который никто никогда не откроет.
+        // создаём запись кода, который никто никогда не откроет.
         $bot = ! $user->telegramLinked() ? TelegramBot::current() : null;
 
         return view('account.profile', [
@@ -28,7 +28,7 @@ class ProfileController extends Controller
             // null-safe rather than assume it always exists.
             'profile' => $user->profile,
             'telegramBotUsername' => $bot?->username,
-            'telegramLinkCode' => $bot ? TelegramLinkCode::issue($user) : null,
+            'telegramLinkCode' => $bot ? TelegramLinkCode::issue($user, $bot) : null,
         ]);
     }
 

@@ -67,7 +67,7 @@ final class ProfilePage extends \MoonShine\Laravel\Pages\ProfilePage
             ]);
         }
 
-        $code = MoonshineTelegramLink::issueCode($moonshineUserId);
+        $code = MoonshineTelegramLink::issueCode($moonshineUserId, $bot);
 
         return Box::make('Telegram', [
             Heading::make('Не привязан. Нужен для кнопки «Отправить себе» на странице VK-постов.')->h(4),
