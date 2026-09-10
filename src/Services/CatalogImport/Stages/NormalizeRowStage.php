@@ -7,6 +7,7 @@ use Illuminate\Support\Str;
 use Services\CatalogImport\CategoryRegistry;
 use Services\CatalogImport\Contracts\ImportStage;
 use Services\CatalogImport\Dto\ImportContext;
+use Support\ValueObjects\Price;
 
 /**
  * Пред-обработка строки: пропускает пустые строки и артефакты заголовка,
@@ -19,7 +20,7 @@ use Services\CatalogImport\Dto\ImportContext;
  * — категория входит в catalog_import.normalize.excluded_categories;
  * — упаковка (Упаковка) содержит одну из catalog_import.normalize.excluded_packages.
  *
- * Читает $ctx->category (выставляется ResolveCategoryStage, идущим первым).
+ * Читает $ctx->category и проверенную цену из предшествующих стадий.
  */
 final class NormalizeRowStage implements ImportStage
 {
@@ -87,14 +88,12 @@ final class NormalizeRowStage implements ImportStage
 
     /**
      * Цена ниже допустимого минимума (catalog_import.normalize.min_price).
-     * Нормализация совпадает с ResolvePriceStage: убираем пробелы-разделители и запятую→точка.
+     * Использует уже проверенную ResolvePriceStage цену; сравнение в копейках.
      */
     private function priceBelowMinimum(ImportContext $ctx): bool
     {
-        $raw = str_replace([',', ' '], ['.', ''], $ctx->row->get(config('catalog_import.columns.price')));
-        $price = is_numeric($raw) ? (float) $raw : 0.0;
-
-        return $price < (int) config('catalog_import.normalize.min_price', 2);
+        return Price::fromMajor($ctx->attributes['price'])->minor()
+            < Price::fromMajor(config('catalog_import.normalize.min_price', 2))->minor();
     }
 
     /**

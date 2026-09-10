@@ -46,6 +46,7 @@ use MoonShine\UI\Fields\Switcher;
 use MoonShine\UI\Fields\Text;
 use MoonShine\UI\Fields\Textarea;
 use Services\Untappd\Facades\Untappd;
+use Support\Rules\DecimalPrice;
 use Throwable;
 use VI\MoonShineSpatieMediaLibrary\Fields\MediaLibrary;
 
@@ -115,12 +116,12 @@ final class ProductFormPage extends FormPage
                     ])->icon('squares-2x2'),
 
                     Tab::make(__('moonshine.product.tabs.price'), [
-                        Number::make(__('moonshine.product.fields.price'), 'price')
+                        Text::make(__('moonshine.product.fields.price'), 'price')
                             ->required()
-                            ->step(0.01)
+                            ->customAttributes(['inputmode' => 'decimal'])
                             // price закастован в Support\ValueObjects\Price (см. Product::casts()) —
                             // полю нужен голый скаляр в рублях, не объект.
-                            ->changeFill(static fn (Product $product) => $product->price?->major())
+                            ->changeFill(static fn (Product $product) => $product->price?->decimal())
                             ->hint('price/stock_quantity/in_stock перезаписываются каждым catalog:import из 1С — правки здесь живут только до следующего синка.'),
 
                         Number::make(__('moonshine.product.fields.stock_quantity'), 'stock_quantity')
@@ -234,7 +235,7 @@ final class ProductFormPage extends FormPage
             'manufacturer_id' => ['nullable', 'integer', 'exists:manufacturers,id'],
             'volume_id' => ['nullable', 'integer', 'exists:volumes,id'],
             'container_id' => ['nullable', 'integer', 'exists:containers,id'],
-            'price' => ['required', 'numeric', 'min:0'],
+            'price' => ['bail', 'required', new DecimalPrice],
             'stock_quantity' => ['required', 'integer', 'min:0'],
             'status' => ['required', Rule::enum(ProductStatus::class)],
             'shelf_life_days' => ['nullable', 'integer', 'min:0', 'max:65535'],

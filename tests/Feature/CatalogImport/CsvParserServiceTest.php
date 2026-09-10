@@ -9,6 +9,7 @@ use Domain\Catalog\Models\Container;
 use Domain\Catalog\Models\Product;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Http;
 use Services\CatalogImport\CsvParserService;
 use Services\CatalogImport\Dto\ImportOptions;
 use Services\CatalogImport\Stages\ResolveProductIdentityStage;
@@ -199,15 +200,10 @@ class CsvParserServiceTest extends TestCase
     }
 
     /**
-     * ResolvePriceStage приводит нечисловые Цену/Остаток к 0 без явного
-     * сигнала — прямой денежный эффект (товар остаётся в каталоге с нулевой
-     * ценой). CatalogImportPriceCoerced делает это заметным в event_logs.
-     *
-     * price_exempt=true обходит NormalizeRowStage::priceBelowMinimum() —
-     * та парсит Цену тем же способом (non-numeric → 0.0) и без этого исключила
-     * бы строку раньше, чем она дойдёт до ResolvePriceStage.
+     * Исключение по минимальной цене не разрешает некорректный формат:
+     * такая строка пропускается ещё до нормализации и создания справочников.
      */
-    public function test_non_numeric_price_and_stock_fire_price_coerced_event(): void
+    public function test_non_numeric_price_is_skipped_even_for_price_exempt_category(): void
     {
         Event::fake([CatalogImportPriceCoerced::class]);
         Category::query()->where('slug', 'beer')->update(['price_exempt' => true]);
@@ -216,18 +212,10 @@ class CsvParserServiceTest extends TestCase
             $this->validCatalogRow(['product_code' => 'CODE-BADPRICE', 'price' => 'н/д', 'stock' => 'abc']),
         ]);
 
-        $this->import($path);
-
-        $product = Product::query()->firstWhere('external_code', 'CODE-BADPRICE');
-        $this->assertSame(0.0, $product->price->major());
-        $this->assertSame(0, $product->stock_quantity);
-
-        Event::assertDispatched(CatalogImportPriceCoerced::class, function (CatalogImportPriceCoerced $event): bool {
-            $this->assertSame(1, $event->coercedPriceCount);
-            $this->assertSame(1, $event->coercedStockCount);
-
-            return true;
-        });
+        $report = $this->import($path);
+        $this->assertNull(Product::query()->firstWhere('external_code', 'CODE-BADPRICE'));
+        $this->assertSame(1, $report->skipped);
+        Event::assertNotDispatched(CatalogImportPriceCoerced::class);
     }
 
     public function test_no_price_coerced_event_when_price_and_stock_are_numeric(): void
@@ -238,6 +226,23 @@ class CsvParserServiceTest extends TestCase
         $this->import($path);
 
         Event::assertNotDispatched(CatalogImportPriceCoerced::class);
+    }
+
+    public function test_invalid_price_preserves_existing_product_and_other_rows_continue(): void
+    {
+        Http::preventStrayRequests();
+        $product = Product::factory()->create(['external_code' => 'PRESERVED', 'price' => '42.50', 'stock_quantity' => 9]);
+        $before = $product->fresh()->getAttributes();
+        $report = $this->import($this->writeCatalogCsv([
+            $this->validCatalogRow(['product_code' => 'PRESERVED', 'price' => '12.345', 'stock' => '1']),
+            $this->validCatalogRow(['product_code' => 'INVALID-NEW', 'price' => '1e3']),
+            $this->validCatalogRow(['product_code' => 'VALID-NEW', 'price' => "1\u{00A0}234,56"]),
+        ]));
+        $this->assertSame($before, $product->fresh()->getAttributes());
+        $this->assertNull(Product::firstWhere('external_code', 'INVALID-NEW'));
+        $this->assertSame('1234.56', Product::firstWhere('external_code', 'VALID-NEW')->getRawOriginal('price'));
+        $this->assertSame(2, $report->skipped);
+        $this->assertSame(1, $report->productsCreated);
     }
 
     public function test_chunk_transaction_mode_gives_same_result_as_row_mode(): void

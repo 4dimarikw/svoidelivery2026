@@ -6,6 +6,7 @@ namespace Domain\Order\Observers;
 
 use Domain\Catalog\Actions\UpdateAmountOrder;
 use Domain\Catalog\Models\Product;
+use Domain\Order\Models\Order;
 use Domain\Order\Models\OrderItem;
 use LogicException;
 
@@ -38,8 +39,13 @@ class OrderItemObserver
 
     public function updated(OrderItem $orderItem): void
     {
-        if ($orderItem->wasChanged('quantity')) {
-            app(UpdateAmountOrder::class)->execute($orderItem->order);
+        if ($orderItem->wasChanged(['price', 'quantity', 'order_id'])) {
+            $ids = array_unique([$orderItem->getRawOriginal('order_id'), $orderItem->order_id]);
+            sort($ids, SORT_NUMERIC);
+            foreach ($ids as $id) {
+                app(UpdateAmountOrder::class)->execute(Order::query()->findOrFail($id));
+            }
+            $orderItem->unsetRelation('order');
         }
     }
 

@@ -2,6 +2,7 @@
 
 namespace Domain\Catalog\Actions;
 
+use Domain\Order\Actions\CheckedOrderTotal;
 use Domain\Order\Models\Order;
 use Exception;
 use Support\ValueObjects\Price;
@@ -18,18 +19,21 @@ class UpdateAmountOrder
 
     public function execute(Order $order): Order
     {
-        // Суммируем в копейках (minor) — без плавающей точки, тот же
-        // приём, что CartManager::amount().
-        $newAmount = Price::fromMinor(
-            $order->orderItems->sum(fn ($orderItem) => $orderItem->amount->minor())
-        );
+        return $order->getConnection()->transaction(function () use ($order): Order {
+            $fresh = Order::query()->whereKey($order->getKey())->lockForUpdate()->firstOrFail();
+            // Текущее блокирующее чтение, включая REPEATABLE READ; кеш связи не используется.
+            $items = $fresh->orderItems()->orderBy('id')->lockForUpdate()->get();
+            $fresh->amount = Price::fromMinor(CheckedOrderTotal::minor(
+                $items->map(fn ($item) => ['price' => $item->price, 'quantity' => $item->quantity])
+            ));
+            if ($fresh->isDirty('amount')) {
+                $fresh->save();
+            }
+            $order->amount = $fresh->amount;
+            $order->syncOriginalAttribute('amount');
+            $order->setRelation('orderItems', $items);
 
-        $order->amount = $newAmount;
-
-        if ($order->isDirty()) {
-            $order->save();
-        }
-
-        return $order;
+            return $order;
+        });
     }
 }

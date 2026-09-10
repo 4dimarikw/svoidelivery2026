@@ -8,6 +8,7 @@ use Infrastructure\Settings\CatalogImportSettings;
 use Services\CatalogImport\Contracts\ImportStage;
 use Services\CatalogImport\Dto\ImportContext;
 use Services\CatalogImport\Support\VolumeText;
+use Support\ValueObjects\Price;
 
 /**
  * Сохранение Product: создаёт новую плоскую запись в таблице products
@@ -70,7 +71,7 @@ final class PersistProductStage implements ImportStage
         $article = $attrs['article'] ?? null;
 
         $syncData = [
-            'price' => $attrs['price'] ?? 0,
+            'price' => Price::fromMajor($attrs['price'] ?? '')->decimal(),
             'stock_quantity' => $stock,
             'in_stock' => $stock > 0,
             'volume_id' => $ctx->volume?->id,

@@ -85,7 +85,9 @@ CsvReader
 ImportContext      ← mutable-контекст, передаётся по всей цепочке
     │
     ▼  Pipeline
-    ├── ResolveCategoryStage       Категория/ABV/СтильПива/Наименование → Category (первый стейдж)
+    ├── ResolvePriceStage          строгая проверка цены → десятичная строка; ошибка пропускает строку
+    │                              до справочников/интеграций; Остаток → stock (прежнее правило)
+    ├── ResolveCategoryStage       Категория/ABV/СтильПива/Наименование → Category
     ├── FilterCategoryStage        --categories=slug,... — пропуск строк вне фильтра
     ├── NormalizeRowStage          пропуск строки при: пустой id_объекта; нет КодТовара И Артикул;
     │                              цена < normalize.min_price (и категория не price_exempt);
@@ -102,7 +104,6 @@ ImportContext      ← mutable-контекст, передаётся по вс�
     ├── ResolvePlatoStage          Plato
     ├── ResolveEbcStage            EBC
     ├── ResolveShelfLifeStage      СрокГодности → shelf_life_days
-    ├── ResolvePriceStage          Цена → price, Остаток → stock
     ├── ResolveExternalIdsStage    КодТовара → external_code, Артикул → article
     ├── ResolveFlagsStage          РейтингПродаж + catalog_import.flags.defaults → products.flags (json, только create)
     ├── ResolveDescriptionStage    Описание → description

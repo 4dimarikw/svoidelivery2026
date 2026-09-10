@@ -14,9 +14,9 @@ use MoonShine\Laravel\Pages\Crud\FormPage;
 use MoonShine\Support\ListOf;
 use MoonShine\UI\Components\FormBuilder;
 use MoonShine\UI\Fields\ID;
-use MoonShine\UI\Fields\Number;
 use MoonShine\UI\Fields\Switcher;
 use MoonShine\UI\Fields\Text;
+use Support\Rules\DecimalPrice;
 use Throwable;
 
 /**
@@ -32,12 +32,12 @@ class DeliveryTypeFormPage extends FormPage
         return [
             ID::make('id'),
             Text::make(__('moonshine.delivery_type.fields.title'), 'title'),
-            Number::make(__('moonshine.delivery_type.fields.price'), 'price')
+            Text::make(__('moonshine.delivery_type.fields.price'), 'price')
                 ->required()
-                ->step(0.01)
+                ->customAttributes(['inputmode' => 'decimal'])
                 // price закастован в Support\ValueObjects\Price — полю нужен
                 // голый скаляр в рублях, не объект (см. ProductFormPage).
-                ->changeFill(static fn (DeliveryType $deliveryType) => $deliveryType->price?->major()),
+                ->changeFill(static fn (DeliveryType $deliveryType) => $deliveryType->price?->decimal()),
             Switcher::make(__('moonshine.delivery_type.fields.with_address'), 'with_address'),
         ];
     }
@@ -56,7 +56,7 @@ class DeliveryTypeFormPage extends FormPage
     {
         return [
             'title' => ['string', 'required'],
-            'price' => ['required', 'numeric', 'min:0'],
+            'price' => ['bail', 'required', new DecimalPrice],
             'with_address' => ['boolean'],
         ];
     }

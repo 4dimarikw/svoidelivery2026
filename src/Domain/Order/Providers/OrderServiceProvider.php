@@ -14,7 +14,7 @@ class OrderServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
-        // Пересчёт Order::amount при любом создании/правке количества/
+        // Пересчёт Order::amount при создании/правке цены, количества, заказа/
         // удалении позиции — единый источник истины (см. UpdateAmountOrder),
         // AssignProducts сам amount не проставляет.
         OrderItem::observe(OrderItemObserver::class);

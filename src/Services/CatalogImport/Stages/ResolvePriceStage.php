@@ -3,16 +3,18 @@
 namespace Services\CatalogImport\Stages;
 
 use Closure;
+use InvalidArgumentException;
 use Services\CatalogImport\Contracts\ImportStage;
 use Services\CatalogImport\Dto\ImportContext;
+use Support\ValueObjects\Price;
 
 /**
  * Цена и остаток: парсит колонки Цена и Остаток.
  *
  * Логика:
- * `Цена`    → $attributes['price'] (float): убирает пробелы-разделители тысяч, запятую→точка.
+ * `Цена`    → $attributes['price'] (точная десятичная строка через Price).
  * `Остаток` → $attributes['stock'] (int).
- * Непарсируемые значения → 0 (не null), чтобы не нарушать NOT NULL ограничение схемы.
+ * Ошибка цены пропускает строку до остальных стадий. Ошибка остатка, как прежде, даёт 0.
  */
 final class ResolvePriceStage implements ImportStage
 {
@@ -21,11 +23,14 @@ final class ResolvePriceStage implements ImportStage
         $priceRaw = $ctx->row->get(config('catalog_import.columns.price'));
         $stockRaw = $ctx->row->get(config('catalog_import.columns.stock'));
 
-        $price = str_replace([',', ' '], ['.', ''], $priceRaw);
+        try {
+            $ctx->attributes['price'] = Price::fromMajor($priceRaw)->decimal();
+        } catch (InvalidArgumentException) {
+            $ctx->addWarning(self::class, 'invalid price, row skipped', $priceRaw);
+            $ctx->skip = true;
+            $ctx->skipStage = self::class;
 
-        if (! is_numeric($price)) {
-            $ctx->addWarning(self::class, 'price not numeric, coerced to 0', $priceRaw);
-            $ctx->priceCoerced = true;
+            return $ctx;
         }
 
         if (! is_numeric($stockRaw)) {
@@ -33,7 +38,6 @@ final class ResolvePriceStage implements ImportStage
             $ctx->stockCoerced = true;
         }
 
-        $ctx->attributes['price'] = is_numeric($price) ? (float) $price : 0.0;
         $ctx->attributes['stock'] = is_numeric($stockRaw) ? (int) $stockRaw : 0;
 
         return $next($ctx);

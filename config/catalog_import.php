@@ -50,13 +50,15 @@ return [
     | Each stage is a class implementing ImportStage. Reorder, add, or replace
     | individual stages to change how a specific attribute is resolved.
     |
-    | ResolveCategoryStage runs FIRST so that $ctx->category is available to
+    | ResolvePriceStage validates price before any database/integration stages.
+    | ResolveCategoryStage then runs so that $ctx->category is available to
     | NormalizeRowStage (price-exempt check) and ResolveBrandStage (per-category
     | default_brand). It must also run before ResolveBeerStyleStage.
     | ResolveBeerStyleStage also syncs Untappd data (via Untappd facade)
     | and absorbs the former ResolveUntappdRefStage logic.
     */
     'stages' => [
+        ResolvePriceStage::class,
         ResolveCategoryStage::class,
         FilterCategoryStage::class,
         NormalizeRowStage::class,
@@ -71,7 +73,6 @@ return [
         ResolvePlatoStage::class,
         ResolveEbcStage::class,
         ResolveShelfLifeStage::class,
-        ResolvePriceStage::class,
         ResolveExternalIdsStage::class,
         ResolveFlagsStage::class,
         ResolveDescriptionStage::class,

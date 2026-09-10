@@ -6,6 +6,7 @@ use Domain\Catalog\Models\Category;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Services\CatalogImport\Dto\ImportContext;
 use Services\CatalogImport\Stages\NormalizeRowStage;
+use Services\CatalogImport\Stages\ResolvePriceStage;
 use Tests\Support\BuildsRawRows;
 use Tests\TestCase;
 
@@ -21,6 +22,7 @@ class NormalizeRowStageTest extends TestCase
             'product_code' => 'CODE1',
             'article' => '',
             'price' => '100',
+            'stock' => '0',
             'category' => 'Пиво',
             'package' => 'кор. 12х0,5л ж/б',
         ], $overrides);
@@ -31,7 +33,8 @@ class NormalizeRowStageTest extends TestCase
         $ctx = new ImportContext($this->row($row));
         $ctx->category = $category;
 
-        (new NormalizeRowStage)($ctx, fn (ImportContext $c) => $c);
+        (new ResolvePriceStage)($ctx,
+            fn (ImportContext $c) => (new NormalizeRowStage)($c, fn ($result) => $result));
 
         return $ctx;
     }

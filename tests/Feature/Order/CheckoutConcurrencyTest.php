@@ -10,6 +10,7 @@ use Domain\Auth\Models\User;
 use Domain\Cart\Models\Cart;
 use Domain\Catalog\Models\Product;
 use Domain\Order\Models\Order;
+use Domain\Order\Models\OrderItem;
 use Domain\Profile\Models\Address;
 use Illuminate\Foundation\Testing\RefreshDatabaseState;
 use Illuminate\Support\Facades\Artisan;
@@ -63,13 +64,14 @@ class CheckoutConcurrencyTest extends TestCase
     }
 
     /** Блокируем товар до старта обоих процессов, чтобы запросы реально перекрывались. */
-    private function race(Product $product, array $operations): array
+    private function race(Product $product, array $operations, array $orderIds = []): array
     {
         $connection = config('database.connections.mysql');
         $processes = [];
         DB::beginTransaction();
         try {
             Product::whereKey($product->id)->lockForUpdate()->firstOrFail();
+            Order::whereKey($orderIds)->orderBy('id')->lockForUpdate()->get();
             foreach ($operations as $operation) {
                 $process = new Process([PHP_BINARY, '-d', 'sys_temp_dir='.sys_get_temp_dir(), base_path('tests/Support/checkout-worker.php')], base_path(), [
                     'APP_ENV' => 'testing', 'APP_CONFIG_CACHE' => base_path('storage/framework/testing/no-checkout-config.php'),
@@ -127,6 +129,34 @@ class CheckoutConcurrencyTest extends TestCase
         $this->assertStringContainsString('https://schema.org/OutOfStock', $seo->text);
         $this->assertSame(1, array_sum(array_column($results, 'events')));
         $this->assertSame([0], array_merge(...array_column($results, 'event_levels')));
+    }
+
+    public function test_parallel_item_price_edits_preserve_the_combined_total(): void
+    {
+        $product = Product::factory()->create();
+        $first = OrderItem::factory()->for($product)->create(['price' => '10.00', 'quantity' => 2]);
+        $second = OrderItem::factory()->for($product)->create(['order_id' => $first->order_id, 'price' => '5.00', 'quantity' => 3]);
+        $userId = $first->order->user_id;
+        $results = $this->race($product, [
+            ['operation' => 'item_update', 'user_id' => $userId, 'item_id' => $first->id, 'changes' => ['price' => '20.00']],
+            ['operation' => 'item_update', 'user_id' => $userId, 'item_id' => $second->id, 'changes' => ['price' => '7.00']],
+        ], [$first->order_id]);
+        $this->assertSame([200, 200], array_column($results, 'status'));
+        $this->assertSame('61.00', $first->order->fresh()->getRawOriginal('amount'));
+    }
+
+    public function test_opposite_item_transfers_use_consistent_order_locks(): void
+    {
+        $product = Product::factory()->create();
+        $first = OrderItem::factory()->for($product)->create(['price' => '10.00', 'quantity' => 2]);
+        $second = OrderItem::factory()->for($product)->create(['price' => '5.00', 'quantity' => 3]);
+        $results = $this->race($product, [
+            ['operation' => 'item_update', 'user_id' => $first->order->user_id, 'item_id' => $first->id, 'changes' => ['order_id' => $second->order_id]],
+            ['operation' => 'item_update', 'user_id' => $second->order->user_id, 'item_id' => $second->id, 'changes' => ['order_id' => $first->order_id]],
+        ], [$first->order_id, $second->order_id]);
+        $this->assertSame([200, 200], array_column($results, 'status'));
+        $this->assertSame('15.00', $first->order->fresh()->getRawOriginal('amount'));
+        $this->assertSame('20.00', $second->order->fresh()->getRawOriginal('amount'));
     }
 
     public function test_two_valid_orders_subtract_both_quantities(): void

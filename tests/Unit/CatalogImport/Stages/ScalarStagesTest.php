@@ -69,18 +69,18 @@ class ScalarStagesTest extends TestCase
         $ctx = new ImportContext($this->row(['price' => '1 234,56', 'stock' => '10']));
         (new ResolvePriceStage)($ctx, fn (ImportContext $c) => $c);
 
-        $this->assertSame(1234.56, $ctx->attributes['price']);
+        $this->assertSame('1234.56', $ctx->attributes['price']);
         $this->assertSame(10, $ctx->attributes['stock']);
     }
 
-    public function test_price_unparseable_defaults_to_zero_not_null(): void
+    public function test_price_unparseable_skips_row(): void
     {
-        // Явно 0.0/0, а не null — иначе нарушится NOT NULL на products.price/stock_quantity.
         $ctx = new ImportContext($this->row(['price' => 'н/д', 'stock' => 'н/д']));
         (new ResolvePriceStage)($ctx, fn (ImportContext $c) => $c);
 
-        $this->assertSame(0.0, $ctx->attributes['price']);
-        $this->assertSame(0, $ctx->attributes['stock']);
+        $this->assertTrue($ctx->skip);
+        $this->assertArrayNotHasKey('price', $ctx->attributes);
+        $this->assertSame(ResolvePriceStage::class, $ctx->skipStage);
     }
 
     public function test_external_ids_maps_all_three_columns(): void

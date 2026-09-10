@@ -6,6 +6,7 @@ use App\Events\Order\OrderStatusChanged;
 use App\Http\Controllers\OrderController;
 use Domain\Auth\Models\User;
 use Domain\Catalog\Models\Product;
+use Domain\Order\Models\OrderItem;
 use Domain\Order\Requests\OrderRequest;
 use Illuminate\Contracts\Console\Kernel;
 use Illuminate\Support\Facades\Bus;
@@ -52,6 +53,9 @@ try {
         $request->validateResolved();
         $response = app(OrderController::class)->store($request);
         $result = ['status' => $response->getStatusCode(), 'redirect' => $response->headers->get('X-Redirect')];
+    } elseif ($input['operation'] === 'item_update') {
+        OrderItem::findOrFail($input['item_id'])->update($input['changes']);
+        $result = ['status' => 200];
     } elseif ($input['operation'] === 'clear') {
         cart()->truncate();
         $result = ['status' => 200];
