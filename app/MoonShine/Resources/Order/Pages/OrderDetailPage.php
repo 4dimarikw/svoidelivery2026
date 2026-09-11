@@ -11,6 +11,7 @@ use App\MoonShine\Resources\OrderItem\OrderItemResource;
 use App\MoonShine\Resources\PaymentMethod\PaymentMethodResource;
 use App\MoonShine\Resources\User\UserResource;
 use App\MoonShine\Traits\CustomUI;
+use App\MoonShine\Traits\OrderDeliveryPanel;
 use MoonShine\Contracts\UI\ComponentContract;
 use MoonShine\Contracts\UI\FieldContract;
 use MoonShine\Laravel\Fields\Relationships\BelongsTo;
@@ -29,6 +30,7 @@ use Throwable;
 class OrderDetailPage extends DetailPage
 {
     use CustomUI;
+    use OrderDeliveryPanel;
 
     /**
      * @return list<FieldContract>
@@ -108,6 +110,7 @@ class OrderDetailPage extends DetailPage
     {
         return [
             ...parent::bottomLayer(),
+            ...$this->deliveryPanel(),
         ];
     }
 }

@@ -1,6 +1,7 @@
 <?php
 
-Schedule::command('queue:work --stop-when-empty')->everyMinute();
+Schedule::command('orders:dispatch-deliveries')->everyMinute()->withoutOverlapping();
+Schedule::command('queue:work --stop-when-empty')->everyMinute()->withoutOverlapping();
 Schedule::command('telegram:prune-link-codes')->daily();
 Schedule::command('logs:prune-sensitive')->daily();
 

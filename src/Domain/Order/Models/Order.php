@@ -76,6 +76,11 @@ class Order extends Model
         return $this->hasMany(OrderItem::class);
     }
 
+    public function deliveries(): HasMany
+    {
+        return $this->hasMany(OrderDelivery::class);
+    }
+
     /**
      * Модель живёт вне `App\Models` (см. CLAUDE.md, "Domain layer") —
      * дефолтная конвенция фабрик её не резолвит, та же ловушка, что уже

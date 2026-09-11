@@ -13,7 +13,6 @@ use App\MoonShine\Resources\User\UserResource;
 use App\MoonShine\Traits\CustomUI;
 use Domain\Auth\Models\User;
 use Domain\Order\Actions\CreateTestOrder;
-use Domain\Order\Actions\UploadOrderToFTP;
 use Domain\Order\Enums\OrderStatuses;
 use Infrastructure\Settings\SiteSettings;
 use MoonShine\Contracts\UI\ActionButtonContract;
@@ -179,8 +178,6 @@ class OrderIndexPage extends IndexPage
             $user = User::query()->where('email', $testUserEmail)->firstOrFail();
 
             $order = app(CreateTestOrder::class)->execute($user->id);
-
-            app(UploadOrderToFTP::class)->execute($order->id);
 
             return JsonResponse::make()->toast('Тестовый заказ создан', ToastType::SUCCESS)->events(
                 [AlpineJs::event(

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Domain\Order\Processes;
 
 use App\Events\Order\OrderCreated;
+use Domain\Order\Actions\CreateOrderDelivery;
 use Domain\Order\Models\Order;
 use Illuminate\Pipeline\Pipeline;
 use Illuminate\Support\Facades\DB;
@@ -35,10 +36,12 @@ final class OrderProcess
      */
     public function run(): Order
     {
-        $order = DB::transaction(fn (): Order => app(Pipeline::class)
-            ->send($this->order)
-            ->through($this->processes)
-            ->thenReturn());
+        $order = DB::transaction(function (): Order {
+            $order = app(Pipeline::class)->send($this->order)->through($this->processes)->thenReturn();
+            app(CreateOrderDelivery::class)->initial($order->id);
+
+            return $order;
+        });
 
         // AssignProducts создаёт позиции через $order->orderItems()->createMany() —
         // OrderItemObserver пересчитывает и сохраняет amount, но на отдельном,

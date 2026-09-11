@@ -10,7 +10,9 @@ use Domain\Auth\Models\User;
 use Domain\Cart\Actions\UpdateCartPrices;
 use Domain\Cart\Models\Cart;
 use Domain\Catalog\Models\Product;
+use Domain\Order\Actions\BuildOrderXml;
 use Domain\Order\Models\Order;
+use Domain\Order\Models\OrderDelivery;
 use Domain\Profile\Models\Address;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Event;
@@ -65,6 +67,7 @@ class CheckoutIdempotencyTest extends TestCase
             ->assertRedirect(route('account.orders.show', $order));
 
         $this->assertSame(1, Order::count());
+        $this->assertSame(1, $order->deliveries()->count());
         $this->assertSame(1, cart()->count());
         $this->assertSame(4, $this->product->fresh()->stock_quantity);
         $this->assertSame($newToken, cart()->checkoutToken());
@@ -72,6 +75,19 @@ class CheckoutIdempotencyTest extends TestCase
         $this->assertNotSame($this->payload['checkout_key'], $newToken);
         Event::assertDispatchedTimes(OrderCreated::class, 1);
         Event::assertDispatchedTimes(OrderStatusChanged::class, 1);
+    }
+
+    public function test_xml_failure_rolls_back_order_delivery_stock_and_cart(): void
+    {
+        $this->mock(BuildOrderXml::class)->shouldReceive('execute')->once()
+            ->andThrow(new RuntimeException('XML generation failed'));
+        $this->postJson(route('checkout.store'), $this->payload)->assertStatus(500);
+        $this->assertSame(0, Order::count());
+        $this->assertSame(0, OrderDelivery::count());
+        $this->assertSame(5, $this->product->fresh()->stock_quantity);
+        $this->assertSame(1, cart()->count());
+        $this->assertSame($this->payload['checkout_key'], cart()->checkoutToken());
+        Event::assertNotDispatched(OrderCreated::class);
     }
 
     public function test_cart_tabs_share_hidden_key(): void

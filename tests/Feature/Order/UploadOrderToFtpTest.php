@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Order;
 
-use App\Jobs\UploadOrderToFtpJob;
 use Domain\Logging\Models\EventLog;
+use Domain\Order\Actions\DeliverOrderXml;
 use Domain\Order\Actions\UploadOrderToFTP;
 use Domain\Order\Models\Order;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -13,11 +13,7 @@ use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
-/**
- * Domain\Order\Actions\UploadOrderToFTP не имела собственного покрытия —
- * тест заодно проверяет перевод сбоев с Log на EventLog (event_logs,
- * см. App\Listeners\PersistEventLog).
- */
+/** Совместимость прежнего API и безопасная запись ошибок доставки в event_logs. */
 class UploadOrderToFtpTest extends TestCase
 {
     use RefreshDatabase;
@@ -43,25 +39,24 @@ class UploadOrderToFtpTest extends TestCase
         $this->assertSame('Заказ #999999 не найден — выгрузка на FTP отменена.', $event->message);
     }
 
-    public function test_upload_failure_logs_event_and_queues_job(): void
+    public function test_legacy_call_persists_delivery_and_worker_records_failure(): void
     {
         Queue::fake();
 
-        // Несуществующий диск роняет Storage::disk()->put() уже на первой
-        // попытке (max_attempts принудительно занижен до 1, чтобы не ждать
-        // реальных ретраев в тесте).
+        // Сохранение заявки не требует доступного транспорта; ошибка возникает в worker.
         config([
             'order.ftp_upload.disk' => 'nonexistent-disk',
-            'order.ftp_upload.max_attempts' => 1,
         ]);
 
         $order = Order::create([]);
 
         $uploaded = app(UploadOrderToFTP::class)->execute($order->id);
 
-        $this->assertFalse($uploaded);
-
-        Queue::assertPushed(UploadOrderToFtpJob::class, fn (UploadOrderToFtpJob $job) => $job->orderId === $order->id);
+        $this->assertTrue($uploaded);
+        Queue::assertNothingPushed();
+        $delivery = $order->deliveries()->sole();
+        app(DeliverOrderXml::class)->execute($delivery->id);
+        $this->assertSame('retry', $delivery->fresh()->state);
 
         $event = EventLog::query()
             ->where('event_type', 'order.ftp_upload_failed')
@@ -72,10 +67,9 @@ class UploadOrderToFtpTest extends TestCase
         $this->assertSame('upload_failed', $event->context['reason']);
         $this->assertTrue($event->context['queued']);
 
-        // Заказ загружен (findOrFail отработал) — номер должен попасть и
-        // в context, и в текст сообщения вместо голого id.
-        $this->assertSame($order->number, $event->context['order_number']);
-        $this->assertStringContainsString("Заказ №{$order->number}", $event->message);
+        // Worker использует сохранённую доставку, дополнительное чтение заказа не нужно.
+        $this->assertSame($order->id, $event->context['order_id']);
+        $this->assertNull($event->context['order_number']);
     }
 
     public function test_successful_upload_does_not_write_event_log(): void

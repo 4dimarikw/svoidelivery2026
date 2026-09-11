@@ -1,0 +1,119 @@
+{
+    "captured_at": "2026-09-11T18:27:23+03:00",
+    "environment": "local",
+    "server": {
+        "version": "5.7.44"
+    },
+    "applied_migrations": [
+        "0001_01_01_000000_create_users_table",
+        "0001_01_01_000001_create_cache_table",
+        "0001_01_01_000002_create_jobs_table",
+        "2020_10_04_115514_create_moonshine_roles_table",
+        "2020_10_05_173148_create_moonshine_tables",
+        "2023_01_19_171805_create_seo_table",
+        "2025_12_17_160238_create_untappd_beers_table",
+        "2025_12_23_095157_create_settings_table",
+        "2025_12_23_165559_create_carts_table",
+        "2026_02_22_095159_create_vksync_settings",
+        "2026_05_18_181632_create_event_logs_table",
+        "2026_07_31_112853_create_notifications_table",
+        "2026_08_01_150000_create_user_profiles_table",
+        "2026_08_01_150100_create_addresses_table",
+        "2026_08_01_160000_create_categories_table",
+        "2026_08_01_160100_create_manufacturers_table",
+        "2026_08_01_160200_create_volumes_table",
+        "2026_08_01_160300_create_containers_table",
+        "2026_08_01_160400_create_beer_styles_table",
+        "2026_08_01_160600_create_products_table",
+        "2026_08_01_160800_create_beer_product_details_table",
+        "2026_08_01_160900_create_properties_table",
+        "2026_08_01_161000_create_category_properties_table",
+        "2026_08_01_185953_create_media_table",
+        "2026_08_03_100100_create_category_match_rules_table",
+        "2026_08_03_100200_seed_category_registry_from_config",
+        "2026_08_03_100300_create_catalog_import_settings",
+        "2026_08_05_213215_moonshine_permissions",
+        "2026_08_06_120003_create_site_settings",
+        "2026_08_06_130000_create_favorites_table",
+        "2026_08_06_130100_create_cart_items_table",
+        "2026_08_09_083517_create_telegraph_bots_table",
+        "2026_08_09_083518_create_telegraph_chats_table",
+        "2026_08_09_100000_create_payment_methods_table",
+        "2026_08_09_100001_create_delivery_types_table",
+        "2026_08_09_100002_create_orders_table",
+        "2026_08_09_100003_create_order_customers_table",
+        "2026_08_09_100004_create_order_items_table",
+        "2026_08_13_120000_create_catalog_import_seen_codes_table",
+        "2026_08_14_000000_add_bot_status_to_user_profiles_table",
+        "2026_08_14_100000_create_vk_posts_table",
+        "2026_08_14_100001_create_vk_post_deliveries_table",
+        "2022_12_19_115549_create_moonshine_socialites_table",
+        "2026_08_15_120000_add_moonshine_user_id_to_telegraph_chats_table",
+        "2026_08_06_120000_create_site_content_tables",
+        "2026_08_16_161802_make_site_sections_route_name_nullable",
+        "2026_08_22_170300_move_profile_social_links_to_json",
+        "2026_08_22_170301_add_messenger_url_to_order_customers_table",
+        "2026_08_22_170500_create_event_logging_settings",
+        "2026_09_08_190000_add_checkout_keys"
+    ],
+    "pending_migrations": [
+        "2026_09_09_100000_protect_order_item_products_and_add_snapshots",
+        "2026_09_09_100100_backfill_order_item_snapshots",
+        "2026_09_09_100200_require_order_item_snapshots",
+        "2026_09_10_120000_create_telegram_link_codes_table",
+        "2026_09_11_100000_create_order_deliveries_table"
+    ],
+    "table_estimates": [
+        {
+            "TABLE_NAME": "event_logs",
+            "TABLE_ROWS": 4,
+            "DATA_LENGTH": 65536,
+            "INDEX_LENGTH": 65536
+        },
+        {
+            "TABLE_NAME": "order_items",
+            "TABLE_ROWS": 120,
+            "DATA_LENGTH": 16384,
+            "INDEX_LENGTH": 65536
+        },
+        {
+            "TABLE_NAME": "orders",
+            "TABLE_ROWS": 12,
+            "DATA_LENGTH": 16384,
+            "INDEX_LENGTH": 131072
+        },
+        {
+            "TABLE_NAME": "products",
+            "TABLE_ROWS": 945,
+            "DATA_LENGTH": 1589248,
+            "INDEX_LENGTH": 589824
+        }
+    ],
+    "orders": {
+        "row_count": 12,
+        "amount": "82587.00"
+    },
+    "items": {
+        "row_count": 113,
+        "amount": "73568.00"
+    },
+    "invalid_items": 0,
+    "ddl": {
+        "orders": {
+            "Table": "orders",
+            "Create Table": "CREATE TABLE `orders` (\n  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,\n  `number` varchar(20) COLLATE utf8mb4_unicode_ci NOT NULL,\n  `status` enum('new','pending','paid','cancelled','completed','sent') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'new',\n  `user_id` bigint(20) unsigned DEFAULT NULL,\n  `delivery_type_id` bigint(20) unsigned NOT NULL DEFAULT '1',\n  `payment_method_id` bigint(20) unsigned NOT NULL DEFAULT '1',\n  `comment` text COLLATE utf8mb4_unicode_ci,\n  `amount` decimal(12,2) NOT NULL DEFAULT '0.00',\n  `created_at` timestamp NULL DEFAULT NULL,\n  `updated_at` timestamp NULL DEFAULT NULL,\n  `checkout_key` char(36) COLLATE utf8mb4_unicode_ci DEFAULT NULL,\n  PRIMARY KEY (`id`),\n  UNIQUE KEY `orders_number_unique` (`number`),\n  UNIQUE KEY `orders_checkout_key_unique` (`checkout_key`),\n  KEY `orders_delivery_type_id_foreign` (`delivery_type_id`),\n  KEY `orders_payment_method_id_foreign` (`payment_method_id`),\n  KEY `orders_status_created_at_index` (`status`,`created_at`),\n  KEY `orders_user_id_status_index` (`user_id`,`status`),\n  KEY `orders_status_index` (`status`),\n  KEY `orders_amount_index` (`amount`),\n  CONSTRAINT `orders_delivery_type_id_foreign` FOREIGN KEY (`delivery_type_id`) REFERENCES `delivery_types` (`id`),\n  CONSTRAINT `orders_payment_method_id_foreign` FOREIGN KEY (`payment_method_id`) REFERENCES `payment_methods` (`id`),\n  CONSTRAINT `orders_user_id_foreign` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE SET NULL ON UPDATE CASCADE\n) ENGINE=InnoDB AUTO_INCREMENT=13 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
+        },
+        "order_items": {
+            "Table": "order_items",
+            "Create Table": "CREATE TABLE `order_items` (\n  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,\n  `order_id` bigint(20) unsigned NOT NULL,\n  `product_id` bigint(20) unsigned NOT NULL,\n  `price` decimal(12,2) NOT NULL,\n  `quantity` int(10) unsigned NOT NULL DEFAULT '1',\n  `created_at` timestamp NULL DEFAULT NULL,\n  `updated_at` timestamp NULL DEFAULT NULL,\n  PRIMARY KEY (`id`),\n  KEY `order_items_product_id_foreign` (`product_id`),\n  KEY `order_items_order_id_product_id_index` (`order_id`,`product_id`),\n  KEY `order_items_created_at_order_id_index` (`created_at`,`order_id`),\n  KEY `order_items_price_index` (`price`),\n  CONSTRAINT `order_items_order_id_foreign` FOREIGN KEY (`order_id`) REFERENCES `orders` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,\n  CONSTRAINT `order_items_product_id_foreign` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE CASCADE ON UPDATE CASCADE\n) ENGINE=InnoDB AUTO_INCREMENT=121 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
+        },
+        "products": {
+            "Table": "products",
+            "Create Table": "CREATE TABLE `products` (\n  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,\n  `external_code` varchar(64) COLLATE utf8mb4_unicode_ci NOT NULL,\n  `article` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,\n  `name` varchar(512) COLLATE utf8mb4_unicode_ci NOT NULL,\n  `slug` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,\n  `description` text COLLATE utf8mb4_unicode_ci,\n  `category_id` bigint(20) unsigned NOT NULL,\n  `manufacturer_id` bigint(20) unsigned DEFAULT NULL,\n  `volume_id` bigint(20) unsigned DEFAULT NULL,\n  `container_id` bigint(20) unsigned DEFAULT NULL,\n  `price` decimal(12,2) NOT NULL DEFAULT '0.00',\n  `stock_quantity` int(10) unsigned NOT NULL DEFAULT '0',\n  `in_stock` tinyint(1) NOT NULL DEFAULT '0',\n  `package_units` smallint(5) unsigned DEFAULT NULL,\n  `packaging_raw` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,\n  `source_category_path` varchar(512) COLLATE utf8mb4_unicode_ci DEFAULT NULL,\n  `shelf_life_days` smallint(5) unsigned DEFAULT NULL,\n  `brand` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,\n  `status` varchar(32) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'draft',\n  `flags` json DEFAULT NULL,\n  `created_at` timestamp NULL DEFAULT NULL,\n  `updated_at` timestamp NULL DEFAULT NULL,\n  PRIMARY KEY (`id`),\n  UNIQUE KEY `products_external_code_unique` (`external_code`),\n  UNIQUE KEY `products_slug_unique` (`slug`),\n  KEY `products_category_manufacturer_price_idx` (`category_id`,`manufacturer_id`,`price`),\n  KEY `products_category_price_idx` (`category_id`,`price`),\n  KEY `products_manufacturer_price_idx` (`manufacturer_id`,`price`),\n  KEY `products_price_idx` (`price`),\n  KEY `products_volume_container_idx` (`volume_id`,`container_id`),\n  KEY `products_container_idx` (`container_id`),\n  KEY `products_status_stock_id_idx` (`status`,`in_stock`,`id`),\n  CONSTRAINT `products_category_id_foreign` FOREIGN KEY (`category_id`) REFERENCES `categories` (`id`) ON UPDATE CASCADE,\n  CONSTRAINT `products_container_id_foreign` FOREIGN KEY (`container_id`) REFERENCES `containers` (`id`) ON UPDATE CASCADE,\n  CONSTRAINT `products_manufacturer_id_foreign` FOREIGN KEY (`manufacturer_id`) REFERENCES `manufacturers` (`id`) ON UPDATE CASCADE,\n  CONSTRAINT `products_volume_id_foreign` FOREIGN KEY (`volume_id`) REFERENCES `volumes` (`id`) ON UPDATE CASCADE\n) ENGINE=InnoDB AUTO_INCREMENT=948 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
+        },
+        "event_logs": {
+            "Table": "event_logs",
+            "Create Table": "CREATE TABLE `event_logs` (\n  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,\n  `event_type` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,\n  `level` varchar(16) COLLATE utf8mb4_unicode_ci NOT NULL,\n  `message` text COLLATE utf8mb4_unicode_ci NOT NULL,\n  `context` json DEFAULT NULL,\n  `caused_by_user_id` bigint(20) unsigned DEFAULT NULL,\n  `caused_by_type` varchar(16) COLLATE utf8mb4_unicode_ci DEFAULT NULL,\n  `created_at` timestamp NOT NULL,\n  PRIMARY KEY (`id`),\n  KEY `event_logs_caused_by_user_id_foreign` (`caused_by_user_id`),\n  KEY `event_logs_event_type_index` (`event_type`),\n  KEY `event_logs_level_index` (`level`),\n  KEY `event_logs_created_at_index` (`created_at`),\n  CONSTRAINT `event_logs_caused_by_user_id_foreign` FOREIGN KEY (`caused_by_user_id`) REFERENCES `users` (`id`) ON DELETE SET NULL\n) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
+        }
+    }
+}

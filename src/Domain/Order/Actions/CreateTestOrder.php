@@ -73,6 +73,8 @@ final class CreateTestOrder
                 ]);
             }
 
+            app(CreateOrderDelivery::class)->initial($order->id, 'test');
+
             return $order->fresh();
         });
     }

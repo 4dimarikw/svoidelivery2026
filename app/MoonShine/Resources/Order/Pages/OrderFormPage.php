@@ -10,20 +10,14 @@ use App\MoonShine\Resources\OrderCustomer\OrderCustomerResource;
 use App\MoonShine\Resources\OrderItem\OrderItemResource;
 use App\MoonShine\Resources\PaymentMethod\PaymentMethodResource;
 use App\MoonShine\Resources\User\UserResource;
-use Domain\Order\Actions\UploadOrderToFTP;
+use App\MoonShine\Traits\OrderDeliveryPanel;
 use Domain\Order\Enums\OrderStatuses;
-use MoonShine\Contracts\Core\DependencyInjection\CrudRequestContract;
 use MoonShine\Contracts\UI\ComponentContract;
 use MoonShine\Contracts\UI\FieldContract;
-use MoonShine\Crud\JsonResponse;
 use MoonShine\Laravel\Fields\Relationships\BelongsTo;
 use MoonShine\Laravel\Fields\Relationships\HasMany;
 use MoonShine\Laravel\Fields\Relationships\HasOne;
 use MoonShine\Laravel\Pages\Crud\FormPage;
-use MoonShine\Support\Attributes\AsyncMethod;
-use MoonShine\Support\Enums\ToastType;
-use MoonShine\Support\ListOf;
-use MoonShine\UI\Components\ActionButton;
 use MoonShine\UI\Components\Layout\Box;
 use MoonShine\UI\Components\Layout\Column;
 use MoonShine\UI\Components\Layout\Grid;
@@ -31,13 +25,14 @@ use MoonShine\UI\Fields\Enum;
 use MoonShine\UI\Fields\ID;
 use MoonShine\UI\Fields\Number;
 use MoonShine\UI\Fields\Text;
-use Throwable;
 
 /**
  * @extends FormPage<OrderResource>
  */
 class OrderFormPage extends FormPage
 {
+    use OrderDeliveryPanel;
+
     /**
      * @return list<ComponentContract|FieldContract>
      */
@@ -83,42 +78,8 @@ class OrderFormPage extends FormPage
         ];
     }
 
-    protected function buttons(): ListOf
+    protected function bottomLayer(): array
     {
-        return parent::buttons()->add(
-            ActionButton::make('Отправить файл в 1С')
-                ->warning()
-                ->method('resendOrder')
-        );
-    }
-
-    /**
-     * @throws Throwable
-     */
-    #[AsyncMethod]
-    public function resendOrder(CrudRequestContract $request, JsonResponse $response)
-    {
-        try {
-            $order = $request->getResource()->getItem();
-
-            if (! $order->id) {
-                return JsonResponse::make()->toast('Ошибка при отправке файла', ToastType::ERROR);
-            }
-
-            // queueOnFailure: false — это ручной повтор из админки, при
-            // провале админ видит ошибку и нажимает кнопку сам; фоновый
-            // job дублировал бы то же действие.
-            $uploaded = app(UploadOrderToFTP::class)->execute($order->id, queueOnFailure: false);
-
-            if (! $uploaded) {
-                return JsonResponse::make()->toast('Ошибка при отправке файла', ToastType::ERROR);
-            }
-
-            return JsonResponse::make()->toast('Файл отправлен', ToastType::SUCCESS);
-        } catch (Throwable $e) {
-            report($e);
-
-            return JsonResponse::make()->toast('Ошибка при отправке файла', ToastType::ERROR);
-        }
+        return [...parent::bottomLayer(), ...$this->deliveryPanel()];
     }
 }

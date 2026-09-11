@@ -39,11 +39,7 @@ class CheckoutTest extends TestCase
     {
         parent::setUp();
 
-        // Успешный чекаут вызывает UploadOrderToFTP::execute() синхронно
-        // (OrderProcess::run()) — без фейкового диска это либо реальный (и
-        // недоступный в тестах) FTP с 3 retry-попытками и задержками, либо,
-        // при QUEUE_CONNECTION=sync (phpunit.xml), синхронный запуск job'а,
-        // чей RuntimeException при провале пробрасывается прямо в тест.
+        // Любая случайная сетевая отправка в тесте остаётся на локальном диске.
         Storage::fake('ftp');
     }
 
@@ -171,9 +167,10 @@ class CheckoutTest extends TestCase
         $this->assertSame(0, CartItem::query()->where('cart_id', $cart->id)->count());
         $this->assertSame(4, $product->fresh()->stock_quantity);
 
-        // OrderCreated → App\Listeners\Order\HandleOrderCreated →
-        // UploadOrderToFTP — проверяем, что цепочка не разорвана.
-        $this->assertCount(1, Storage::disk('ftp')->allFiles(config('order.ftp_upload.dir')));
+        // Checkout сохраняет XML атомарно, сетевую загрузку выполняет worker.
+        $delivery = $order->deliveries()->sole();
+        $this->assertSame('pending', $delivery->state);
+        $this->assertCount(0, Storage::disk('ftp')->allFiles(config('order.ftp_upload.dir')));
 
         // Та же цепочка → notifyAdmin() — письмо ставится в очередь, не
         // отправляется синхронно (см. HandleOrderCreated::notifyAdmin()).
