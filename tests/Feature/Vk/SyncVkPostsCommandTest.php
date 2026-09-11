@@ -7,6 +7,7 @@ use Domain\Vk\Models\VkPost;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
 use Infrastructure\Settings\VKSyncSettings;
+use Tests\Support\FakeImageNetwork;
 use Tests\TestCase;
 
 class SyncVkPostsCommandTest extends TestCase
@@ -16,6 +17,7 @@ class SyncVkPostsCommandTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+        FakeImageNetwork::install();
 
         config(['services.vk.access_token' => 'test-token']);
     }
@@ -29,7 +31,7 @@ class SyncVkPostsCommandTest extends TestCase
             'api.vk.com/method/wall.get*' => Http::response([
                 'response' => ['count' => count($items), 'items' => $items],
             ]),
-            'sun9-1.userapi.com/*' => Http::response('', 200, ['Content-Type' => 'image/jpeg']),
+            'sun9-1.userapi.com/*' => Http::response(FakeImageNetwork::jpeg(), 200, ['Content-Type' => 'image/jpeg']),
         ]);
     }
 
@@ -84,11 +86,7 @@ class SyncVkPostsCommandTest extends TestCase
 
     public function test_rejected_image_is_dropped_but_post_is_still_saved(): void
     {
-        // Своя ссылка на картинку (не переиспользуем ту, что уже фигурирует
-        // в других тестах этого файла) — VkImageUrlValidator мемоизирует
-        // результат HEAD-проверки по URL на весь процесс, и общий URL с уже
-        // закешированным "успехом" из другого теста сделал бы этот тест
-        // недетерминированным при прогоне в общем процессе PHPUnit.
+        // Отклонённая картинка не мешает сохранению поста.
         $payload = $this->vkPostPayload();
         $payload['attachments'][0]['photo']['sizes'][1]['url'] = 'https://sun9-1.userapi.com/rejected.jpg';
 
@@ -130,7 +128,7 @@ class SyncVkPostsCommandTest extends TestCase
             'api.vk.com/method/wall.get*' => Http::sequence()
                 ->push(['response' => ['count' => 1, 'items' => [$this->vkPostPayload(text: 'Исходный текст')]]])
                 ->push(['response' => ['count' => 1, 'items' => [$this->vkPostPayload(text: 'Текст изменился в VK')]]]),
-            'sun9-1.userapi.com/*' => Http::response('', 200, ['Content-Type' => 'image/jpeg']),
+            'sun9-1.userapi.com/*' => Http::response(FakeImageNetwork::jpeg(), 200, ['Content-Type' => 'image/jpeg']),
         ]);
 
         $this->artisan('vk:sync-posts', ['--domain' => 'testgroup', '--force' => true])->assertExitCode(0);

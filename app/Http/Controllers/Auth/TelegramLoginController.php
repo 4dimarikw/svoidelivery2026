@@ -4,20 +4,20 @@ namespace App\Http\Controllers\Auth;
 
 use App\Events\Auth\TelegramSignatureInvalid;
 use App\Http\Controllers\Controller;
-use Domain\Auth\Models\User;
 use Domain\Telegram\Actions\FindOrRegisterTelegramUser;
 use Domain\Telegram\Actions\UnlinkTelegramAccount;
 use Domain\Telegram\Models\TelegramBot;
+use Domain\Telegram\Support\TelegramAuthFields;
 use Domain\Telegram\Support\TelegramLinkCode;
 use Domain\Telegram\Support\WebAppInitData;
+use Domain\Telegram\Support\WebAppSessionExchange;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Validator;
 use Laravel\Socialite\Contracts\User as SocialiteUser;
-use Laravel\Socialite\Facades\Socialite;
+use Laravel\Socialite\Two\User;
 
 /**
  * Вход гостя через Telegram — два независимых способа получить те же
@@ -39,8 +39,8 @@ use Laravel\Socialite\Facades\Socialite;
  * подходит: он не даёт немедленного редиректа с сессией.
  *
  * Виджет — не OAuth: он редиректит браузер прямо сюда обычным GET с
- * параметрами id/first_name/last_name/username/photo_url/auth_date/hash, а
- * SocialiteProviders\Telegram\Provider::user() проверяет их подпись.
+ * параметрами id/first_name/last_name/username/photo_url/auth_date/hash.
+ * Подпись проверяется локально через hash_equals; DTO Socialite сохранён.
  */
 class TelegramLoginController extends Controller
 {
@@ -84,8 +84,8 @@ class TelegramLoginController extends Controller
             // фолбэчит его на first_name, когда у аккаунта нет @username.
             // Сырой payload честный: ключа 'username' там просто нет.
             // getRaw() не в Contracts\User — instanceof сужает до конкретного
-            // класса, который реально возвращает Socialite::driver('telegram').
-            $telegramUser instanceof \Laravel\Socialite\Two\User ? ($telegramUser->getRaw()['username'] ?? null) : null,
+            // DTO, который создаёт локальная проверка подписи.
+            $telegramUser instanceof User ? ($telegramUser->getRaw()['username'] ?? null) : null,
             $bot,
         );
 
@@ -108,7 +108,7 @@ class TelegramLoginController extends Controller
         }
 
         $reason = null;
-        $data = WebAppInitData::verify((string) $request->input('init_data'), $bot->token, $reason);
+        $data = WebAppInitData::verify($request->input('init_data'), $bot->token, $reason);
 
         if ($data === null) {
             // Тот же ключ ошибки, что у callback() — тот же <x-ui.error> на
@@ -117,6 +117,12 @@ class TelegramLoginController extends Controller
 
             return redirect()->route('login')
                 ->withErrors(['email' => __('account.telegram.failed')]);
+        }
+
+        if (! app(WebAppSessionExchange::class)->claim($data, $bot->id, $request->session())) {
+            $this->logAuthFailure($request, 'webapp', 'exchange_rejected');
+
+            return redirect()->route('login')->withErrors(['email' => __('account.telegram.exchange_failed')]);
         }
 
         $this->loginTelegramUser($request, $data->id, $data->displayName(), $data->username, $bot);
@@ -179,52 +185,41 @@ class TelegramLoginController extends Controller
         return null;
     }
 
-    /**
-     * Проверяет подпись Telegram.
-     *
-     * @return array{0: ?SocialiteUser, 1: ?string} [пользователь, причина отказа]
-     *                                              Причина: 'stale_auth_date' | 'field_validation_failed' | 'hash_mismatch'.
-     *                                              Provider::user() (vendor) кидает один и тот же голый
-     *                                              \InvalidArgumentException и на непрошедшей валидации полей, и на
-     *                                              несовпадении HMAC — чтобы различить их без правки vendor-кода,
-     *                                              та же валидация полей прогоняется здесь заранее: если она
-     *                                              проходит, а драйвер всё равно бросает, единственная оставшаяся
-     *                                              причина — несовпадение подписи.
-     */
+    /** @return array{0: ?SocialiteUser, 1: ?string} */
     private function resolveTelegramUser(Request $request, TelegramBot $bot): array
     {
-        // auth_date проверяется до драйвера: тот пропускает целые сутки.
-        $authDate = (int) $request->input('auth_date');
-
-        if ($authDate <= 0 || now()->timestamp - $authDate > self::AUTH_DATE_TTL) {
-            return [null, 'stale_auth_date'];
-        }
-
-        $fieldsValid = ! Validator::make($request->all(), [
-            'id' => 'required|numeric',
-            'auth_date' => 'required|date_format:U|before:1 day',
-            'hash' => 'required|size:64',
-        ])->fails();
-
-        if (! $fieldsValid) {
+        $fields = $request->all();
+        if (! TelegramAuthFields::scalarFields($fields)
+            || TelegramAuthFields::positiveInteger($fields['id'] ?? null) === null
+            || ! is_string($fields['hash'] ?? null)
+            || ! preg_match('/\\A[a-f0-9]{64}\\z/D', $fields['hash'])) {
             return [null, 'field_validation_failed'];
         }
-
-        // config('services.telegram.*') читает SocialiteProviders\Manager —
-        // заполняется локально, прямо перед вызовом, а не глобально в
-        // AppServiceProvider::boot() (тот дёргался бы на КАЖДЫЙ запрос ещё
-        // до гарантированного применения миграций — см. комментарий там).
-        config([
-            'services.telegram.client_id' => (string) $bot->id,
-            'services.telegram.client_secret' => $bot->token,
-            'services.telegram.redirect' => url('/auth/telegram/callback'),
-        ]);
-
-        try {
-            return [Socialite::driver('telegram')->user(), null];
-        } catch (\InvalidArgumentException) {
+        foreach (['first_name', 'last_name', 'username', 'photo_url'] as $field) {
+            if (isset($fields[$field]) && ! is_string($fields[$field])) {
+                return [null, 'field_validation_failed'];
+            }
+        }
+        $reason = TelegramAuthFields::dateFailure($fields['auth_date'] ?? null, self::AUTH_DATE_TTL);
+        if ($reason !== null) {
+            return [null, $reason];
+        }
+        $hash = $fields['hash'];
+        unset($fields['hash']);
+        $check = collect($fields)->map(fn ($value, $key) => "$key=$value")->sort()->join("\n");
+        $expected = hash_hmac('sha256', $check, hash('sha256', $bot->token, true));
+        if (! hash_equals($expected, $hash)) {
             return [null, 'hash_mismatch'];
         }
+        unset($fields['auth_date']);
+        $name = trim(($fields['first_name'] ?? '').' '.($fields['last_name'] ?? ''));
+
+        return [(new User)->setRaw($fields)->map([
+            'id' => $fields['id'],
+            'name' => $name !== '' ? $name : ($fields['username'] ?? (string) $fields['id']),
+            'nickname' => $fields['username'] ?? $fields['first_name'] ?? null,
+            'avatar' => $fields['photo_url'] ?? null,
+        ]), null];
     }
 
     /**

@@ -5,6 +5,7 @@ namespace Services\CatalogImport\Stages;
 use Closure;
 use Services\CatalogImport\Contracts\ImportStage;
 use Services\CatalogImport\Dto\ImportContext;
+use Services\RemoteImages\RemoteImageDownloader;
 use Throwable;
 
 /**
@@ -44,9 +45,9 @@ final class PersistProductImageStage implements ImportStage
         }
 
         try {
-            $product->addMediaFromUrl($url)
+            app(RemoteImageDownloader::class)->withCleanup(fn () => $product->addMediaFromUrl($url)
                 ->withCustomProperties(['source' => 'untappd', 'source_url' => $url])
-                ->toMediaCollection($collection);
+                ->toMediaCollection($collection));
 
             $ctx->imageAttachedThisRow = true;
         } catch (Throwable $e) {

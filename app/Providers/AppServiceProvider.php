@@ -24,6 +24,7 @@ use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 use Services\CatalogImport\CategoryRegistry;
+use Services\RemoteImages\RemoteImageDownloader;
 use Services\Untappd\Providers\UntappdProvider;
 use SocialiteProviders\Manager\SocialiteWasCalled;
 use SocialiteProviders\Telegram\Provider as TelegramProvider;
@@ -35,6 +36,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
+        $this->app->singleton(RemoteImageDownloader::class);
         $this->app->register(
             UntappdProvider::class
         );

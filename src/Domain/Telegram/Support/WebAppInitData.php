@@ -25,29 +25,51 @@ final class WebAppInitData
         public readonly ?string $firstName,
         public readonly ?string $lastName,
         public readonly ?string $username,
+        public readonly int $authDate,
+        public readonly string $signature,
     ) {}
 
     /**
      * null — initData отсутствует, подпись не совпала или auth_date протух.
      *
      * $reason — заполняется причиной отказа (out-параметр), когда возвращён
-     * null: 'empty_init_data' | 'missing_fields' | 'stale_auth_date' |
-     * 'hash_mismatch' | 'invalid_user_payload'. Нужен вызывающему коду
+     * null: ошибка полей, времени, подписи или user. Нужен вызывающему коду
      * (TelegramLoginController), чтобы отличить подделку подписи от
      * протухшей/неполной сессии — раньше все причины схлопывались в один
      * null без возможности их различить.
      */
-    public static function verify(string $initData, string $botToken, ?string &$reason = null): ?self
+    public static function verify(mixed $initData, string $botToken, ?string &$reason = null): ?self
     {
         $reason = null;
 
-        if ($initData === '') {
+        if (! is_string($initData) || $initData === '' || strlen($initData) > 16384) {
             $reason = 'empty_init_data';
 
             return null;
         }
 
-        parse_str($initData, $params);
+        // Не допускаем массивы, повторные ключи и нормализацию имён parse_str.
+        $params = [];
+        foreach (explode('&', $initData) as $pair) {
+            $parts = explode('=', $pair, 2);
+            if (count($parts) !== 2 || preg_match('/%(?![a-fA-F0-9]{2})/', $pair)) {
+                $reason = 'invalid_fields';
+
+                return null;
+            }
+            $key = urldecode($parts[0]);
+            if (array_key_exists($key, $params)) {
+                $reason = 'invalid_fields';
+
+                return null;
+            }
+            $params[$key] = urldecode($parts[1]);
+        }
+        if (! TelegramAuthFields::scalarFields($params)) {
+            $reason = 'invalid_fields';
+
+            return null;
+        }
 
         if (! isset($params['hash'], $params['auth_date'], $params['user']) || ! is_string($params['hash'])) {
             $reason = 'missing_fields';
@@ -55,13 +77,11 @@ final class WebAppInitData
             return null;
         }
 
-        $authDate = (int) $params['auth_date'];
-
-        if ($authDate <= 0 || now()->timestamp - $authDate > self::AUTH_DATE_TTL) {
-            $reason = 'stale_auth_date';
-
+        $reason = TelegramAuthFields::dateFailure($params['auth_date'], self::AUTH_DATE_TTL);
+        if ($reason !== null) {
             return null;
         }
+        $authDate = (int) $params['auth_date'];
 
         $hash = $params['hash'];
         unset($params['hash']);
@@ -74,18 +94,25 @@ final class WebAppInitData
         $secretKey = hash_hmac('sha256', $botToken, 'WebAppData', true);
         $expectedHash = hash_hmac('sha256', $dataCheckString, $secretKey);
 
-        if (! hash_equals($expectedHash, $hash)) {
+        if (! preg_match('/\A[a-f0-9]{64}\z/D', $hash) || ! hash_equals($expectedHash, $hash)) {
             $reason = 'hash_mismatch';
 
             return null;
         }
 
-        $user = json_decode((string) $params['user'], true);
+        $user = json_decode($params['user'], true);
 
-        if (! is_array($user) || ! isset($user['id']) || ! is_numeric($user['id'])) {
+        if (! is_array($user) || ! isset($user['id']) || ! is_int($user['id']) || $user['id'] <= 0) {
             $reason = 'invalid_user_payload';
 
             return null;
+        }
+        foreach (['first_name', 'last_name', 'username'] as $field) {
+            if (array_key_exists($field, $user) && ! is_string($user[$field])) {
+                $reason = 'invalid_user_payload';
+
+                return null;
+            }
         }
 
         return new self(
@@ -93,6 +120,8 @@ final class WebAppInitData
             firstName: $user['first_name'] ?? null,
             lastName: $user['last_name'] ?? null,
             username: $user['username'] ?? null,
+            authDate: $authDate,
+            signature: $expectedHash,
         );
     }
 

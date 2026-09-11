@@ -43,6 +43,7 @@ return [
         'unlink_blocked' => 'Отвязать Telegram нельзя: это единственный способ войти в аккаунт. Сначала добавьте e-mail и пароль.',
         'email_optional' => 'Вы вошли через Telegram — e-mail можно не указывать.',
         'failed' => 'Не удалось войти через Telegram. Попробуйте ещё раз.',
+        'exchange_failed' => 'Не удалось подтвердить вход. Закройте и снова откройте приложение в Telegram.',
         'linked' => 'Telegram привязан.',
         'unlinked' => 'Telegram отвязан.',
         'webapp_login' => 'Войти через Telegram',

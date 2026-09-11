@@ -54,11 +54,12 @@ return [
 
         'stack' => [
             'driver' => 'stack',
-            'channels' => explode(',', (string) env('LOG_STACK', 'single')),
+            'channels' => explode(',', (string) env('LOG_STACK', 'daily')),
             'ignore_exceptions' => false,
         ],
 
         'single' => [
+            'permission' => 0600,
             'driver' => 'single',
             'path' => storage_path('logs/laravel.log'),
             'level' => env('LOG_LEVEL', 'debug'),
@@ -66,6 +67,7 @@ return [
         ],
 
         'daily' => [
+            'permission' => 0600,
             'driver' => 'daily',
             'path' => storage_path('logs/laravel.log'),
             'level' => env('LOG_LEVEL', 'debug'),
@@ -78,6 +80,7 @@ return [
         // тонули в общем логе и хранились дольше 14 дней 'daily' (разбор
         // инцидента обычно задним числом).
         'security' => [
+            'permission' => 0600,
             'driver' => 'daily',
             'path' => storage_path('logs/security.log'),
             'level' => env('LOG_SECURITY_LEVEL', 'info'),

@@ -15,6 +15,7 @@ return Application::configure(basePath: dirname(__DIR__))
         //
     })
     ->withExceptions(function (Exceptions $exceptions): void {
+        $exceptions->dontFlash(['init_data', 'initData', 'hash', 'auth_date', 'authorization', 'token', 'secret']);
         // Self-healing slug (spatie/laravel-sluggable) — не ошибка, а штатный
         // способ сделать редирект на канонический slug (у исключения свой
         // render(), см. StaleSelfHealingUrl::render()); без dontReport() оно

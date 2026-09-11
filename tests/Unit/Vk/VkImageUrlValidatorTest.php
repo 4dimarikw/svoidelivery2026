@@ -4,10 +4,17 @@ namespace Tests\Unit\Vk;
 
 use Illuminate\Support\Facades\Http;
 use Services\Vk\Support\VkImageUrlValidator;
+use Tests\Support\FakeImageNetwork;
 use Tests\TestCase;
 
 class VkImageUrlValidatorTest extends TestCase
 {
+    protected function setUp(): void
+    {
+        parent::setUp();
+        FakeImageNetwork::install();
+    }
+
     private function validator(): VkImageUrlValidator
     {
         return new VkImageUrlValidator;
@@ -32,13 +39,13 @@ class VkImageUrlValidatorTest extends TestCase
     public function test_accepts_reachable_image_on_allowed_host(): void
     {
         Http::fake([
-            'sun9-1.userapi.com/*' => Http::response('', 200, ['Content-Type' => 'image/jpeg']),
+            'sun9-1.userapi.com/*' => Http::response(FakeImageNetwork::jpeg(), 200, ['Content-Type' => 'image/jpeg']),
         ]);
 
         $this->assertTrue(($this->validator())('https://sun9-1.userapi.com/photo.jpg'));
     }
 
-    public function test_rejects_when_head_request_fails(): void
+    public function test_rejects_when_download_fails(): void
     {
         Http::fake([
             'sun9-1.userapi.com/*' => Http::response('', 404),

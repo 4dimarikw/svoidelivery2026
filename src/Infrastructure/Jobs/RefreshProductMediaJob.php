@@ -9,6 +9,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Services\RemoteImages\RemoteImageDownloader;
 use Spatie\MediaLibrary\MediaCollections\Exceptions\FileCannotBeAdded;
 use Throwable;
 
@@ -39,9 +40,9 @@ class RefreshProductMediaJob implements ShouldQueue
      */
     public function handle(): void
     {
-        $fileAdder = $this->product->addMediaFromUrl($this->imageUrl)->preservingOriginal();
-
-        $fileAdder->toMediaCollection($this->collectionName);
+        app(RemoteImageDownloader::class)->withCleanup(fn () => $this->product
+            ->addMediaFromUrl($this->imageUrl)
+            ->toMediaCollection($this->collectionName));
     }
 
     public function failed(?Throwable $exception): void

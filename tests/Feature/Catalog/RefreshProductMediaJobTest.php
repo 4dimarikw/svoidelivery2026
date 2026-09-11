@@ -14,17 +14,15 @@ use Infrastructure\Jobs\RefreshProductMediaJob;
 use Mockery;
 use PHPUnit\Framework\Attributes\DataProvider;
 use RuntimeException;
-use Spatie\MediaLibrary\Downloaders\HttpFacadeDownloader;
 use Spatie\MediaLibrary\MediaCollections\Exceptions\FileCannotBeAdded;
+use Tests\Support\FakeImageNetwork;
 use Tests\TestCase;
 use Throwable;
 
 /**
  * Регрессия F09: ошибки скачивания, проверки и записи новой картинки
  * не должны удалять прежнюю картинку и её конверсии.
- * config('media-library.media_downloader') переключён на HttpFacadeDownloader
- * (vendor), который качает через Http-фасад — единственный способ подставить
- * Http::fake() под addMediaFromUrl() (DefaultDownloader его не видит).
+ * Новый адаптер проверяет содержимое; только DNS и транспорт подменены.
  */
 class RefreshProductMediaJobTest extends TestCase
 {
@@ -33,9 +31,10 @@ class RefreshProductMediaJobTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+        FakeImageNetwork::install();
 
         config([
-            'media-library.media_downloader' => HttpFacadeDownloader::class,
+            'remote-images.untappd_hosts' => ['broken-image.test', 'ok-image.test', 'image.test'],
             'media-library.disk_name' => 'public',
             'media-library.conversions_disk_name' => 'public',
         ]);
@@ -106,6 +105,7 @@ class RefreshProductMediaJobTest extends TestCase
     #[DataProvider('rejectedReplacements')]
     public function test_rejected_replacement_preserves_original_file_and_conversions(string $failure): void
     {
+        $temporaryFiles = glob(sys_get_temp_dir().'/remote-image-*');
         $product = Product::factory()->create();
         $original = $product->addMedia(UploadedFile::fake()->image('old.jpg'))
             ->preservingOriginal()->toMediaCollection('main');
@@ -135,6 +135,7 @@ class RefreshProductMediaJobTest extends TestCase
             app('filesystem')->set('public', $disk);
         }
         $this->assertInstanceOf(FileCannotBeAdded::class, $exception);
+        $this->assertSame($temporaryFiles, glob(sys_get_temp_dir().'/remote-image-*'));
         $product->refresh();
         $this->assertCount(1, $product->getMedia('main'));
         $this->assertSame($original->id, $product->getFirstMedia('main')->id);

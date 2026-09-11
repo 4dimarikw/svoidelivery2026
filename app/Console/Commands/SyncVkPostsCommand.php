@@ -27,6 +27,7 @@ class SyncVkPostsCommand extends Command
 
     public function handle(VKSyncSettings $settings, VkImageUrlValidator $validateImage): int
     {
+        $validateImage->reset();
         $accessToken = config('services.vk.access_token');
 
         if (blank($accessToken)) {

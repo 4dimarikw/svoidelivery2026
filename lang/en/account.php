@@ -43,6 +43,7 @@ return [
         'unlink_blocked' => 'Telegram cannot be unlinked: it is the only way into this account. Add an email and a password first.',
         'email_optional' => 'You signed in with Telegram — an email is optional.',
         'failed' => 'Could not sign in with Telegram. Please try again.',
+        'exchange_failed' => 'Could not confirm sign-in. Close and reopen the app in Telegram.',
         'linked' => 'Telegram linked.',
         'unlinked' => 'Telegram unlinked.',
         'webapp_login' => 'Sign in with Telegram',

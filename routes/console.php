@@ -2,6 +2,7 @@
 
 Schedule::command('queue:work --stop-when-empty')->everyMinute();
 Schedule::command('telegram:prune-link-codes')->daily();
+Schedule::command('logs:prune-sensitive')->daily();
 
 // rescue() — чтение настроек на бутстрапе консоли до миграций (напр. в
 // тестах перед RefreshDatabase) не должно ронять весь артисан, см.
