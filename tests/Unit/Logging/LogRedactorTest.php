@@ -8,6 +8,20 @@ use Tests\TestCase;
 
 class LogRedactorTest extends TestCase
 {
+    public function test_image_urls_keep_file_hashes_but_hide_access_credentials(): void
+    {
+        $filename = str_repeat('a', 64).'.jpg';
+        $result = (new LogRedactor)->value(['image_urls' => [
+            'https://site.test/storage/media/702/'.$filename,
+            'https://name:private-password@site.test/storage/media/702/'.$filename.'?signature=private-signature',
+        ], 'token' => 'private-token']);
+        $this->assertSame('https://site.test/storage/media/702/'.$filename, $result['image_urls'][0]);
+        $this->assertStringContainsString($filename, $result['image_urls'][1]);
+        foreach (['private-password', 'private-signature', 'private-token'] as $secret) {
+            $this->assertStringNotContainsString($secret, json_encode($result));
+        }
+    }
+
     public static function secrets(): array
     {
         return [

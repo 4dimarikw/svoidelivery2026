@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Console\Commands;
 
 use App\Events\VKSyncFailed;
+use Domain\Vk\Actions\DownloadVkPostImages;
 use Domain\Vk\Enums\VkPostStatus;
 use Domain\Vk\Models\VkPost;
 use Illuminate\Console\Command;
@@ -12,6 +13,7 @@ use Illuminate\Support\Facades\DB;
 use Infrastructure\Settings\VKSyncSettings;
 use Services\Vk\DTOs\VkWallPost;
 use Services\Vk\Support\VkImageUrlValidator;
+use Services\Vk\Support\VkTextFormatter;
 use Services\Vk\VkClient;
 use Throwable;
 
@@ -87,6 +89,7 @@ class SyncVkPostsCommand extends Command
         $skippedOld = 0;
         $rejectedImages = [];
         $maxDate = $lastUpdate;
+        $imagePostIds = [];
 
         DB::beginTransaction();
 
@@ -100,6 +103,14 @@ class SyncVkPostsCommand extends Command
                     continue;
                 }
 
+                $existing = VkPost::query()
+                    ->where('owner_id', $post->ownerId)
+                    ->where('vk_post_id', $post->postId)
+                    ->first();
+                if ($existing !== null) {
+                    $imagePostIds[] = $existing->id;
+                }
+
                 if (! $force && $post->date <= $lastUpdate) {
                     $skippedOld++;
 
@@ -108,6 +119,10 @@ class SyncVkPostsCommand extends Command
 
                 $processed++;
                 $maxDate = max($maxDate, $post->date);
+
+                if ($existing !== null && $existing->status !== VkPostStatus::DRAFT) {
+                    continue;
+                }
 
                 $images = [];
                 $rejected = [];
@@ -119,17 +134,6 @@ class SyncVkPostsCommand extends Command
                         $rejected[] = $url;
                         $rejectedImages[] = $url;
                     }
-                }
-
-                $existing = VkPost::query()
-                    ->where('owner_id', $post->ownerId)
-                    ->where('vk_post_id', $post->postId)
-                    ->first();
-
-                // Пост, уже прошедший ручную проверку (status != draft), не
-                // перезаписываем — иначе синхронизация затрёт правки редактора.
-                if ($existing !== null && $existing->status !== VkPostStatus::DRAFT) {
-                    continue;
                 }
 
                 // status и message_text — поля ручного воркфлоу, синхронизация
@@ -149,13 +153,14 @@ class SyncVkPostsCommand extends Command
                     $existing->update($attributes);
                     $updated++;
                 } else {
-                    VkPost::query()->create([
+                    $savedPost = VkPost::query()->create([
                         'owner_id' => $post->ownerId,
                         'vk_post_id' => $post->postId,
                         'status' => $settings->post_status ?? VkPostStatus::DRAFT->value,
-                        'message_text' => $post->text,
+                        'message_text' => app(VkTextFormatter::class)->forImport($post->text),
                         ...$attributes,
                     ]);
+                    $imagePostIds[] = $savedPost->id;
                     $created++;
                 }
             }
@@ -179,6 +184,18 @@ class SyncVkPostsCommand extends Command
             DB::commit();
         }
 
+        $imageFailures = 0;
+        if (! $isDryRun && $settings->download_images) {
+            foreach (array_unique($imagePostIds) as $postId) {
+                try {
+                    app(DownloadVkPostImages::class)(VkPost::query()->findOrFail($postId));
+                } catch (Throwable $e) {
+                    $imageFailures++;
+                    $this->warn($e->getMessage());
+                }
+            }
+        }
+
         $this->table(['Метрика', 'Количество'], [
             ['Получено от VK', count($items)],
             ['Обработано (новых+обновлённых)', $processed],
@@ -187,6 +204,7 @@ class SyncVkPostsCommand extends Command
             ['Пропущено (тип поста)', $skippedType],
             ['Пропущено (уже видели)', $skippedOld],
             ['Отклонено картинок', count($rejectedImages)],
+            ['Постов с ошибкой загрузки копий', $imageFailures],
         ]);
 
         if ($rejectedImages !== []) {
@@ -200,6 +218,6 @@ class SyncVkPostsCommand extends Command
             }
         }
 
-        return self::SUCCESS;
+        return $imageFailures > 0 ? self::FAILURE : self::SUCCESS;
     }
 }

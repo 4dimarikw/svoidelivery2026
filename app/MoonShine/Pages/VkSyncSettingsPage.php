@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace App\MoonShine\Pages;
 
+use Domain\Vk\Enums\VkImageSendMode;
 use Domain\Vk\Enums\VkPostStatus;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Infrastructure\Rules\CronExpressionRule;
 use Infrastructure\Settings\VKSyncSettings;
 use MoonShine\Contracts\UI\ComponentContract;
@@ -62,6 +64,12 @@ final class VkSyncSettingsPage extends Page
                         Checkbox::make('Репосты', 'post_types_copy')
                             ->hint('Учитывать репосты сторонних записей на стену группы (тип copy).'),
                         Preview::make('Последнее обновление', 'last_update_display'),
+                        Switcher::make('Загружать картинки постов на сайт', 'download_images')
+                            ->hint('Загружать копии при синхронизации. При отправке с сайта недостающие копии загружаются автоматически даже при выключенной опции.'),
+                        Select::make('Способ отправки картинок', 'image_send_mode')
+                            ->options(collect(VkImageSendMode::cases())->mapWithKeys(fn (VkImageSendMode $mode) => [$mode->value => $mode->label()])->all())
+                            ->required()
+                            ->hint('Ссылки с сайта должны быть доступны Telegram из интернета. Для отправки себе с localhost выберите «Файлами с сайта». Массовая рассылка в режиме «Файлами с сайта» недоступна, даже для постов без картинок.'),
                     ])
                     ->fill([
                         ...$settings->toArray(),
@@ -82,6 +90,8 @@ final class VkSyncSettingsPage extends Page
     public function save(Request $request, VKSyncSettings $settings): JsonResponse
     {
         $validated = $request->validate([
+            'image_send_mode' => ['required', Rule::enum(VkImageSendMode::class)],
+            'download_images' => ['sometimes', 'boolean'],
             'domain' => ['required', 'string', 'max:255'],
             'count' => ['required', 'integer', 'min:1'],
             'cron' => ['required', 'string', new CronExpressionRule],
@@ -106,6 +116,8 @@ final class VkSyncSettingsPage extends Page
         // Switcher не шлёт ключ вовсе, когда выключен — см. тот же комментарий
         // в SiteSettingsPage::save().
         $settings->active = $request->boolean('active');
+        $settings->download_images = $request->boolean('download_images');
+        $settings->image_send_mode = $validated['image_send_mode'];
 
         $settings->save();
 

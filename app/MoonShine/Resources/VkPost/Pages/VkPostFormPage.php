@@ -5,9 +5,12 @@ declare(strict_types=1);
 namespace App\MoonShine\Resources\VkPost\Pages;
 
 use App\MoonShine\Resources\VkPost\VkPostResource;
+use Domain\Vk\Actions\DownloadVkPostImages;
 use Domain\Vk\Actions\SendVkPostToChatAction;
+use Domain\Vk\Enums\VkImageSendMode;
 use Domain\Vk\Enums\VkPostStatus;
 use Domain\Vk\Models\VkPost;
+use Infrastructure\Settings\VKSyncSettings;
 use MoonShine\Contracts\Core\DependencyInjection\CrudRequestContract;
 use MoonShine\Contracts\Core\TypeCasts\DataWrapperContract;
 use MoonShine\Contracts\UI\ComponentContract;
@@ -15,6 +18,7 @@ use MoonShine\Contracts\UI\FieldContract;
 use MoonShine\Crud\JsonResponse;
 use MoonShine\Laravel\Pages\Crud\FormPage;
 use MoonShine\Support\Attributes\AsyncMethod;
+use MoonShine\Support\Enums\Ability;
 use MoonShine\Support\ListOf;
 use MoonShine\UI\Components\ActionButton;
 use MoonShine\UI\Components\Collapse;
@@ -25,6 +29,7 @@ use MoonShine\UI\Components\Layout\Box;
 use MoonShine\UI\Components\Layout\Column;
 use MoonShine\UI\Components\Layout\Flex;
 use MoonShine\UI\Components\Layout\Grid;
+use MoonShine\UI\Components\Thumbnails;
 use MoonShine\UI\Fields\Date;
 use MoonShine\UI\Fields\Enum;
 use MoonShine\UI\Fields\ID;
@@ -54,6 +59,11 @@ final class VkPostFormPage extends FormPage
                     ->previewMode(),
                 Date::make('Опубликован в VK', 'posted_at')->withTime()->locked(),
                 Enum::make('Статус', 'status')->attach(VkPostStatus::class),
+            ]),
+            Box::make('Локальные копии', [
+                Heading::make('Способ отправки: '.VkImageSendMode::from(app(VKSyncSettings::class)->image_send_mode)->label())->h(5),
+                Heading::make('Загружено на сайт: '.($this->getItem()?->imageDownloadStatus() ?? '0 / 0'))->h(5),
+                Thumbnails::make($this->getItem()?->localImageUrls() ?? []),
             ]),
             Box::make('Рассылка', [
                 Collapse::make('Исходный текст (VK)', [
@@ -89,7 +99,7 @@ final class VkPostFormPage extends FormPage
     private function imagesBox(): ComponentContract
     {
         $item = $this->getItem();
-        $images = $item instanceof VkPost ? $item->images : [];
+        $images = $item instanceof VkPost ? $item->imagePreviewUrls() : [];
 
         if ($images === [] || $images === null) {
             return Box::make('Картинки поста', [
@@ -168,9 +178,22 @@ final class VkPostFormPage extends FormPage
     protected function buttons(): ListOf
     {
         return parent::buttons()->add(...[
+            ActionButton::make('Загрузить недостающие картинки')
+                ->canSee(fn () => $this->getItem() instanceof VkPost && $this->getResource()->can(Ability::UPDATE))
+                ->method('downloadImages'),
             ActionButton::make('Отправить себе')->method('sendToSelf'),
             ActionButton::make('Разослать всем')->warning()->method('broadcastAll'),
         ]);
+    }
+
+    #[AsyncMethod]
+    public function downloadImages(CrudRequestContract $request, DownloadVkPostImages $download): JsonResponse
+    {
+        $response = VkPostIndexPage::downloadPostImages($request, $download);
+
+        return $response->getStatusCode() === 200
+            ? $response->redirect($this->getResource()->getFormPageUrl($request->getResource()->getItem()?->getKey()))
+            : $response;
     }
 
     #[AsyncMethod]

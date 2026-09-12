@@ -23,6 +23,8 @@ class VkSyncSettingsSeeder extends AbstractSettingsSeeder
             'count' => 1,
             'cron' => '1 * * * *',
             'active' => false,
+            'download_images' => false,
+            'image_send_mode' => 'original_url',
             'post_status' => VkPostStatus::DRAFT->value,
             'post_types' => ['post'],
         ];

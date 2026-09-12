@@ -76,7 +76,7 @@ return [
     /*
      * Таймаут HTTP-запроса к серверам Telegram.
      */
-    'http_timeout' => env('TELEGRAPH_HTTP_TIMEOUT', 30),
+    'http_timeout' => env('TELEGRAPH_HTTP_TIMEOUT', 120),
 
     /*
      * HTTP-прокси для запросов к Telegram в формате http://user:password@host:port.

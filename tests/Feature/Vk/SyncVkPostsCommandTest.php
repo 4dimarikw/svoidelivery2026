@@ -2,17 +2,47 @@
 
 namespace Tests\Feature\Vk;
 
+use Domain\Vk\Actions\DownloadVkPostImages;
 use Domain\Vk\Enums\VkPostStatus;
 use Domain\Vk\Models\VkPost;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Storage;
 use Infrastructure\Settings\VKSyncSettings;
+use RuntimeException;
 use Tests\Support\FakeImageNetwork;
 use Tests\TestCase;
 
 class SyncVkPostsCommandTest extends TestCase
 {
     use RefreshDatabase;
+
+    public function test_import_converts_links_for_posts_and_reposts_and_preserves_edits(): void
+    {
+        $text = 'Подробности [https://vk.ru/topic-194587991_46740865|в этом обсуждении]';
+        $html = 'Подробности <a href="https://vk.ru/topic-194587991_46740865">в этом обсуждении</a>';
+        $postPayload = $this->vkPostPayload(text: $text);
+        $repost = $this->vkPostPayload(id: 2, text: 'Комментарий');
+        $repost['copy_history'] = [$postPayload];
+        $settings = app(VKSyncSettings::class);
+        $settings->post_types = ['post', 'copy'];
+        $settings->save();
+        $this->fakeWallGet([$postPayload, $repost]);
+        $this->artisan('vk:sync-posts', ['--domain' => 'testgroup', '--force' => true])->assertExitCode(0);
+        $posts = VkPost::orderBy('vk_post_id')->get();
+        $this->assertCount(2, $posts);
+        foreach ($posts as $post) {
+            $this->assertSame($text, $post->text);
+            $this->assertSame($html, $post->message_text);
+            $post->update(['message_text' => 'Ручная правка']);
+        }
+        $this->assertEquals($postPayload, $posts[0]->raw);
+        $this->assertEquals($repost, $posts[1]->raw);
+        $this->artisan('vk:sync-posts', ['--domain' => 'testgroup', '--force' => true])->assertExitCode(0);
+        foreach ($posts as $post) {
+            $this->assertSame('Ручная правка', $post->refresh()->message_text);
+        }
+    }
 
     protected function setUp(): void
     {
@@ -60,6 +90,52 @@ class SyncVkPostsCommandTest extends TestCase
         ];
     }
 
+    public function test_download_option_saves_copies_and_dry_run_does_not(): void
+    {
+        Storage::fake('vk-sync-test');
+        config(['media-library.disk_name' => 'vk-sync-test', 'filesystems.disks.vk-sync-test.driver' => 'local']);
+        $settings = app(VKSyncSettings::class);
+        $settings->download_images = true;
+        $settings->save();
+        $this->fakeWallGet([$this->vkPostPayload()]);
+        $this->artisan('vk:sync-posts', ['--domain' => 'testgroup', '--force' => true, '--dry-run' => true])->assertExitCode(0);
+        $this->assertSame([], Storage::disk('vk-sync-test')->allFiles());
+        $this->assertDatabaseCount('vk_posts', 0);
+        $this->assertDatabaseCount('media', 0);
+        $this->artisan('vk:sync-posts', ['--domain' => 'testgroup', '--force' => true])->assertExitCode(0);
+        $post = VkPost::sole();
+        $this->assertNotNull($post->localImage($post->images[0]));
+    }
+
+    public function test_old_ready_posts_get_copies_without_editorial_changes(): void
+    {
+        Storage::fake('vk-sync-test');
+        config(['media-library.disk_name' => 'vk-sync-test', 'filesystems.disks.vk-sync-test.driver' => 'local']);
+        $post = VkPost::factory()->ready()->create(['owner_id' => -12345, 'vk_post_id' => 1,
+            'message_text' => 'Правки редактора', 'images' => ['https://sun9-1.userapi.com/edited.jpg']]);
+        $before = $post->refresh()->getAttributes();
+        $settings = app(VKSyncSettings::class);
+        $settings->active = true;
+        $settings->last_update = 1_700_000_000;
+        $settings->download_images = true;
+        $settings->save();
+        $this->fakeWallGet([$this->vkPostPayload()]);
+        $this->artisan('vk:sync-posts', ['--domain' => 'testgroup'])->assertExitCode(0);
+        $this->assertSame($before, $post->refresh()->getAttributes());
+        $this->assertNotNull($post->localImage($post->images[0]));
+    }
+
+    public function test_copy_failure_does_not_roll_back_saved_post(): void
+    {
+        $settings = app(VKSyncSettings::class);
+        $settings->download_images = true;
+        $settings->save();
+        $this->fakeWallGet([$this->vkPostPayload()]);
+        $this->mock(DownloadVkPostImages::class)->shouldReceive('__invoke')->once()->andThrow(new RuntimeException('Disk unavailable'));
+        $this->artisan('vk:sync-posts', ['--domain' => 'testgroup', '--force' => true])->assertExitCode(1);
+        $this->assertSame('Привет из VK', VkPost::sole()->message_text);
+    }
+
     public function test_fails_without_access_token(): void
     {
         config(['services.vk.access_token' => null]);
@@ -82,6 +158,7 @@ class SyncVkPostsCommandTest extends TestCase
         $this->assertSame(VkPostStatus::DRAFT, $post->status);
         // Наибольший по width размер — тот, что попадает в images.
         $this->assertSame(['https://sun9-1.userapi.com/photo.jpg'], $post->images);
+        $this->assertCount(0, $post->getMedia(VkPost::IMAGE_COLLECTION));
     }
 
     public function test_rejected_image_is_dropped_but_post_is_still_saved(): void

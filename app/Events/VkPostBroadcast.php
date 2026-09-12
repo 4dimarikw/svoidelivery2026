@@ -14,6 +14,8 @@ final readonly class VkPostBroadcast implements LoggableEvent
         public int $sent,
         public int $failed,
         public int $skipped,
+        public string $imageSendMode = 'original_url',
+        public array $imageUrls = [],
     ) {}
 
     public function eventType(): string
@@ -38,6 +40,8 @@ final readonly class VkPostBroadcast implements LoggableEvent
             'sent' => $this->sent,
             'failed' => $this->failed,
             'skipped' => $this->skipped,
+            'image_send_mode' => $this->imageSendMode,
+            'image_urls' => $this->imageUrls,
         ];
     }
 }

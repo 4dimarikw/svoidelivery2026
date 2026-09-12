@@ -15,7 +15,7 @@
 
 <h1 class="font-display text-heading-m uppercase text-ink-900 sm:text-display-l">{{ $content['heading'] ?? '' }}</h1>
 
-<div class="mt-6 max-w-2xl space-y-4 text-body-l text-ink-700">
+<div class="mt-6 space-y-4 text-body-l text-ink-700">
     @if (! empty($content['lead']))
         <p>{{ $content['lead'] }}</p>
     @endif

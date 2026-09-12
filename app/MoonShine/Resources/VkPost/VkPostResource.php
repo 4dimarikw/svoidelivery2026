@@ -33,7 +33,7 @@ class VkPostResource extends ModelResource
 
     protected bool $detailInModal = true;
 
-    protected array $with = ['deliveries'];
+    protected array $with = ['deliveries', 'media'];
 
     public function getTitle(): string
     {
@@ -44,7 +44,7 @@ class VkPostResource extends ModelResource
 
     protected function activeActions(): ListOf
     {
-        return parent::activeActions()->except(Action::CREATE);
+        return parent::activeActions()->except(Action::CREATE, Action::VIEW);
     }
 
     protected function pages(): array

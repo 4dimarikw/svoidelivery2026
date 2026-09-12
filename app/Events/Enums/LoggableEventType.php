@@ -28,6 +28,9 @@ enum LoggableEventType: string
     case OrderCreationFailed = 'order.creation_failed';
     case QueueJobFailed = 'queue.job_failed';
     case VkPostBroadcast = 'vk_post.broadcast';
+    case VkPostTestSend = 'vk_post.test_send';
+    case VkPostImageDownloadFailed = 'vk_post.image_download_failed';
+    case VkPostBroadcastPreparationFailed = 'vk_post.broadcast_preparation_failed';
     case VkSyncFailed = 'GetPostFromVk.sync_failed';
     case FeedbackSent = 'ProfileController.feedbackSent';
     case TelegramActivityCheckCompleted = 'telegram.activity_check_completed';
@@ -55,6 +58,9 @@ enum LoggableEventType: string
             self::OrderCreationFailed => 'Ошибка оформления заказа',
             self::QueueJobFailed => 'Ошибка фоновой задачи (очередь)',
             self::VkPostBroadcast => 'Рассылка поста VK в Telegram',
+            self::VkPostTestSend => 'Тестовая отправка поста VK в Telegram',
+            self::VkPostImageDownloadFailed => 'Ошибка загрузки картинки поста VK',
+            self::VkPostBroadcastPreparationFailed => 'Ошибка подготовки рассылки поста VK',
             self::VkSyncFailed => 'Ошибка синхронизации постов VK',
             self::FeedbackSent => 'Отправка обратной связи из профиля',
             self::TelegramActivityCheckCompleted => 'Итог проверки активности Telegram-ботов',

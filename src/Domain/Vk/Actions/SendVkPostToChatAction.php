@@ -6,7 +6,12 @@ namespace Domain\Vk\Actions;
 
 use DefStudio\Telegraph\Client\TelegraphResponse;
 use Domain\Telegram\Models\TelegramChat;
+use Domain\Vk\DTOs\PreparedVkPostImages;
+use Domain\Vk\Enums\VkImageSendMode;
 use Domain\Vk\Models\VkPost;
+use Infrastructure\Settings\VKSyncSettings;
+use RuntimeException;
+use Services\Telegram\LocalMediaTelegraph;
 
 /**
  * Собирает и отправляет один VkPost в один Telegram-чат. Единственная
@@ -23,10 +28,45 @@ final class SendVkPostToChatAction
 
     private const int MAX_ALBUM_SIZE = 10;
 
-    public function __invoke(VkPost $post, TelegramChat $chat): TelegraphResponse
+    public function prepare(VkPost $post): PreparedVkPostImages
     {
-        $text = $this->buildText($post);
-        $images = array_slice($post->images ?? [], 0, self::MAX_ALBUM_SIZE);
+        $mode = VkImageSendMode::from(app(VKSyncSettings::class)->image_send_mode);
+        $urls = array_slice($post->images ?? [], 0, self::MAX_ALBUM_SIZE);
+        if ($mode === VkImageSendMode::OriginalUrl || $urls === []) {
+            return new PreparedVkPostImages($mode, $urls, $urls);
+        }
+        app(DownloadVkPostImages::class)($post, $urls);
+        $images = [];
+        $imageUrls = [];
+        foreach ($urls as $url) {
+            $media = $post->localImage($url);
+            if ($media === null) {
+                throw new RuntimeException('Локальная копия картинки поста VK #'.$post->id.' отсутствует.');
+            }
+            $imageUrls[] = $media->getUrl();
+            if ($mode === VkImageSendMode::SiteUrl) {
+                $images[] = $media->getUrl();
+            } else {
+                $path = $media->getPath();
+                if (! is_file($path) || ! is_readable($path)) {
+                    throw new RuntimeException('Файл картинки поста VK #'.$post->id.' недоступен для чтения.');
+                }
+                $images[] = $path;
+            }
+        }
+
+        if ($mode === VkImageSendMode::SiteFile) {
+            app(LocalMediaTelegraph::class)->validateLocalPhotos($images);
+        }
+
+        return new PreparedVkPostImages($mode, $images, $imageUrls);
+    }
+
+    public function __invoke(VkPost $post, TelegramChat $chat, ?PreparedVkPostImages $prepared = null): TelegraphResponse
+    {
+        $text = $post->broadcastText;
+        $prepared ??= $this->prepare($post);
+        $images = $prepared->images;
 
         if ($images === []) {
             return $chat->html($text)->send();
@@ -35,6 +75,10 @@ final class SendVkPostToChatAction
         if (count($images) === 1) {
             $caption = mb_strlen($text) <= self::CAPTION_LIMIT ? $text : null;
             $response = $chat->photo($images[0])->html($caption ?? '')->send();
+
+            if (! $response->telegraphOk()) {
+                return $response;
+            }
 
             if ($caption === null) {
                 return $chat->html($text)->send();
@@ -57,7 +101,13 @@ final class SendVkPostToChatAction
             $media[] = $item;
         }
 
-        $response = $chat->mediaGroup($media)->send();
+        $response = $prepared->mode === VkImageSendMode::SiteFile
+            ? app(LocalMediaTelegraph::class)->chat($chat)->localMediaGroup($media)->send()
+            : $chat->mediaGroup($media)->send();
+
+        if (! $response->telegraphOk()) {
+            return $response;
+        }
 
         if (! $fitsCaption) {
             return $chat->html($text)->send();
@@ -66,19 +116,4 @@ final class SendVkPostToChatAction
         return $response;
     }
 
-    /**
-     * Текст поста + ссылка на оригинал. HTML-экранирование обязательно —
-     * Telegram принимает узкое подмножество HTML (parse_mode=HTML), и
-     * необработанные "<"/"&" из VK-текста ломают разбор сообщения.
-     * Внутренние ссылки VK вида [id123|Имя] / [club1|Название] разворачиваются
-     * в обычный текст — Telegram такой синтаксис не понимает.
-     */
-    private function buildText(VkPost $post): string
-    {
-        $raw = preg_replace('/\[(?:id|club)\d+\|([^\]]*)\]/u', '$1', $post->broadcastText) ?? $post->broadcastText;
-
-        $escaped = htmlspecialchars(trim($raw), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
-
-        return $escaped."\n\n".$post->vkUrl;
-    }
 }

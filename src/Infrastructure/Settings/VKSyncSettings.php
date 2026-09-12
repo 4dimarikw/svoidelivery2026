@@ -16,6 +16,10 @@ class VKSyncSettings extends Settings
 
     public bool $active = false;
 
+    public bool $download_images = false;
+
+    public string $image_send_mode = 'original_url';
+
     public ?string $post_status = 'draft';
 
     public ?array $post_types = ['post'];

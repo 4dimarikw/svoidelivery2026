@@ -77,6 +77,35 @@ class SafeLoggingTest extends TestCase
         }
     }
 
+    public function test_deep_exception_chain_is_logged_without_crashing_or_exposing_secrets(): void
+    {
+        $sink = new TestHandler;
+        Log::driver()->getLogger()->setHandlers([$sink]);
+        $observed = [];
+        Event::listen(MessageLogged::class, function ($event) use (&$observed) {
+            $observed[] = $event;
+        });
+        $exception = null;
+        for ($i = 0; $i < 25; $i++) {
+            $exception = new \RuntimeException('Layer '.$i.' password=private-secret', 0, $exception);
+        }
+        report($exception);
+        $this->assertCount(1, $sink->getRecords());
+        $this->assertNotEmpty($observed);
+        foreach ($observed as $event) {
+            $safe = $event->context['exception'];
+            $this->assertInstanceOf(\Throwable::class, $safe);
+            $this->assertStringContainsString('Layer 24', $safe->getMessage());
+            $this->assertStringNotContainsString('private-secret', (string) $safe);
+            $depth = 0;
+            do {
+                $this->assertIsArray($safe->getTrace());
+                $depth++;
+            } while ($safe = $safe->getPrevious());
+            $this->assertLessThan(25, $depth);
+        }
+    }
+
     public function test_emergency_fallback_is_redacted_in_actual_file(): void
     {
         $path = tempnam(sys_get_temp_dir(), 'safe-emergency-');

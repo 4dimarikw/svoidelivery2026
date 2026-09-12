@@ -5,9 +5,12 @@ declare(strict_types=1);
 namespace Infrastructure\Jobs;
 
 use App\Events\VkPostBroadcast;
+use App\Events\VkPostBroadcastPreparationFailed;
 use Domain\Auth\Models\User;
 use Domain\Telegram\Models\TelegramChat;
 use Domain\Vk\Actions\SendVkPostToChatAction;
+use Domain\Vk\DTOs\PreparedVkPostImages;
+use Domain\Vk\Enums\VkImageSendMode;
 use Domain\Vk\Enums\VkPostStatus;
 use Domain\Vk\Models\VkPost;
 use Domain\Vk\Models\VkPostDelivery;
@@ -18,6 +21,8 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
+use Infrastructure\Settings\VKSyncSettings;
+use RuntimeException;
 use Throwable;
 
 /**
@@ -29,6 +34,8 @@ use Throwable;
  */
 class BroadcastVkPostJob implements ShouldBeUnique, ShouldQueue
 {
+    public const string FILE_MODE_ERROR = 'Массовая рассылка файлами с сайта недоступна. Выберите отправку оригинальными ссылками VK или ссылками с сайта';
+
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     // 1, не 5 — Bot API уже даёт нам свой ретрай на 429 внутри handle();
@@ -56,8 +63,24 @@ class BroadcastVkPostJob implements ShouldBeUnique, ShouldQueue
     {
         $post = VkPost::query()->findOrFail($this->vkPostId);
 
+        if (app(VKSyncSettings::class)->image_send_mode === VkImageSendMode::SiteFile->value) {
+            event(new VkPostBroadcastPreparationFailed($post->id, self::FILE_MODE_ERROR));
+            $this->fail(new RuntimeException(self::FILE_MODE_ERROR));
+
+            return;
+        }
+
         if (trim($post->broadcastText) === '') {
             Log::warning('Рассылка поста VK пропущена: пустой текст для рассылки', ['vk_post_id' => $post->id]);
+
+            return;
+        }
+
+        try {
+            $prepared = $send->prepare($post);
+        } catch (Throwable $e) {
+            event(new VkPostBroadcastPreparationFailed($post->id, $e->getMessage()));
+            $this->fail($e);
 
             return;
         }
@@ -76,7 +99,7 @@ class BroadcastVkPostJob implements ShouldBeUnique, ShouldQueue
             ->whereHas('telegramChat')
             ->whereDoesntHave('profile', fn ($q) => $q->where('is_bot_active', false))
             ->with('telegramChat')
-            ->chunkById(200, function ($users) use ($send, $post, $alreadySent, &$sent, &$failed, &$skipped): void {
+            ->chunkById(200, function ($users) use ($send, $post, $prepared, $alreadySent, &$sent, &$failed, &$skipped): void {
                 foreach ($users as $user) {
                     if (in_array($user->id, $alreadySent, true)) {
                         $skipped++;
@@ -84,7 +107,7 @@ class BroadcastVkPostJob implements ShouldBeUnique, ShouldQueue
                         continue;
                     }
 
-                    [$status, $error] = $this->deliverOnce($send, $post, $user->telegramChat);
+                    [$status, $error] = $this->deliverOnce($send, $post, $user->telegramChat, $prepared);
 
                     VkPostDelivery::query()->updateOrCreate(
                         ['vk_post_id' => $post->id, 'user_id' => $user->id],
@@ -105,7 +128,7 @@ class BroadcastVkPostJob implements ShouldBeUnique, ShouldQueue
             'broadcast_stats' => ['sent' => $sent, 'failed' => $failed, 'skipped' => $skipped],
         ]);
 
-        event(new VkPostBroadcast($post->id, $sent, $failed, $skipped));
+        event(new VkPostBroadcast($post->id, $sent, $failed, $skipped, $prepared->mode->value, $prepared->imageUrls));
     }
 
     /**
@@ -114,10 +137,10 @@ class BroadcastVkPostJob implements ShouldBeUnique, ShouldQueue
      *
      * @return array{0: string, 1: string|null}
      */
-    private function deliverOnce(SendVkPostToChatAction $send, VkPost $post, TelegramChat $chat): array
+    private function deliverOnce(SendVkPostToChatAction $send, VkPost $post, TelegramChat $chat, PreparedVkPostImages $prepared): array
     {
         try {
-            $response = $send($post, $chat);
+            $response = $send($post, $chat, $prepared);
 
             if ($response->telegraphOk()) {
                 return ['sent', null];
@@ -127,7 +150,7 @@ class BroadcastVkPostJob implements ShouldBeUnique, ShouldQueue
                 $retryAfter = (int) ($response->json('parameters.retry_after') ?? 1);
                 sleep(min($retryAfter, 30));
 
-                $retry = $send($post, $chat);
+                $retry = $send($post, $chat, $prepared);
 
                 return $retry->telegraphOk()
                     ? ['sent', null]

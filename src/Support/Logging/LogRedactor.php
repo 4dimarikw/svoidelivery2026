@@ -14,6 +14,11 @@ final class LogRedactor
         if (is_array($value)) {
             $result = [];
             foreach ($value as $key => $item) {
+                if ($key === 'image_urls' && is_array($item)) {
+                    $result[$key] = array_map(fn ($url) => is_string($url) ? $this->imageUrl($url) : $this->value($url, $depth + 1), $item);
+
+                    continue;
+                }
                 $result[is_string($key) ? $this->text($key) : $key] = $this->sensitiveKey((string) $key)
                     ? '[REDACTED]' : $this->value($item, $depth + 1);
             }
@@ -46,6 +51,21 @@ final class LogRedactor
         $key = strtolower(str_replace(['-', '_', ' '], '', $key));
 
         return preg_match('/password|passwd|token|secret|apikey|authorization|bearer|cookie|session|csrf|privatekey|initdata|signature|^hash$|^user$|^args$/', $key) === 1;
+    }
+
+    private function imageUrl(string $url): string
+    {
+        // SHA-256 в имени сохранённой картинки — идентификатор файла, не секрет.
+        // Защищаем только имя файла; остальные части URL проходят обычную очистку.
+        $filenames = [];
+        $safe = preg_replace_callback('~/[a-f0-9]{64}(?=\.(?:jpg|jpeg|png|webp)(?:[?#]|$))~i', function ($match) use (&$filenames) {
+            $placeholder = '/__media_filename_'.count($filenames).'__';
+            $filenames[$placeholder] = $match[0];
+
+            return $placeholder;
+        }, $url);
+
+        return strtr($this->text($safe ?? $url), $filenames);
     }
 
     public function text(string $text): string

@@ -3,6 +3,7 @@
 namespace App\Listeners;
 
 use App\Events\LoggableEvent;
+use Domain\Auth\Models\User;
 use Domain\Logging\Models\EventLog;
 use Infrastructure\Settings\EventLoggingSettings;
 use Support\Logging\LogCorrelation;
@@ -24,14 +25,14 @@ class PersistEventLog
             return;
         }
 
-        [$userId, $causerType] = $this->resolveCauser();
+        [$userId, $causerType, $causerContext] = $this->resolveCauser();
 
         try {
             EventLog::query()->create([
                 'event_type' => $event->eventType(),
                 'level' => $event->level(),
                 'message' => (new LogRedactor)->text($event->message()),
-                'context' => [...(new LogRedactor)->value($event->context()), 'correlation_id' => LogCorrelation::id()],
+                'context' => [...(new LogRedactor)->value($event->context()), ...$causerContext, 'correlation_id' => LogCorrelation::id()],
                 'caused_by_user_id' => $userId,
                 'caused_by_type' => $causerType,
                 'created_at' => now(),
@@ -41,17 +42,22 @@ class PersistEventLog
         }
     }
 
-    /** @return array{int|null, string} */
+    /** @return array{int|null, string, array<string, mixed>} */
     private function resolveCauser(): array
     {
         if (auth()->check()) {
-            return [auth()->id(), 'user'];
+            if (auth()->user() instanceof User) {
+                return [auth()->id(), 'user', []];
+            }
+
+            // caused_by_user_id ссылается только на users, не на moonshine_users.
+            return [null, 'admin', ['admin_id' => auth()->id()]];
         }
 
         if (app()->runningInConsole()) {
-            return [null, 'console'];
+            return [null, 'console', []];
         }
 
-        return [null, 'system'];
+        return [null, 'system', []];
     }
 }
