@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Content;
 
+use ContentCms\Models\SiteMenu;
+use ContentCms\Models\SiteMenuItem;
+use ContentCms\Models\SiteSection;
 use Domain\Auth\Models\User;
-use Domain\Content\Models\SiteMenu;
-use Domain\Content\Models\SiteMenuItem;
-use Domain\Content\Models\SiteSection;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;

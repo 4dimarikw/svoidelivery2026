@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "b7edd715fe0a9088156f848754f4c5b3",
+    "content-hash": "fb53fd6d9ad3cfd9d70940f4d08d3848",
     "packages": [
         {
             "name": "bacon/bacon-qr-code",
@@ -491,6 +491,89 @@
                 "source": "https://github.com/dflydev/dflydev-dot-access-data/tree/v3.0.3"
             },
             "time": "2024-07-08T12:26:09+00:00"
+        },
+        {
+            "name": "dimarik/laravel-content-cms",
+            "version": "v2.0.1",
+            "source": {
+                "type": "git",
+                "url": "git@github.com:4dimarikw/laravel-content-cms.git",
+                "reference": "08e0fd4caeacf41dc47b61d632ab940f45b12893"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/4dimarikw/laravel-content-cms/zipball/08e0fd4caeacf41dc47b61d632ab940f45b12893",
+                "reference": "08e0fd4caeacf41dc47b61d632ab940f45b12893",
+                "shasum": ""
+            },
+            "require": {
+                "illuminate/console": "^12.0",
+                "illuminate/database": "^12.0",
+                "illuminate/filesystem": "^12.0",
+                "illuminate/routing": "^12.0",
+                "illuminate/support": "^12.0",
+                "illuminate/validation": "^12.0",
+                "kalnoy/nestedset": "^6.0",
+                "moonshine/moonshine": "^4.18",
+                "php": "^8.4",
+                "spatie/laravel-medialibrary": "^11.23",
+                "visual-ideas/moonshine-spatie-medialibrary": "^4.1"
+            },
+            "require-dev": {
+                "fakerphp/faker": "^1.23",
+                "laravel/pint": "^1.24",
+                "orchestra/testbench": "^10.0",
+                "phpunit/phpunit": "^11.5"
+            },
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "providers": [
+                        "ContentCms\\ContentCmsServiceProvider"
+                    ]
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "ContentCms\\": "src/",
+                    "ContentCms\\Database\\Factories\\": "database/factories/"
+                }
+            },
+            "autoload-dev": {
+                "psr-4": {
+                    "ContentCms\\Tests\\": "tests/"
+                }
+            },
+            "archive": {
+                "exclude": [
+                    "/vendor",
+                    "/build",
+                    "/tests",
+                    "/.idea",
+                    "/.phpunit.cache",
+                    "/.phpunit.result.cache",
+                    "/composer.lock",
+                    "/phpunit.xml",
+                    "/.gitignore"
+                ]
+            },
+            "scripts": {
+                "test": [
+                    "phpunit"
+                ],
+                "lint": [
+                    "pint --test"
+                ]
+            },
+            "license": [
+                "proprietary"
+            ],
+            "description": "Reusable Laravel CMS core and an application-owned MoonShine scaffold.",
+            "support": {
+                "source": "https://github.com/4dimarikw/laravel-content-cms/tree/v2.0.1",
+                "issues": "https://github.com/4dimarikw/laravel-content-cms/issues"
+            },
+            "time": "2026-09-12T09:14:37+00:00"
         },
         {
             "name": "doctrine/deprecations",

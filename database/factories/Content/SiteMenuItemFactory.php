@@ -2,9 +2,9 @@
 
 namespace Database\Factories\Content;
 
-use Domain\Content\Models\SiteMenu;
-use Domain\Content\Models\SiteMenuItem;
-use Domain\Content\Models\SiteSection;
+use ContentCms\Models\SiteMenu;
+use ContentCms\Models\SiteMenuItem;
+use ContentCms\Models\SiteSection;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /** @extends Factory<SiteMenuItem> */
@@ -27,7 +27,7 @@ class SiteMenuItemFactory extends Factory
 
     public function external(): static
     {
-        return $this->state(fn(): array => [
+        return $this->state(fn (): array => [
             'site_section_id' => null,
             'external_url' => fake()->url(),
         ]);

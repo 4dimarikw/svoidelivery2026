@@ -7,8 +7,8 @@ namespace App\MoonShine\Resources\SiteSection\Pages;
 use App\MoonShine\Resources\ContentBlock\ContentBlockResource;
 use App\MoonShine\Resources\SiteSection\SiteSectionResource;
 use App\MoonShine\Traits\ChecksSuperUser;
-use Domain\Content\Models\SiteSection;
-use Domain\Content\Support\PublicRouteOptions;
+use ContentCms\Models\SiteSection;
+use ContentCms\Support\PublicRouteOptions;
 use Illuminate\Validation\Rule;
 use MoonShine\Contracts\Core\TypeCasts\DataWrapperContract;
 use MoonShine\Laravel\Fields\Relationships\HasMany;
@@ -56,11 +56,17 @@ final class SiteSectionFormPage extends FormPage
             return;
         }
 
-        request()->merge(['fragment' => ltrim(trim((string) request('fragment')), '#')]);
+        $route = trim((string) request('route_name'));
+        request()->merge([
+            'route_name' => $route === '' ? null : $route,
+            'fragment' => $route === '' ? '' : ltrim(trim((string) request('fragment')), '#'),
+        ]);
     }
 
     protected function rules(DataWrapperContract $item): array
     {
+        $this->assertContentStructureUnchanged($item->getOriginal(), ['key', 'route_name', 'fragment']);
+
         if (! $this->isSuperUser()) {
             return [
                 'title' => ['required', 'string', 'max:255'],
@@ -77,9 +83,9 @@ final class SiteSectionFormPage extends FormPage
                 'present',
                 'string',
                 'max:255',
-                Rule::unique('site_sections', 'fragment')
+                ...(filled(request('route_name')) ? [Rule::unique('site_sections', 'fragment')
                     ->where(fn ($query) => $query->where('route_name', request('route_name')))
-                    ->ignore($item->getKey()),
+                    ->ignore($item->getKey())] : []),
             ],
             'sort_order' => ['required', 'integer', 'min:0'],
             'is_active' => ['boolean'],

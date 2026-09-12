@@ -6,7 +6,7 @@ namespace App\MoonShine\Resources\SiteMenuItem;
 
 use App\MoonShine\Resources\SiteMenuItem\Pages\SiteMenuItemFormPage;
 use App\MoonShine\Resources\SiteMenuItem\Pages\SiteMenuItemIndexPage;
-use Domain\Content\Models\SiteMenuItem;
+use ContentCms\Models\SiteMenuItem;
 use Illuminate\Contracts\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;

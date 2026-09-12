@@ -6,7 +6,7 @@ namespace App\MoonShine\Resources\SiteMenu;
 
 use App\MoonShine\Resources\SiteMenu\Pages\SiteMenuFormPage;
 use App\MoonShine\Resources\SiteMenu\Pages\SiteMenuIndexPage;
-use Domain\Content\Models\SiteMenu;
+use ContentCms\Models\SiteMenu;
 use MoonShine\Laravel\Resources\ModelResource;
 use MoonShine\MenuManager\Attributes\Group;
 use MoonShine\MenuManager\Attributes\Order;

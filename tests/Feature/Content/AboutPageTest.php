@@ -4,9 +4,8 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Content;
 
-use Domain\Content\Models\ContentBlock;
-use Domain\Content\Models\ContentBlockItem;
-use Domain\Content\Models\SiteSection;
+use ContentCms\Models\ContentBlock;
+use ContentCms\Models\SiteSection;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -35,27 +34,22 @@ class AboutPageTest extends TestCase
                 'schedule' => 'Заказы принимаем по будням',
                 'ordering_heading' => 'Как оформить заказ:',
                 'promo_lead' => 'Акции:',
+                'ordering_rules' => [
+                    ['text' => 'заказ должен быть кратным 12', 'is_active' => true],
+                    ['text' => 'Скрытый пункт', 'is_active' => false],
+                    ['text' => '<script>alert(1)</script>', 'is_active' => true],
+                ],
+                'promotions' => [['text' => 'Скидка 5% на день рождения', 'is_active' => true]],
                 'notice' => 'ОБЯЗАТЕЛЬНО ПРОВЕРЬТЕ ВЛОЖЕНИЕ',
             ],
-        ]);
-
-        ContentBlockItem::factory()->create([
-            'content_block_id' => $block->id,
-            'group_key' => 'ordering_rules',
-            'key' => 'rule-1',
-            'content' => ['text' => 'заказ должен быть кратным 12'],
-        ]);
-
-        ContentBlockItem::factory()->create([
-            'content_block_id' => $block->id,
-            'group_key' => 'promotions',
-            'key' => 'promo-1',
-            'content' => ['text' => 'Скидка 5% на день рождения'],
         ]);
 
         $response = $this->get(route('about'));
 
         $response->assertOk();
+        $response->assertDontSee('Скрытый пункт');
+        $response->assertSeeInOrder(['заказ должен быть кратным 12', '<script>alert(1)</script>']);
+        $response->assertDontSee('<script>alert(1)</script>', false);
         $response->assertSee('О нас');
         $response->assertSee('Приветствуем вас в онлайн-баре тестовом');
         $response->assertSee('Заказы принимаем по будням');
@@ -82,7 +76,7 @@ class AboutPageTest extends TestCase
     {
         $section = SiteSection::factory()->create(['key' => 'about', 'route_name' => 'about']);
 
-        // about_info зарегистрирован в config('content.types') (иначе
+        // about_info зарегистрирован в config('content-cms.types') (иначе
         // ContentBlockObserver отклонил бы создание — по-настоящему
         // незарегистрированный тип нельзя даже сохранить), но здесь мы
         // временно очищаем config('content.views') — тот же эффект, как

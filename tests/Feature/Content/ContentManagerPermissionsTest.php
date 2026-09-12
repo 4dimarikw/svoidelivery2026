@@ -4,16 +4,18 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Content;
 
+use ContentCms\Content\ContentBlockTypeRegistry;
+use ContentCms\Models\ContentBlock;
+use ContentCms\Models\ContentBlockItem;
+use ContentCms\Models\SiteMenu;
+use ContentCms\Models\SiteMenuItem;
+use ContentCms\Models\SiteSection;
 use Database\Seeders\MoonshinePermissionSeeder;
-use Domain\Content\Models\ContentBlock;
-use Domain\Content\Models\ContentBlockItem;
-use Domain\Content\Models\SiteMenu;
-use Domain\Content\Models\SiteMenuItem;
-use Domain\Content\Models\SiteSection;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Session\Middleware\AuthenticateSession;
 use MoonShine\Laravel\Models\MoonshineUser;
 use MoonShine\Laravel\Models\MoonshineUserRole;
+use Tests\Fixtures\Content\ItemsBlockType;
 use Tests\TestCase;
 
 /**
@@ -30,6 +32,9 @@ class ContentManagerPermissionsTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+
+        config(['content-cms.types' => [...config('content-cms.types'), ItemsBlockType::class]]);
+        $this->app->forgetInstance(ContentBlockTypeRegistry::class);
 
         $this->seed(MoonshinePermissionSeeder::class);
 
@@ -66,7 +71,7 @@ class ContentManagerPermissionsTest extends TestCase
         $section = SiteSection::factory()->create();
         $menu = SiteMenu::factory()->create();
         $menuItem = SiteMenuItem::factory()->create(['site_menu_id' => $menu->id]);
-        $block = ContentBlock::factory()->create(['site_section_id' => $section->id, 'type' => 'about_info']);
+        $block = ContentBlock::factory()->create(['site_section_id' => $section->id, 'type' => 'test_items']);
         $item = ContentBlockItem::factory()->create(['content_block_id' => $block->id, 'group_key' => 'ordering_rules', 'content' => ['text' => 'Пункт правил']]);
 
         $manager = $this->manager();
@@ -95,7 +100,7 @@ class ContentManagerPermissionsTest extends TestCase
     {
         $section = SiteSection::factory()->create();
         $menu = SiteMenu::factory()->create();
-        $block = ContentBlock::factory()->create(['site_section_id' => $section->id, 'type' => 'about_info']);
+        $block = ContentBlock::factory()->create(['site_section_id' => $section->id, 'type' => 'test_items']);
 
         $manager = $this->manager();
 
@@ -123,7 +128,7 @@ class ContentManagerPermissionsTest extends TestCase
         $section = SiteSection::factory()->create();
         $menu = SiteMenu::factory()->create();
         $menuItem = SiteMenuItem::factory()->create(['site_menu_id' => $menu->id]);
-        $block = ContentBlock::factory()->create(['site_section_id' => $section->id, 'type' => 'about_info']);
+        $block = ContentBlock::factory()->create(['site_section_id' => $section->id, 'type' => 'test_items']);
         $item = ContentBlockItem::factory()->create(['content_block_id' => $block->id, 'group_key' => 'ordering_rules', 'content' => ['text' => 'Пункт правил']]);
 
         $manager = $this->manager();
@@ -154,7 +159,7 @@ class ContentManagerPermissionsTest extends TestCase
         $section = SiteSection::factory()->create(['key' => 'promo', 'route_name' => 'home', 'fragment' => 'promo-anchor']);
         $menu = SiteMenu::factory()->create(['key' => 'main']);
         $menuItem = SiteMenuItem::factory()->create(['site_menu_id' => $menu->id, 'key' => 'item-fixed', 'label' => 'Старая подпись']);
-        $block = ContentBlock::factory()->create(['site_section_id' => $section->id, 'type' => 'about_info', 'key' => 'block-fixed', 'title' => 'Старый блок']);
+        $block = ContentBlock::factory()->create(['site_section_id' => $section->id, 'type' => 'test_items', 'key' => 'block-fixed', 'title' => 'Старый блок']);
         $item = ContentBlockItem::factory()->create(['content_block_id' => $block->id, 'key' => 'item-fixed-2', 'title' => 'Старый элемент', 'group_key' => 'ordering_rules', 'content' => ['text' => 'Пункт правил']]);
 
         $manager = $this->manager();
@@ -230,7 +235,7 @@ class ContentManagerPermissionsTest extends TestCase
         $section = SiteSection::factory()->create();
         $menu = SiteMenu::factory()->create();
         $menuItem = SiteMenuItem::factory()->create(['site_menu_id' => $menu->id]);
-        $block = ContentBlock::factory()->create(['site_section_id' => $section->id, 'type' => 'about_info']);
+        $block = ContentBlock::factory()->create(['site_section_id' => $section->id, 'type' => 'test_items']);
         $item = ContentBlockItem::factory()->create(['content_block_id' => $block->id, 'group_key' => 'ordering_rules', 'content' => ['text' => 'Пункт правил']]);
 
         $manager = $this->manager();
@@ -276,6 +281,31 @@ class ContentManagerPermissionsTest extends TestCase
 
         self::assertStringContainsString('Ключ', $superuserMenuItemHtml);
         self::assertStringContainsString('Внешний URL', $superuserMenuItemHtml);
+    }
+
+    public function test_manager_cannot_forge_service_field_updates(): void
+    {
+        $section = SiteSection::factory()->create();
+        $menu = SiteMenu::factory()->create();
+        $menuItem = SiteMenuItem::factory()->create(['site_menu_id' => $menu->id]);
+        $block = ContentBlock::factory()->ofType('test_items')->create(['site_section_id' => $section->id]);
+        $item = ContentBlockItem::factory()->inGroup($block, 'ordering_rules')->create(['content' => ['text' => 'Text']]);
+        $this->actingAs($this->manager(), 'moonshine');
+
+        foreach ([
+            ['site-section-resource', $section, ['key', 'route_name', 'fragment']],
+            ['site-menu-resource', $menu, ['key']],
+            ['site-menu-item-resource', $menuItem, ['key', 'site_menu_id', 'parent_id', 'site_section_id', 'external_url']],
+            ['content-block-resource', $block, ['key', 'site_section_id', 'type']],
+            ['content-block-item-resource', $item, ['key', 'content_block_id', 'group_key']],
+        ] as [$resource, $model, $columns]) {
+            $before = $model->fresh()->getAttributes();
+            foreach ($columns as $column) {
+                $this->put("/admin/resource/{$resource}/crud/{$model->id}", [$column => 'forged'])
+                    ->assertRedirect()->assertSessionHasErrors($column);
+                $this->assertSame($before, $model->fresh()->getAttributes());
+            }
+        }
     }
 
     public function test_manager_does_not_see_branch_transfer_button(): void

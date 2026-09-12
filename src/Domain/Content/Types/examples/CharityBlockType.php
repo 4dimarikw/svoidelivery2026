@@ -2,8 +2,8 @@
 
 namespace Domain\Content\Types\examples;
 
-use Domain\Content\Data\ContentItemGroup;
-use Domain\Content\Rules\SafeContentUrl;
+use ContentCms\Content\Data\ContentItemGroup;
+use ContentCms\Rules\SafeContentUrl;
 use Domain\Content\Types\AbstractContentBlockType;
 use MoonShine\UI\Fields\Number;
 

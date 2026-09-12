@@ -2,38 +2,24 @@
 
 namespace Domain\Content\Actions\Content;
 
-use Domain\Content\Models\ContentBlock;
-use Domain\Content\Models\SiteSection;
+use ContentCms\Actions\Content\LoadPublishedSectionByKey;
+use ContentCms\Models\ContentBlock;
 
-/**
- * Загружает опубликованный блок глобальной секции footer с route_name=null для публичных страниц. Singleton
- * сохраняет результат в пределах HTTP-запроса; постоянный кеш не используется.
- */
+/** Мемоизирует опубликованный блок общего подвала в пределах запроса. */
 final class LoadSiteFooter
 {
     private bool $loaded = false;
 
     private ?ContentBlock $block = null;
 
+    public function __construct(private readonly LoadPublishedSectionByKey $sections) {}
+
     public function handle(): ?ContentBlock
     {
-        if ($this->loaded) {
-            return $this->block;
+        if (! $this->loaded) {
+            $this->block = $this->sections->handle('footer')?->publishedBlocks->first();
+            $this->loaded = true;
         }
-
-        // Без media/publishedItems в eager-load — footer_info их не использует
-        // (2 коротких текстовых поля, ни ссылок, ни картинок, см.
-        // Domain\Content\Types\FooterBlockType). Держим запрос минимальным:
-        // подвал рендерится на КАЖДОЙ публичной странице, лишние join'ы тут
-        // дороже, чем на /about, которая одна.
-        $section = SiteSection::query()
-            ->active()
-            ->where('key', 'footer')
-            ->with('publishedBlocks')
-            ->first();
-
-        $this->block = $section?->publishedBlocks->first();
-        $this->loaded = true;
 
         return $this->block;
     }

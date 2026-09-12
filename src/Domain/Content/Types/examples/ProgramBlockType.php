@@ -2,7 +2,7 @@
 
 namespace Domain\Content\Types\examples;
 
-use Domain\Content\Data\ContentItemGroup;
+use ContentCms\Content\Data\ContentItemGroup;
 use Domain\Content\Types\AbstractContentBlockType;
 use MoonShine\UI\Fields\Json;
 

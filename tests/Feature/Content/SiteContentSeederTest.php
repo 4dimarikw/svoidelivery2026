@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Content;
 
+use ContentCms\Models\ContentBlock;
+use ContentCms\Models\SiteMenu;
+use ContentCms\Models\SiteMenuItem;
+use ContentCms\Models\SiteSection;
 use Database\Seeders\SiteContentSeeder;
-use Domain\Content\Models\ContentBlock;
-use Domain\Content\Models\SiteMenu;
-use Domain\Content\Models\SiteMenuItem;
-use Domain\Content\Models\SiteSection;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -41,7 +41,11 @@ class SiteContentSeederTest extends TestCase
 
         $aboutBlock = ContentBlock::where('site_section_id', $about->id)->where('key', 'about')->firstOrFail();
         $this->assertSame('about_info', $aboutBlock->type);
-        $this->assertCount(8, $aboutBlock->items);
+        $this->assertCount(0, $aboutBlock->items);
+        $this->assertCount(5, $aboutBlock->content['ordering_rules']);
+        $this->assertCount(3, $aboutBlock->content['promotions']);
+        $fixture = require database_path('seeders/data/site-content.php');
+        $this->assertEquals($fixture['blocks']['about']['content'], $aboutBlock->content);
 
         $footerBlock = ContentBlock::where('site_section_id', $footer->id)->where('key', 'footer')->firstOrFail();
         $this->assertSame('footer_info', $footerBlock->type);

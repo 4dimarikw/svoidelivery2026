@@ -2,10 +2,10 @@
 
 namespace Tests\Feature;
 
+use ContentCms\Models\SiteMenuItem;
 use Database\Seeders\CurrentSiteDataSeeder;
-use Domain\Content\Models\SiteMenuItem;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Infrastructure\Settings\SiteSettings;
 use LogicException;

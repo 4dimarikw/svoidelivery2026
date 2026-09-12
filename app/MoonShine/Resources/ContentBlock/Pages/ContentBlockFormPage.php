@@ -8,9 +8,9 @@ use App\MoonShine\Resources\ContentBlock\ContentBlockResource;
 use App\MoonShine\Resources\ContentBlockItem\ContentBlockItemResource;
 use App\MoonShine\Resources\SiteSection\SiteSectionResource;
 use App\MoonShine\Traits\ChecksSuperUser;
-use Domain\Content\ContentBlockTypeRegistry;
-use Domain\Content\Models\ContentBlock;
-use Domain\Content\Models\SiteSection;
+use ContentCms\Content\ContentBlockTypeRegistry;
+use ContentCms\Models\ContentBlock;
+use ContentCms\Models\SiteSection;
 use Illuminate\Validation\Rule;
 use MoonShine\Contracts\Core\TypeCasts\DataWrapperContract;
 use MoonShine\Laravel\Fields\Relationships\BelongsTo;
@@ -70,8 +70,18 @@ final class ContentBlockFormPage extends FormPage
                         ->removable(),
                     $type->mediaCollections(),
                 ),
+                ...array_map(
+                    static fn (string $collection) => MediaLibrary::make('Файл: '.$collection, $collection)
+                        ->keepOriginalFileName()
+                        ->allowedExtensions(['pdf', 'jpg', 'jpeg', 'png', 'webp'])
+                        ->dir('upload_for_media_library')
+                        ->removable(),
+                    $type->fileCollections(),
+                ),
             ]);
-            $fields[] = HasMany::make('Элементы блока', 'items', resource: ContentBlockItemResource::class)->creatable();
+            if ($type->itemGroups() !== []) {
+                $fields[] = HasMany::make('Элементы блока', 'items', resource: ContentBlockItemResource::class)->creatable();
+            }
         }
 
         return $fields;
@@ -79,6 +89,8 @@ final class ContentBlockFormPage extends FormPage
 
     protected function rules(DataWrapperContract $item): array
     {
+        $this->assertContentStructureUnchanged($item->getOriginal(), ['key', 'site_section_id', 'type']);
+
         $registry = app(ContentBlockTypeRegistry::class);
         $model = $item->getOriginal();
         $typeKey = $model->exists ? $model->type : (string) request('type');
@@ -105,8 +117,10 @@ final class ContentBlockFormPage extends FormPage
             ];
         }
 
-        foreach ($type?->blockRules() ?? [] as $key => $rule) {
-            $rules['content.'.$key] = $rule;
+        if ($model->exists) {
+            foreach ($type?->blockRules() ?? [] as $key => $rule) {
+                $rules['content.'.$key] = $rule;
+            }
         }
 
         return $rules;

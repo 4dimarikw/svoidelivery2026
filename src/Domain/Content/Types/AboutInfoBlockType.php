@@ -2,7 +2,8 @@
 
 namespace Domain\Content\Types;
 
-use Domain\Content\Data\ContentItemGroup;
+use MoonShine\UI\Fields\Json;
+use MoonShine\UI\Fields\Switcher;
 
 /**
  * Контент страницы «О нас» (route `about`): приветствие, график приёма
@@ -30,7 +31,15 @@ final class AboutInfoBlockType extends AbstractContentBlockType
             $this->textarea('Приветственный текст', 'lead'),
             $this->textarea('График приёма заказов', 'schedule'),
             $this->text('Заголовок блока правил', 'ordering_heading'),
+            Json::make('Правила оформления заказа', 'ordering_rules')->fields([
+                $this->text('Текст пункта', 'text')->required(),
+                Switcher::make('Активен', 'is_active')->default(true),
+            ])->creatable()->removable()->reorderable()->stopFilteringEmpty(),
             $this->text('Заголовок блока акций', 'promo_lead'),
+            Json::make('Акции', 'promotions')->fields([
+                $this->text('Текст пункта', 'text')->required(),
+                Switcher::make('Активен', 'is_active')->default(true),
+            ])->creatable()->removable()->reorderable()->stopFilteringEmpty(),
             $this->textarea('Обязательное уведомление', 'notice'),
         ];
     }
@@ -43,19 +52,13 @@ final class AboutInfoBlockType extends AbstractContentBlockType
             'schedule' => ['nullable', 'string', 'max:2000'],
             'ordering_heading' => ['nullable', 'string', 'max:255'],
             'promo_lead' => ['nullable', 'string', 'max:255'],
+            'ordering_rules' => ['nullable', 'array'],
+            'ordering_rules.*.text' => ['required', 'string', 'max:500'],
+            'ordering_rules.*.is_active' => ['required', 'boolean'],
+            'promotions' => ['nullable', 'array'],
+            'promotions.*.text' => ['required', 'string', 'max:500'],
+            'promotions.*.is_active' => ['required', 'boolean'],
             'notice' => ['nullable', 'string', 'max:2000'],
-        ];
-    }
-
-    public function itemGroups(): array
-    {
-        return [
-            'ordering_rules' => new ContentItemGroup('ordering_rules', 'Правила оформления заказа', [
-                $this->text('Текст пункта', 'text'),
-            ], ['text' => ['required', 'string', 'max:500']]),
-            'promotions' => new ContentItemGroup('promotions', 'Акции', [
-                $this->text('Текст пункта', 'text'),
-            ], ['text' => ['required', 'string', 'max:500']]),
         ];
     }
 }

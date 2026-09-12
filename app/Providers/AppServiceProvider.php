@@ -61,14 +61,10 @@ class AppServiceProvider extends ServiceProvider
 
         $this->app->singleton(FilterManager::class);
 
-        // Singleton, не readonly-объект per-request — LoadSiteMenu
-        // мемоизирует построенное дерево (см. класс), так что View Composer
-        // ниже и LoadPublicPage::handle() на home/about не строят его дважды.
-        $this->app->singleton(LoadSiteMenu::class);
+        // Общие данные переиспользуются внутри запроса, но не между запросами worker.
+        $this->app->scoped(LoadSiteMenu::class);
+        $this->app->scoped(LoadSiteFooter::class);
 
-        // Тот же мотив, что у LoadSiteMenu — мемоизация на запрос под
-        // composer подвала ниже.
-        $this->app->singleton(LoadSiteFooter::class);
     }
 
     public function boot(): void

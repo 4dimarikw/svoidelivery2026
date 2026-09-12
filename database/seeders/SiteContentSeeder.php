@@ -2,12 +2,12 @@
 
 namespace Database\Seeders;
 
-use Domain\Content\Models\ContentBlock;
-use Domain\Content\Models\ContentBlockItem;
-use Domain\Content\Models\SiteMenu;
-use Domain\Content\Models\SiteMenuItem;
-use Domain\Content\Models\SiteSection;
-use Domain\Content\Support\SafeContentUrl;
+use ContentCms\Models\ContentBlock;
+use ContentCms\Models\ContentBlockItem;
+use ContentCms\Models\SiteMenu;
+use ContentCms\Models\SiteMenuItem;
+use ContentCms\Models\SiteSection;
+use ContentCms\Support\SafeContentUrl;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;

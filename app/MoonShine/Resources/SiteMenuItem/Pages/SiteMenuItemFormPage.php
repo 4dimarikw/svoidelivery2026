@@ -8,9 +8,10 @@ use App\MoonShine\Resources\SiteMenu\SiteMenuResource;
 use App\MoonShine\Resources\SiteMenuItem\SiteMenuItemResource;
 use App\MoonShine\Resources\SiteSection\SiteSectionResource;
 use App\MoonShine\Traits\ChecksSuperUser;
-use Domain\Content\Models\SiteMenu;
-use Domain\Content\Models\SiteMenuItem;
-use Domain\Content\Models\SiteSection;
+use ContentCms\Models\SiteMenu;
+use ContentCms\Models\SiteMenuItem;
+use ContentCms\Models\SiteSection;
+use ContentCms\Rules\SafeContentUrl;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Validation\Rule;
 use MoonShine\Contracts\Core\TypeCasts\DataWrapperContract;
@@ -21,7 +22,6 @@ use MoonShine\UI\Components\Layout\Box;
 use MoonShine\UI\Fields\ID;
 use MoonShine\UI\Fields\Switcher;
 use MoonShine\UI\Fields\Text;
-use MoonShine\UI\Fields\Url;
 
 /** @extends FormPage<SiteMenuItemResource, SiteMenuItem> */
 final class SiteMenuItemFormPage extends FormPage
@@ -71,8 +71,9 @@ final class SiteMenuItemFormPage extends FormPage
                             ->orderBy('_lft');
                     },
                 );
-            $fields[] = BelongsTo::make('Раздел', 'section', formatted: static fn (SiteSection $section) => $section->title, resource: SiteSectionResource::class)->nullable()->searchable();
-            $fields[] = Url::make('Внешний URL', 'external_url');
+            $fields[] = BelongsTo::make('Раздел', 'section', formatted: static fn (SiteSection $section) => $section->title, resource: SiteSectionResource::class)->nullable()->searchable()
+                ->valuesQuery(static fn (Builder $query): Builder => $query->whereNotNull('route_name'));
+            $fields[] = Text::make('Внешний URL', 'external_url');
         }
 
         $fields[] = Text::make('Подпись (если отличается от названия раздела)', 'label');
@@ -84,6 +85,8 @@ final class SiteMenuItemFormPage extends FormPage
 
     protected function rules(DataWrapperContract $item): array
     {
+        $this->assertContentStructureUnchanged($item->getOriginal(), ['key', 'site_menu_id', 'parent_id', 'site_section_id', 'external_url']);
+
         if (! $this->isSuperUser()) {
             return [
                 'label' => ['nullable', 'string', 'max:255'],
@@ -115,8 +118,8 @@ final class SiteMenuItemFormPage extends FormPage
                 Rule::exists('site_menu_items', 'id')->where(static fn ($query) => $query->where('site_menu_id', $menuId)),
                 Rule::notIn($excludedParentIds),
             ],
-            'site_section_id' => ['nullable', 'exists:site_sections,id'],
-            'external_url' => ['nullable', 'url:http,https', 'max:2048'],
+            'site_section_id' => ['nullable', Rule::exists('site_sections', 'id')->whereNotNull('route_name')],
+            'external_url' => ['nullable', 'string', new SafeContentUrl, 'max:2048'],
             'label' => ['nullable', 'string', 'max:255'],
             'open_in_new_tab' => ['boolean'],
             'is_active' => ['boolean'],

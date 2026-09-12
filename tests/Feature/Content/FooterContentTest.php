@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Content;
 
-use Domain\Content\Models\ContentBlock;
-use Domain\Content\Models\SiteSection;
+use ContentCms\Models\ContentBlock;
+use ContentCms\Models\SiteSection;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 

@@ -6,7 +6,7 @@ namespace App\MoonShine\Resources\SiteSection;
 
 use App\MoonShine\Resources\SiteSection\Pages\SiteSectionFormPage;
 use App\MoonShine\Resources\SiteSection\Pages\SiteSectionIndexPage;
-use Domain\Content\Models\SiteSection;
+use ContentCms\Models\SiteSection;
 use MoonShine\Laravel\Resources\ModelResource;
 use MoonShine\MenuManager\Attributes\Group;
 use MoonShine\MenuManager\Attributes\Order;

@@ -7,7 +7,7 @@ namespace App\MoonShine\Resources\SiteMenu\Pages;
 use App\MoonShine\Resources\SiteMenu\SiteMenuResource;
 use App\MoonShine\Resources\SiteMenuItem\SiteMenuItemResource;
 use App\MoonShine\Traits\ChecksSuperUser;
-use Domain\Content\Models\SiteMenu;
+use ContentCms\Models\SiteMenu;
 use Illuminate\Validation\Rule;
 use MoonShine\Contracts\Core\TypeCasts\DataWrapperContract;
 use MoonShine\Laravel\Fields\Relationships\HasMany;
@@ -37,6 +37,8 @@ final class SiteMenuFormPage extends FormPage
 
     protected function rules(DataWrapperContract $item): array
     {
+        $this->assertContentStructureUnchanged($item->getOriginal(), ['key']);
+
         if (! $this->isSuperUser()) {
             return [
                 'title' => ['required', 'string', 'max:255'],

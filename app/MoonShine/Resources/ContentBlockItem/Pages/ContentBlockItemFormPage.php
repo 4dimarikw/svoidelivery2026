@@ -7,10 +7,10 @@ namespace App\MoonShine\Resources\ContentBlockItem\Pages;
 use App\MoonShine\Resources\ContentBlock\ContentBlockResource;
 use App\MoonShine\Resources\ContentBlockItem\ContentBlockItemResource;
 use App\MoonShine\Traits\ChecksSuperUser;
-use Domain\Content\ContentBlockTypeRegistry;
-use Domain\Content\Data\ContentItemGroup;
-use Domain\Content\Models\ContentBlock;
-use Domain\Content\Models\ContentBlockItem;
+use ContentCms\Content\ContentBlockTypeRegistry;
+use ContentCms\Content\Data\ContentItemGroup;
+use ContentCms\Models\ContentBlock;
+use ContentCms\Models\ContentBlockItem;
 use Illuminate\Validation\Rule;
 use MoonShine\Contracts\Core\TypeCasts\DataWrapperContract;
 use MoonShine\Laravel\Fields\Relationships\BelongsTo;
@@ -75,6 +75,8 @@ final class ContentBlockItemFormPage extends FormPage
 
     protected function rules(DataWrapperContract $item): array
     {
+        $this->assertContentStructureUnchanged($item->getOriginal(), ['key', 'content_block_id', 'group_key']);
+
         $model = $item->getOriginal();
         $blockId = (int) request('content_block_id', $model->content_block_id);
         $groupKey = $model->exists ? $model->group_key : (string) request('group_key');

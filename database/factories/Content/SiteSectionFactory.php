@@ -2,8 +2,7 @@
 
 namespace Database\Factories\Content;
 
-
-use Domain\Content\Models\SiteSection;
+use ContentCms\Models\SiteSection;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /** @extends Factory<SiteSection> */

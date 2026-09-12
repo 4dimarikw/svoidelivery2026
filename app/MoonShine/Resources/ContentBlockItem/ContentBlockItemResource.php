@@ -6,7 +6,7 @@ namespace App\MoonShine\Resources\ContentBlockItem;
 
 use App\MoonShine\Resources\ContentBlockItem\Pages\ContentBlockItemFormPage;
 use App\MoonShine\Resources\ContentBlockItem\Pages\ContentBlockItemIndexPage;
-use Domain\Content\Models\ContentBlockItem;
+use ContentCms\Models\ContentBlockItem;
 use MoonShine\Laravel\Resources\ModelResource;
 use MoonShine\MenuManager\Attributes\Group;
 use MoonShine\MenuManager\Attributes\Order;

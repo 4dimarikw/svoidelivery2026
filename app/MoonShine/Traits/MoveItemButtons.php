@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\MoonShine\Traits;
 
-use Domain\Content\Models\SiteMenu;
-use Domain\Content\Models\SiteMenuItem;
+use ContentCms\Models\SiteMenu;
+use ContentCms\Models\SiteMenuItem;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use MoonShine\Contracts\Core\DependencyInjection\CrudRequestContract;

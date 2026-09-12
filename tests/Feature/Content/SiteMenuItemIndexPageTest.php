@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Content;
 
-use Domain\Content\Models\SiteMenu;
-use Domain\Content\Models\SiteMenuItem;
+use ContentCms\Models\SiteMenu;
+use ContentCms\Models\SiteMenuItem;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use MoonShine\Laravel\Models\MoonshineUser;
 use MoonShine\Laravel\Models\MoonshineUserRole;

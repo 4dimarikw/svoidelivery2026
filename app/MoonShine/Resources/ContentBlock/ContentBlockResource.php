@@ -6,7 +6,7 @@ namespace App\MoonShine\Resources\ContentBlock;
 
 use App\MoonShine\Resources\ContentBlock\Pages\ContentBlockFormPage;
 use App\MoonShine\Resources\ContentBlock\Pages\ContentBlockIndexPage;
-use Domain\Content\Models\ContentBlock;
+use ContentCms\Models\ContentBlock;
 use MoonShine\Crud\Handlers\Handler;
 use MoonShine\ImportExport\Contracts\HasImportExportContract;
 use MoonShine\ImportExport\ExportHandler;

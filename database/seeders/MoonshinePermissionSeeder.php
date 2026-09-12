@@ -3,6 +3,11 @@
 namespace Database\Seeders;
 
 use App\MoonShine\Models\MoonshinePermission;
+use ContentCms\Models\ContentBlock;
+use ContentCms\Models\ContentBlockItem;
+use ContentCms\Models\SiteMenu;
+use ContentCms\Models\SiteMenuItem;
+use ContentCms\Models\SiteSection;
 use Domain\Auth\Models\User;
 use Domain\Catalog\Models\BeerStyle;
 use Domain\Catalog\Models\Category;
@@ -10,11 +15,6 @@ use Domain\Catalog\Models\Container;
 use Domain\Catalog\Models\Manufacturer;
 use Domain\Catalog\Models\Product;
 use Domain\Catalog\Models\Volume;
-use Domain\Content\Models\ContentBlock;
-use Domain\Content\Models\ContentBlockItem;
-use Domain\Content\Models\SiteMenu;
-use Domain\Content\Models\SiteMenuItem;
-use Domain\Content\Models\SiteSection;
 use Domain\Favorite\Models\Favorite;
 use Domain\Order\Models\Order;
 use Domain\Order\Models\OrderCustomer;

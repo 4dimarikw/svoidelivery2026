@@ -8,6 +8,12 @@
 @props(['sections'])
 
 @foreach ($sections as $section)
+    @php
+        $fragment = ltrim(trim((string) $section->fragment), '#');
+    @endphp
+    @if ($fragment !== '')
+        <section id="{{ $fragment }}">
+    @endif
     @foreach ($section->publishedBlocks as $block)
         @php
             $view = config('content.views.'.$block->type);
@@ -18,4 +24,7 @@
             <x-dynamic-component :component="$component" :block="$block" />
         @endif
     @endforeach
+    @if ($fragment !== '')
+        </section>
+    @endif
 @endforeach

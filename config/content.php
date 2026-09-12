@@ -1,23 +1,16 @@
 <?php
 
-use Domain\Content\Types\AboutInfoBlockType;
-use Domain\Content\Types\FooterBlockType;
-
 return [
     // Ключ типа => Blade-компонент (config('content.views.'.$block->type)),
     // единственная точка выбора view для публичного рендера (см. §10
     // docs/cms-ai-agent-guideline.md) — неизвестный/незарегистрированный тип
-    // остаётся без view и не выводится (Domain\Content\Models\ContentBlock::scopeRenderable()).
+    // остаётся без view и не выводится (ContentCms\Models\ContentBlock::scopeRenderable()).
     // footer_info сюда не входит: подвал не идёт через диспетчер
     // <x-content.sections> (тот — для произвольного списка блоков секции
     // страницы), Domain\Content\Actions\Content\LoadSiteFooter отдаёт
     // единственный блок напрямую, footer.blade.php читает его content сам.
     'views' => [
         'about_info' => 'components.content.about-info',
-    ],
-    'types' => [
-        AboutInfoBlockType::class,
-        FooterBlockType::class,
     ],
     'icons' => [
         'heart',
