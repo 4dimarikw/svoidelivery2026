@@ -13,8 +13,6 @@ use Illuminate\Translation\PotentiallyTranslatedString;
 class EmailListRule implements ValidationRule
 {
     /**
-     * Run the validation rule.
-     *
      * @param  Closure(string, ?string=): PotentiallyTranslatedString  $fail
      */
     public function validate(string $attribute, mixed $value, Closure $fail): void

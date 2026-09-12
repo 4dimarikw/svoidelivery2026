@@ -8,7 +8,9 @@ use App\Events\Order\OrderFtpUploadFailed;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Throwable;
 
-/** Совместимость старых вызовов: true означает сохранение заявки, а не успешную загрузку. */
+/**
+ * Возвращаемое true подтверждает сохранение заявки на доставку; результат сетевой отправки хранится отдельно.
+ */
 class UploadOrderToFTP
 {
     public function __invoke(int $orderId): bool

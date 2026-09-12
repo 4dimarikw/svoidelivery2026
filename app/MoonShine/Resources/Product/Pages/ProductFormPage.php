@@ -153,28 +153,6 @@ final class ProductFormPage extends FormPage
                     ])->icon('adjustments-horizontal'),
 
                     Tab::make(__('moonshine.product.tabs.image'), [
-                        //                        Image::make(__('moonshine.product.fields.current_image'), 'thumb')
-                        //                            ->changePreview(static fn($value) => Thumbnails::make($value))
-                        //                            ->disabled()
-                        //                            // 'thumb' — вычисляемый accessor (Product::thumb()), не колонка: no-op,
-                        //                            // иначе apply() пытается записать это имя как обычную колонку в UPDATE/INSERT.
-                        //                            ->onApply(static fn(Product $item): Product => $item),
-                        //
-                        //                        Image::make(__('moonshine.product.fields.main_image'), 'main_image')
-                        //                            ->allowedExtensions(['jpg', 'jpeg', 'png', 'webp'])
-                        //                            ->hint('Загрузка новой картинки заменяет текущую и защищает её от перезаписи фотографией с Untappd при импорте.')
-                        //                            // 'main_image' не колонка таблицы — no-op, чтобы data_set не писал мусор в модель.
-                        //                            ->onApply(static fn(Product $item): Product => $item)
-                        //                            ->onAfterApply(static function (Product $item, mixed $value): Product {
-                        //                                if ($value instanceof UploadedFile) {
-                        //                                    $item->addMedia($value->getRealPath())
-                        //                                        ->usingFileName($value->hashName())
-                        //                                        ->withCustomProperties(['source' => 'admin'])
-                        //                                        ->toMediaCollection('main');
-                        //                                }
-                        //
-                        //                                return $item;
-                        //                            }),
                         When::make(
                             fn () => ! blank($this->getItem()?->beerDetails->untappd_beer_id),
                             fn () => [ActionButton::make('Обновить через Untappd')

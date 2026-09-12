@@ -1,6 +1,4 @@
-{{-- Exists solely so GET /user/confirm-password doesn't 500 — with
-     'views' => true it's registered unconditionally by Fortify regardless
-     of which features are enabled, and there's no default view binding. --}}
+{{-- Представление обязательного маршрута GET /user/confirm-password при views=true в Fortify. --}}
 <x-layouts.auth :title="__('account.confirm.title')">
     <x-ui.auth-card :title="__('account.confirm.title')" :subtitle="__('account.confirm.subtitle')">
         <x-ui.form :action="route('password.confirm.store')" mode="default">

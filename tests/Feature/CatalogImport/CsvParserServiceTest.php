@@ -17,9 +17,8 @@ use Tests\Support\BuildsCatalogCsv;
 use Tests\TestCase;
 
 /**
- * Сквозной прогон пайплайна через реальную БД (мигрированный реестр категорий,
- * см. migration 2026_08_03_100200_seed_category_registry_from_config). Ни одна
- * строка фикстуры не задаёт UntappdRef — ResolveBeerStyleStage не делает HTTP.
+ * Сквозная проверка импорта на базе со стартовым реестром из исходных миграций. Фикстуры не содержат UntappdRef,
+ * поэтому ResolveBeerStyleStage не выполняет HTTP-запросов.
  */
 class CsvParserServiceTest extends TestCase
 {
@@ -62,7 +61,7 @@ class CsvParserServiceTest extends TestCase
         $this->import($path);
 
         $product = Product::query()->firstWhere('external_code', $code);
-        // description — по-прежнему create-only, повторный импорт не должен
+        // description задаётся импортом только при создании; повторный импорт не должен
         // его трогать, в отличие от name (см. ниже).
         $product->update(['description' => 'Описание, изменённое админом']);
 
@@ -81,9 +80,9 @@ class CsvParserServiceTest extends TestCase
         $this->assertSame(250.0, $product->price->major());
         $this->assertSame(0, $product->stock_quantity);
         $this->assertFalse($product->in_stock);
-        // name — теперь sync-поле, повторный импорт освежает его из CSV.
+        // Повторный импорт обновляет name из CSV.
         $this->assertSame('Пиво светлое тестовое', $product->name);
-        // description — create-only, правка админа сохранена.
+        // Описание задаётся импортом только при создании; правка администратора сохраняется.
         $this->assertSame('Описание, изменённое админом', $product->description);
     }
 
@@ -159,9 +158,8 @@ class CsvParserServiceTest extends TestCase
     }
 
     /**
-     * Раньше пропуски строк были видны только в консоли/файле отчёта —
-     * CatalogImportRowsSkipped агрегирует их в одно событие на прогон
-     * (не на строку, иначе построчный цикл завалил бы event_logs).
+     * CatalogImportRowsSkipped агрегирует пропуски строк в одно событие на прогон, ограничивая количество
+     * записей event_logs.
      */
     public function test_skipped_rows_fire_one_aggregated_event_with_a_breakdown_by_stage(): void
     {

@@ -1,8 +1,7 @@
 <?php
 
-// App-owned UI strings for the <x-ui.*> component library. Keep these keys
-// out of auth.php / validation.php — those are managed by laravel-lang/common
-// and get overwritten by `composer post-update-cmd` → `artisan lang:update`.
+// Тексты компонентов x-ui. Файлы auth.php и validation.php управляются laravel-lang/common и перезаписываются
+// командой lang:update.
 
 return [
     'skip_to_content' => 'Skip to content',

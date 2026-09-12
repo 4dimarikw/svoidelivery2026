@@ -90,9 +90,7 @@ class OrderController extends Controller
         } catch (ValidationException $e) {
             throw $e;
         } catch (OrderProcessException $e) {
-            // Отказ по бизнес-правилу (мин. сумма, нет в наличии) — раньше
-            // нигде не логировался, хотя это единственная точка, где
-            // накапливается статистика отказов оформления.
+            // Отказы по бизнес-правилам записываются в журнал для анализа причин незавершённого оформления.
             event(new OrderCreationFailed(
                 userId: $request->user()->id,
                 reason: 'business_rejected',
@@ -110,9 +108,7 @@ class OrderController extends Controller
 
             return back()->withErrors(['checkout' => $e->getMessage()])->withInput();
         } catch (Throwable $e) {
-            // Любой другой сбой (дедлок БД, удалённый в корзине товар и т.п.)
-            // раньше уходил на общий 500 без единой записи о заказе — событие
-            // здесь, исключение пробрасывается дальше как раньше.
+            // Непредвиденный сбой записывается в журнал, после чего исключение передаётся общему обработчику.
             event(new OrderCreationFailed(
                 userId: $request->user()->id,
                 reason: 'unexpected',
@@ -125,7 +121,7 @@ class OrderController extends Controller
         }
 
         if (is_array($order)) {
-            // Price updates must commit before returning the refusal.
+            // Обновление цен должно быть зафиксировано до возврата отказа.
             $message = __('order.errors.cart_prices_changed', ['changes' => implode('; ', $order)]);
             $redirect = redirect()->route('cart.index')->withErrors(['checkout' => $message])
                 ->withInput($request->except('_token'));

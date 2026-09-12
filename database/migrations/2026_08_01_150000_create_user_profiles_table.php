@@ -6,9 +6,6 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::create('user_profiles', function (Blueprint $table) {
@@ -18,16 +15,16 @@ return new class extends Migration
             $table->string('last_name')->nullable();
             $table->string('patronymic')->nullable();
             $table->string('phone')->nullable();
-            $table->string('vk_url')->nullable();
-            $table->string('telegram_url')->nullable();
+            $table->json('social_links')->nullable();
+            // NULL означает отсутствие проверки доступности бота.
+            $table->boolean('is_bot_active')->nullable();
+            $table->text('last_bot_error')->nullable();
+            $table->timestamp('bot_checked_at')->nullable();
             $table->text('default_order_comment')->nullable();
             $table->timestamps();
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::dropIfExists('user_profiles');

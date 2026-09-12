@@ -61,10 +61,8 @@ class PackMultiplicityTest extends TestCase
     }
 
     /**
-     * Категории с этими code уже засеяны миграцией
-     * 2026_08_03_100200_seed_category_registry_from_config — RefreshDatabase
-     * пересоздаёт их перед каждым тестом, создавать заново нельзя
-     * (categories.code уникален).
+     * Категории создаются исходной миграцией categories через RefreshDatabase. Повторное создание с тем же code
+     * нарушает уникальность.
      */
     private function categoryByCode(string $code): Category
     {

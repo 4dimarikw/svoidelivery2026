@@ -13,10 +13,7 @@ final class AssignProducts implements OrderProcessContract
 {
     public function handle(Order $order, $next)
     {
-        // $order->amount здесь не проставляется — единственный источник
-        // истины для суммы заказа теперь Domain\Order\Observers\OrderItemObserver
-        // (пересчитывает через UpdateAmountOrder на created каждой позиции),
-        // не дублируем то же самое ещё и тут.
+        // Сумму заказа пересчитывает OrderItemObserver через UpdateAmountOrder при создании каждой позиции.
         foreach (cart()->cartItems() as $cartItem) {
             /** @var CartItem $cartItem */
             $item = $order->orderItems()->make(OrderItemDTO::fromCartItem($cartItem)->toArray());

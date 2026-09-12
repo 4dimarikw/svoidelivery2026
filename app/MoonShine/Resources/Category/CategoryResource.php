@@ -68,14 +68,8 @@ class CategoryResource extends ModelResource
         ];
     }
 
-    // RelationRepeater ('matchRules', see CategoryFormPage) saves its rows
-    // via raw query-builder update()/delete() (RelationRepeater::saveRelation()),
-    // which does NOT fire Eloquent model events — so CategoryMatchRule::booted()
-    // never runs for edits/deletes of existing rules made through this form.
-    // That's currently masked because saving the parent Category always fires
-    // Category::saved in the same request, but that's event-order coincidence,
-    // not a guarantee. Flush explicitly here so cache invalidation doesn't
-    // depend on it.
+    // RelationRepeater сохраняет и удаляет правила через построитель запросов без событий Eloquent. Явная
+    // очистка кеша обеспечивает актуальность реестра независимо от порядка событий родительской Category.
     protected function afterCreated(DataWrapperContract $item): DataWrapperContract
     {
         CategoryRegistry::flush();

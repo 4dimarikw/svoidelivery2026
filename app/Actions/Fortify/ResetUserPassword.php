@@ -13,7 +13,7 @@ class ResetUserPassword implements ResetsUserPasswords
     use PasswordValidationRules;
 
     /**
-     * Validate and reset the user's forgotten password.
+     * Проверяет данные и сбрасывает забытый пароль пользователя.
      *
      * @param  array<string, string>  $input
      *

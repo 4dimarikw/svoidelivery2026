@@ -39,7 +39,6 @@ final class UntappdBeerIndexPage extends IndexPage
             Number::make(__('moonshine.untappd_beer.fields.rating_score'), 'rating_score')->sortable(),
             Number::make(__('moonshine.untappd_beer.fields.rating_count'), 'rating_count'),
             Date::make(__('moonshine.untappd_beer.fields.synced_at'), 'synced_at')->format('d.m.Y H:i')->sortable(),
-//            Number::make(__('moonshine.untappd_beer.fields.products_count'), 'beer_product_details_count')->badge(Color::GRAY),
         ];
     }
 

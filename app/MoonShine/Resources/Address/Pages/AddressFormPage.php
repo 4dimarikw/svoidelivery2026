@@ -41,8 +41,7 @@ final class AddressFormPage extends FormPage
         ];
     }
 
-    // Rules mirror App\Http\Controllers\Account\AddressController::validated()
-    // — same fields, same constraints, both entry points into the same table.
+    // Правила совпадают с AddressController::validated(): обе формы записывают данные в одну таблицу.
     protected function rules(DataWrapperContract $item): array
     {
         return [

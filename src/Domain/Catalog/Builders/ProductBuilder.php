@@ -12,10 +12,8 @@ use Domain\Catalog\Models\Product;
 use Illuminate\Database\Eloquent\Builder;
 
 /**
- * Кастомный query builder Product — вынесен из Product::scope*() через
- * newEloquentBuilder(), чтобы модель не разрасталась query-логикой. Методы
- * без префикса scope*: кастомному билдеру он не нужен, они и так chainable
- * и на инстансе, и статически через Model::__callStatic.
+ * Построитель запросов Product подключается через newEloquentBuilder(). Методы доступны в цепочке запросов и
+ * статически через модель без префикса scope.
  *
  * @extends Builder<Product>
  */

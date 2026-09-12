@@ -13,11 +13,8 @@ use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 /**
- * FilterOptionsRegistry кэширует значения витринных справочных фильтров
- * (categories/beer_styles/manufacturers/volumes/containers) целиком одним
- * ключом — раньше каждый AbstractFilter::values() бил в БД при каждом
- * рендере каталога. Правки в админке должны попадать в следующий же рендер,
- * без ручного сброса кэша (по образцу CategoryRegistryCacheTest).
+ * FilterOptionsRegistry кеширует справочные фильтры одним ключом. Изменения в админке должны отражаться при
+ * следующем рендере без ручной очистки кеша.
  */
 class FilterOptionsRegistryCacheTest extends TestCase
 {
@@ -36,8 +33,7 @@ class FilterOptionsRegistryCacheTest extends TestCase
 
     public function test_container_without_a_label_falls_back_to_name(): void
     {
-        // Регресс на mapWithKeys(label ?: name) — раньше это была логика
-        // внутри ContainerFilter::values(), теперь перенесена в load().
+        // Подпись тары определяется выражением label ?: name при загрузке реестра.
         $container = Container::factory()->create(['name' => 'Только имя', 'label' => '', 'is_active' => true]);
 
         $this->assertSame('Только имя', FilterOptionsRegistry::for('containers')[$container->id]);

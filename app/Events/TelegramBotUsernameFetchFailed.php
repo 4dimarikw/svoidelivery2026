@@ -3,14 +3,8 @@
 namespace App\Events;
 
 /**
- * Domain\Telegram\Models\TelegramBot::booted()'s saved()-хук не смог получить
- * юзернейм бота через getMe (невалидный токен или Telegram недоступен) —
- * раньше гасилось голым catch (Throwable) { return; }, и бот тихо сохранялся
- * с username = null, что ломает и виджет входа (<x-ui.telegram-login-button>
- * читает TelegramBot::current()?->username), и deep-link привязки. Попадает
- * в event_logs через App\Listeners\PersistEventLog (автодискавери по
- * LoggableEvent). Событий немного — только при сохранении записи бота,
- * агрегация не нужна.
+ * Ошибка получения имени бота через getMe при сохранении TelegramBot. Имя используется виджетом входа и ссылкой
+ * привязки; событие регистрируется в event_logs через PersistEventLog.
  */
 final readonly class TelegramBotUsernameFetchFailed implements LoggableEvent
 {

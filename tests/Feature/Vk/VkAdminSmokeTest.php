@@ -13,10 +13,8 @@ use MoonShine\Laravel\Models\MoonshineUserRole;
 use Tests\TestCase;
 
 /**
- * Смоук на реальный admin-роут — та же регрессия, что и
- * FavoriteResourceSmokeTest: без обновлённого classmap (composer
- * dump-autoload) новый App\MoonShine\Resources\VkPost\* класс не
- * подхватится MoonShine, и роут вернёт 404/500 вместо страницы.
+ * Проверяет реальный маршрут админки VK. Оптимизированная карта классов Composer должна содержать ресурсы VkPost
+ * для обнаружения MoonShine.
  */
 class VkAdminSmokeTest extends TestCase
 {

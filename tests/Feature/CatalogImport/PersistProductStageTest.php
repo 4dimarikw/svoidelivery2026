@@ -131,7 +131,7 @@ class PersistProductStageTest extends TestCase
         $this->assertFalse($result->product->wasRecentlyCreated);
         $existing->refresh();
 
-        // Оперативные поля — как и раньше.
+        // Оперативные поля синхронизируются при повторном импорте.
         $this->assertSame(999.0, $existing->price->major());
         $this->assertSame(0, $existing->stock_quantity);
         $this->assertFalse($existing->in_stock);
@@ -146,7 +146,7 @@ class PersistProductStageTest extends TestCase
         $this->assertSame('Новый заголовок', $existing->name);
         $this->assertSame('НОВЫЙ АРТИКУЛ', $existing->article);
 
-        // По-прежнему create-only.
+        // Значение задаётся импортом только при создании.
         $this->assertSame('Старое описание — create-only', $existing->description);
     }
 
@@ -232,9 +232,8 @@ class PersistProductStageTest extends TestCase
 
         $result = $this->runStage($ctx);
 
-        // containsString, не assertSame — description теперь идёт через
-        // Support\Casts\PurifiedHtml (см. tests/Feature/Domain/ProductDescriptionPurificationTest.php);
-        // здесь важен только источник (Untappd, не CSV), не точное форматирование.
+        // Проверяется источник description из Untappd. PurifiedHtml может менять форматирование, поэтому
+        // сравнивается содержимое, а не полное совпадение строки.
         $this->assertStringContainsString('Untappd-описание', $result->product->description);
         $this->assertStringNotContainsString('CSV-описание', $result->product->description);
     }

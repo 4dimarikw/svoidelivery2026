@@ -59,7 +59,6 @@ final class MoonShineLayout extends AppLayout
 
     protected function menu(): array
     {
-        //      return $this->autoloadMenu();
 
         $isAdmin = request()->user()->isSuperUser();
 
@@ -126,6 +125,5 @@ final class MoonShineLayout extends AppLayout
     {
         parent::colors($colorManager);
 
-        // $colorManager->primary('#00000');
     }
 }

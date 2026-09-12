@@ -1,7 +1,5 @@
-{{-- Slot-only wrapper — deliberately never renders a control from a `type`
-     prop. `select` needs `options`, `textarea` needs `rows`, and a checkbox
-     isn't a `.field` at all (its label WRAPS the input). Use the
-     <x-ui.*-field> composites for the common cases instead. --}}
+{{-- Обёртка поля выводит содержимое слота. Для типовых элементов используются компоненты x-ui.*-field со своими
+   параметрами. --}}
 @props([
     'label' => null,
     'for' => null,

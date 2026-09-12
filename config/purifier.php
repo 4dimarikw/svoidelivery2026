@@ -1,18 +1,7 @@
 <?php
 
 /**
- * Ok, glad you are here
- * first we get a config instance, and set the settings
- * $config = HTMLPurifier_Config::createDefault();
- * $config->set('Core.Encoding', $this->config->get('purifier.encoding'));
- * $config->set('Cache.SerializerPath', $this->config->get('purifier.cachePath'));
- * if ( ! $this->config->get('purifier.finalize')) {
- *     $config->autoFinalize = false;
- * }
- * $config->loadArray($this->getConfig());
- *
- * You must NOT delete the default settings
- * anything in settings should be compacted with params that needed to instance HTMLPurifier_Config.
+ * Конфигурация HTMLPurifier. Профиль default обязателен; параметры профилей передаются в HTMLPurifier_Config.
  *
  * @link http://htmlpurifier.org/live/configdoc/plain.html
  */
@@ -62,7 +51,7 @@ return [
                 ['header',  'Block', 'Flow', 'Common'],
                 ['footer',  'Block', 'Flow', 'Common'],
 
-                // Content model actually excludes several tags, not modelled here
+                // Модель содержимого допускает некоторые теги, исключённые спецификацией.
                 ['address', 'Block', 'Flow', 'Common'],
                 ['hgroup', 'Block', 'Required: h1 | h2 | h3 | h4 | h5 | h6', 'Common'],
 

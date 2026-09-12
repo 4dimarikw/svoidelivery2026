@@ -117,10 +117,8 @@ class CatalogControllerTest extends TestCase
 
     public function test_price_range_filter_narrows_results_with_only_max_bound(): void
     {
-        // Регрессия: gte:price_min раньше падало на несовпадении типов
-        // (пустой price_min → null после ConvertEmptyStringsToNull), весь
-        // запрос 422-ился и редиректил обратно — фильтр молча ничего не
-        // делал при заполненном только «до». См. PriceRangeFilter::rules().
+        // Фильтр применяет верхнюю границу цены при пустой нижней. Проверка gte включается только при
+        // заполненном price_min.
         $cheap = Product::factory()->create(['name' => 'Дешёвое', 'price' => 100]);
         $expensive = Product::factory()->create(['name' => 'Дорогое', 'price' => 4000]);
 
@@ -176,10 +174,8 @@ class CatalogControllerTest extends TestCase
     }
 
     /**
-     * Регрессия: in_stock и stock_quantity могут разойтись (например,
-     * UpdateProductStockQuantity списал остаток в 0, но раньше не трогал
-     * in_stock, см. Domain\Order\Processes) — ProductBuilder::onlyInStock()
-     * должен проверять оба поля, не только флаг.
+     * ProductBuilder::onlyInStock() проверяет одновременно in_stock и stock_quantity: одного флага наличия
+     * недостаточно.
      */
     public function test_in_stock_filter_hides_products_with_zero_stock_despite_the_flag(): void
     {
@@ -364,10 +360,8 @@ class CatalogControllerTest extends TestCase
 
     public function test_favorited_product_seeds_alpine_state_as_favorited(): void
     {
-        // Сердце теперь залито всегда (fill="currentColor" статично,
-        // design-system.html §06 .card .thumb-wrap .fav) — «в избранном»
-        // отражается только цветом через Alpine :class, которое читает
-        // favorited, засеянное сервером в x-data.
+        // Сердце использует fill=currentColor. Состояние избранного задаёт цвет через Alpine :class и начальный
+        // favorited в x-data.
         $user = User::factory()->create();
         $product = Product::factory()->create();
         Favorite::factory()->create(['user_id' => $user->id, 'product_id' => $product->id]);
@@ -443,7 +437,7 @@ class CatalogControllerTest extends TestCase
 
         $response->assertOk();
         $response->assertSee('OLD SONG');
-        // Старая склейка "производитель · марка" в одной строке не должна вернуться.
+        // Производитель и марка отображаются раздельно.
         $response->assertDontSee('Big Village · OLD SONG');
     }
 
@@ -934,18 +928,8 @@ class CatalogControllerTest extends TestCase
         $queryCount = count(DB::getQueryLog());
         DB::disableQueryLog();
 
-        // Коррелированный подзапрос в ORDER BY не добавляет запрос на строку —
-        // тот же бюджет, что у обычного каталога без сортировки, плюс один
-        // фиксированный (не растущий с числом товаров) запрос за
-        // Infrastructure\Settings\SiteSettings: LoadPublicPage передаёт его
-        // в каждый public-page view уже давно, но ни один Blade-файл его не
-        // читал — свойство лениво грузится из БД при первом обращении, а
-        // первым обращением стал <x-ui.telegram-autologin> (смонтирован в
-        // components/layouts/app.blade.php на каждой странице). Плюс
-        // фиксированный запрос подвала (Domain\Content\Actions\Content\LoadSiteFooter,
-        // View Composer components.layouts.footer — на каждой публичной
-        // странице, не только на /about).
-        // F02: ещё один общий eager-load категорий для правила покупки.
+        // Коррелированный подзапрос сортировки не увеличивает число запросов пропорционально товарам. Бюджет
+        // учитывает общую загрузку категорий, настроек сайта и подвала.
         $this->assertLessThan(18, $queryCount, 'Сортировка по рейтингу не должна добавлять N+1.');
     }
 

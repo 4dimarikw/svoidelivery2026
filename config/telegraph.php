@@ -9,114 +9,94 @@ use Domain\Telegram\Models\TelegramChat;
 
 return [
     /*
-     * Telegram api base url, it can be overridden
-     * for self-hosted servers
+     * Базовый URL Telegram API, включая собственный сервер API.
      */
     'telegram_api_url' => 'https://api.telegram.org/',
 
     /*
-     * Sets Telegraph messages default parse mode
-     * allowed values: html|markdown|MarkdownV2
+     * Режим разметки сообщений Telegraph: html, markdown или MarkdownV2.
      */
     'default_parse_mode' => Telegraph::PARSE_HTML,
 
     'webhook' => [
         /*
-         * Sets a custom webhook domain to be used,
-         * if null defaults to the app.url
+         * Домен вебхука; при null используется app.url.
          */
         'domain' => env('TELEGRAM_WEBHOOK_DOMAIN'),
 
         /*
-         * Sets the webhook URL that will be exposed by the server,
-         * this can be customized or entirely disabled (by setting it to NULL)
+         * Путь вебхука на сервере; null отключает маршрут.
          */
         'url' => env('TELEGRAPH_WEBHOOK_URL', '/telegraph/{token}/webhook'),
 
         /*
-         * Sets the handler to be used when Telegraph
-         * receives a new webhook call.
-         *
-         * For reference, see https://docs.defstudio.it/telegraph/webhooks/overview
+         * Обработчик входящего вебхука Telegraph. См. https://docs.defstudio.it/telegraph/webhooks/overview.
          */
         'handler' => WebhookHandler::class,
 
         /*
-         * Middleware to be applied to the webhook route
+         * Промежуточные обработчики маршрута вебхука.
          */
         'middleware' => [],
 
         /*
-         * Sets a custom domain when registering a webhook. This will allow a local telegram bot api server
-         * to reach the webhook. Disabled by default
-         *
-         * For reference, see https://core.telegram.org/bots/api#using-a-local-bot-api-server
+         * Домен регистрации вебхука для локального сервера Telegram Bot API. См.
+         * https://core.telegram.org/bots/api#using-a-local-bot-api-server.
          */
-        // 'domain' => 'http://my.custom.domain',
 
         /*
-         * If enabled, unknown webhook commands are
-         * reported as exception in application logs
+         * Регистрация неизвестных команд вебхука как исключений в журнале приложения.
          */
         'report_unknown_commands' => env('TELEGRAPH_REPORT_UNKNOWN_COMMANDS', true),
 
         /**
-         * secret token to be sent in a X-Telegram-Bot-Api-Secret-Token header
-         * to verify the authenticity of the webhook
+         * Секретный токен заголовка X-Telegram-Bot-Api-Secret-Token для проверки подлинности вебхука.
          */
         'secret' => env('TELEGRAPH_WEBHOOK_SECRET'),
 
         /**
-         * maximum allowed simultaneous connections to the webhook (defaults to 40)
+         * Максимальное число одновременных подключений к вебхуку.
          */
         'max_connections' => env('TELEGRAPH_WEBHOOK_MAX_CONNECTIONS', 40),
 
         /**
-         * List of event types for which the webhook should fire.
-         *
-         * Specify a null to receive all update types except `chat_member`, `message_reaction`,
-         * and `message_reaction_count` (by default).
+         * Типы обновлений вебхука. При null принимаются все стандартные типы, кроме chat_member,
+         * message_reaction и message_reaction_count.
          *
          * @see https://core.telegram.org/bots/api#setwebhook
          */
         'allowed_updates' => null,
 
         /*
-         * If enabled, Telegraph dumps received
-         * webhook messages to logs
+         * Запись входящих сообщений вебхука в журнал.
          */
         'debug' => env('TELEGRAPH_WEBHOOK_DEBUG', false),
     ],
 
     /*
-     * Sets HTTP request timeout when interacting with Telegram servers
+     * Таймаут HTTP-запроса к серверам Telegram.
      */
     'http_timeout' => env('TELEGRAPH_HTTP_TIMEOUT', 30),
 
     /*
-     * Sets HTTP proxy to be used when interacting with Telegram servers
-     * Example: 'http://user:password@host:port'
+     * HTTP-прокси для запросов к Telegram в формате http://user:password@host:port.
      */
     'http_proxy' => env('TELEGRAPH_HTTP_PROXY', null),
 
     /*
-     * Sets HTTP connection request timeout when interacting with Telegram servers
+     * Таймаут установки HTTP-соединения с Telegram.
      */
     'http_connection_timeout' => env('TELEGRAPH_HTTP_CONNECTION_TIMEOUT', 10),
 
     'security' => [
         /*
-         * if enabled, allows callback queries from unregistered chats
+         * Разрешение запросов обратного вызова от незарегистрированных чатов.
          */
         'allow_callback_queries_from_unknown_chats' => false,
 
         /*
-         * if enabled, allows messages and commands from unregistered chats
-         *
-         * Включено: без этого первый /start от ещё незнакомого боту
-         * пользователя 404-ится в WebhookHandler::setupChat() ещё до того,
-         * как App\Telegraph\WebhookHandler::start() успевает отработать
-         * (см. привязку Telegram в /account/profile).
+         * Разрешает сообщения и команды незарегистрированных чатов, включая первый /start для привязки Telegram
+         * в профиле.
          */
         'allow_messages_from_unknown_chats' => true,
 
@@ -132,11 +112,8 @@ return [
     ],
 
     /*
-     * Set model class for both TelegraphBot and TelegraphChat,
-     * to allow more customization.
-     *
-     * Bot model must be or extend `DefStudio\Telegraph\Models\TelegraphBot::class`
-     * Chat model must be or extend `DefStudio\Telegraph\Models\TelegraphChat::class`
+     * Модели бота и чата должны наследовать DefStudio\Telegraph\Models\TelegraphBot и TelegraphChat
+     * соответственно.
      */
     'models' => [
         'bot' => TelegramBot::class,
@@ -145,44 +122,40 @@ return [
 
     'storage' => [
         /**
-         * Default storage driver to be used for Telegraph data
+         * Драйвер хранения данных Telegraph по умолчанию.
          */
         'default' => 'file',
 
         'stores' => [
             'file' => [
                 /**
-                 * Telegraph cache driver to be used, must implement
-                 * DefStudio\Telegraph\Contracts\StorageDriver contract
+                 * Драйвер хранилища, реализующий DefStudio\Telegraph\Contracts\StorageDriver.
                  */
                 'driver' => FileStorageDriver::class,
 
                 /*
-                 * Laravel Storage disk to use. See /config/filesystems/disks for available disks
-                 * If 'null', Laravel default store will be used,
+                 * Диск Laravel из config/filesystems.php; null использует диск по умолчанию.
                  */
                 'disk' => 'local',
 
                 /**
-                 * Folder inside filesystem to be used as root for Telegraph storage
+                 * Корневой каталог хранения данных Telegraph на диске.
                  */
                 'root' => 'telegraph',
             ],
             'cache' => [
                 /**
-                 * Telegraph cache driver to be used, must implement
-                 * DefStudio\Telegraph\Contracts\StorageDriver contract
+                 * Драйвер хранилища, реализующий DefStudio\Telegraph\Contracts\StorageDriver.
                  */
                 'driver' => CacheStorageDriver::class,
 
                 /*
-                 * Laravel Cache store to use. See /config/cache/stores for available stores
-                 * If 'null', Laravel default store will be used,
+                 * Хранилище кеша Laravel из config/cache.php; null использует хранилище по умолчанию.
                  */
                 'store' => null,
 
                 /*
-                 * Prefix to be prepended to cache keys
+                 * Префикс ключей кеша.
                  */
                 'key_prefix' => 'tgph',
             ],
@@ -190,9 +163,8 @@ return [
     ],
 
     /**
-     * Attachment validation rules, Telegram bot API defaults are set
-     * can be changed to match higher limits when using a local bot
-     * API server (ref. https://core.telegram.org/bots/api#using-a-local-bot-api-server)
+     * Правила проверки вложений с ограничениями Telegram Bot API. Локальный сервер API допускает настройку
+     * повышенных лимитов: https://core.telegram.org/bots/api#using-a-local-bot-api-server.
      */
     'attachments' => [
         'thumbnail' => [
@@ -224,13 +196,11 @@ return [
     ],
 
     /*
-     * Sets preferences for commands
+     * Настройки команд.
      */
     'commands' => [
         /*
-         * Defines a list of characters that are the identifier of a command sent to the chat.
-         *
-         * Default is `/`
+         * Префиксы команд в сообщениях чата; стандартный префикс — /.
          */
         'start_with' => ['/'],
     ],

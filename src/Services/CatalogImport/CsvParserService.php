@@ -75,11 +75,6 @@ readonly class CsvParserService
                 $report->durationMs = (int) round((hrtime(true) - $startedAt) / 1_000_000);
 
                 if (! $options->dryRun) {
-                    // NB: after the ProductVariation collapse (flat products.* schema), this
-                    // event's signature dropped brandsCreated→manufacturersCreated and lost
-                    // variationsCreated/variationsUpdated entirely. If CatalogImportCompleted
-                    // (transferred separately into Support\Logging\Events) still declares the
-                    // old constructor, update it to match this call.
                     event(new CatalogImportCompleted(
                         path: $path,
                         processed: $report->processed,
@@ -176,8 +171,8 @@ readonly class CsvParserService
             if ($transactionMode === 'none') {
                 $ctx = $this->runPipeline($ctx, $stages);
             } else {
-                // One transaction per row guarantees no orphan Product without variation.
-                // Trade-off: O(n) transactions on large files. Use transaction_mode=chunk for bulk runs.
+                // Транзакция на строку обеспечивает совместное сохранение товара и связанных данных. Режим chunk
+                // сокращает число транзакций при массовом импорте.
                 $ctx = DB::transaction(fn () => $this->runPipeline($ctx, $stages));
             }
 
@@ -255,8 +250,8 @@ readonly class CsvParserService
      */
     private function runPostCommitStages(ImportContext $ctx, array $stages): void
     {
-        // dry-run: post-commit stages are skipped centrally here so individual stages
-        // don't need their own dryRun guards. skip and empty-stages checks follow.
+        // В режиме dry-run этапы после фиксации транзакции пропускаются централизованно. Затем проверяются
+        // пропуск строки и отсутствие этапов.
         if ($ctx->dryRun || $ctx->skip || $stages === []) {
             return;
         }

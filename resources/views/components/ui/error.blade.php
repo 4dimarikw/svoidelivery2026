@@ -1,8 +1,5 @@
-{{-- Priority chain: Alpine (ajax/enhance mode, live) → $errors (Blade, from
-     a real redirect) → nothing. `mode` is the ONLY key this library ever
-     reads via @aware — see CLAUDE.md. When mode is 'default' (or there's no
-     ancestor <x-ui.form> at all), this renders as a plain static Blade
-     partial with no Alpine bindings. --}}
+{{-- Приоритет ошибок: актуальное состояние Alpine, затем errors из Blade. mode наследуется через @aware; в режиме
+   default выводится статичное сообщение без Alpine-привязок. --}}
 @props([
     'name',
     'bag' => 'default',

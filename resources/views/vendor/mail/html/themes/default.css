@@ -1,12 +1,7 @@
-/* Свои Delivery brand theme for transactional emails (Fortify's
-   verify-email / reset-password notifications render through
-   x-mail::message, which pulls this file in by Laravel's default theme
-   resolution — see resources/views/vendor/mail/html/*.blade.php).
-   Values are the inlined equivalents of tailwind.config.js theme tokens;
-   email clients can't read CSS variables or Tailwind classes, so every
-   value here is a literal hex/px, not a token reference. */
+/* Тема писем «Свои Delivery» для уведомлений Fortify через x-mail::message. Цвета и размеры соответствуют
+   токенам tailwind.config.js и записаны явно для совместимости с почтовыми клиентами. */
 
-/* Base */
+/* Базовые стили. */
 
 body,
 body *:not(html):not(style):not(br):not(tr):not(code) {
@@ -17,7 +12,7 @@ body *:not(html):not(style):not(br):not(tr):not(code) {
 
 body {
     -webkit-text-size-adjust: none;
-    background-color: #F4EFE0; /* cream-100 — page background */
+    background-color: #F4EFE0; /* cream-100 — фон страницы. */
     color: #1A1410; /* ink-900 */
     height: 100%;
     line-height: 1.4;
@@ -42,7 +37,7 @@ a img {
     border: none;
 }
 
-/* Typography */
+/* Типографика. */
 
 h1 {
     color: #1A1410;
@@ -86,7 +81,7 @@ img {
     max-width: 100%;
 }
 
-/* Layout */
+/* Макет. */
 
 .wrapper {
     -premailer-cellpadding: 0;
@@ -107,7 +102,7 @@ img {
     width: 100%;
 }
 
-/* Header */
+/* Шапка. */
 
 .header {
     padding: 25px 0;
@@ -121,7 +116,7 @@ img {
     text-decoration: none;
 }
 
-/* Logo */
+/* Логотип. */
 
 .logo {
     height: 64px;
@@ -131,7 +126,7 @@ img {
     width: 64px;
 }
 
-/* Body */
+/* Основное содержимое. */
 
 .body {
     -premailer-cellpadding: 0;
@@ -149,11 +144,11 @@ img {
     -premailer-cellpadding: 0;
     -premailer-cellspacing: 0;
     -premailer-width: 570px;
-    background-color: #FAF6EC; /* cream-50 — card surface */
+    background-color: #FAF6EC; /* cream-50 — поверхность карточки. */
     border-color: rgba(26, 20, 16, .12); /* hairline */
     border-radius: 4px;
     border-width: 1px;
-    box-shadow: 0 6px 14px -6px rgba(15, 46, 55, .18), 0 2px 4px rgba(15, 46, 55, .08); /* teal-tinted shadow-md */
+    box-shadow: 0 6px 14px -6px rgba(15, 46, 55, .18), 0 2px 4px rgba(15, 46, 55, .08); /* Тень shadow-md с бирюзовым оттенком. */
     margin: 0 auto;
     padding: 0;
     width: 570px;
@@ -163,7 +158,7 @@ img {
     word-break: break-all;
 }
 
-/* Subcopy */
+/* Дополнительный текст. */
 
 .subcopy {
     border-top: 1px solid rgba(26, 20, 16, .12);
@@ -176,7 +171,7 @@ img {
     font-size: 14px;
 }
 
-/* Footer */
+/* Подвал. */
 
 .footer {
     -premailer-cellpadding: 0;
@@ -199,7 +194,7 @@ img {
     text-decoration: underline;
 }
 
-/* Tables */
+/* Таблицы. */
 
 .table table {
     -premailer-cellpadding: 0;
@@ -228,7 +223,7 @@ img {
     padding: 32px;
 }
 
-/* Buttons */
+/* Кнопки. */
 
 .action {
     -premailer-cellpadding: 0;
@@ -265,7 +260,7 @@ img {
 
 .button-green,
 .button-success {
-    background-color: #2C6371; /* teal-600 — brand has no distinct "success" green */
+    background-color: #2C6371; /* teal-600 — цвет успешного действия в палитре проекта. */
     border-bottom: 8px solid #2C6371;
     border-left: 18px solid #2C6371;
     border-right: 18px solid #2C6371;
@@ -283,7 +278,7 @@ img {
     color: #F4EFE0;
 }
 
-/* Panels */
+/* Панели. */
 
 .panel {
     border-left: #1F4E5C solid 4px; /* teal-700 */
@@ -309,7 +304,7 @@ img {
     padding-bottom: 0;
 }
 
-/* Utilities */
+/* Вспомогательные стили. */
 
 .break-all {
     word-break: break-all;

@@ -11,13 +11,8 @@ use Services\Untappd\DTOs\BeerResponseDTO;
 use Services\Untappd\Facades\Untappd;
 
 /**
- * Дозапрашивает Untappd по beer_id уже существующей записи и перезаписывает её поля —
- * единая точка fetch+persist для одного пива. До появления этого класса та же логика была
- * продублирована дважды: Services\CatalogImport\Stages\ResolveBeerStyleStage::fetchAndStore()
- * (первичный синк при импорте 1С по UntappdRef из CSV) и
- * App\MoonShine\Resources\UntappdBeer\Pages\UntappdBeerFormPage::resync() (кнопка в
- * MoonShine). Оба места сознательно не переведены на этот класс — стабильные существующие
- * пути, трогать их не входило в задачу.
+ * Запрашивает Untappd по beer_id существующей записи и сохраняет полученные поля. Импорт каталога и кнопка
+ * синхронизации в MoonShine используют собственные пути загрузки.
  */
 final class SyncUntappdBeerAction
 {

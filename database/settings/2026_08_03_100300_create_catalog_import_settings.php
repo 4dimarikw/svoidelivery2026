@@ -4,12 +4,8 @@ use Domain\Catalog\Enums\ProductStatus;
 use Spatie\LaravelSettings\Migrations\SettingsMigration;
 
 /**
- * Настройки импорта каталога 1С: маркеры сегментов "Категория" для
- * CategorySlugResolver (см. CategoryRegistry), предохранитель обнуления
- * остатков (см. ZeroOutStaleProductsAction), а также настройки, изначально
- * жившие в GeneralSettings (product_status, new_days, cache,
- * last_catalog_update, extra_charge) — они логически про каталог/импорт, а
- * не про «общие» настройки сайта. См. Infrastructure\Settings\CatalogImportSettings.
+ * Настройки импорта каталога 1С: маркеры категорий, защита обнуления остатков, статус товара, период новинок,
+ * кеш, время обновления и наценка. См. Infrastructure\Settings\CatalogImportSettings.
  */
 return new class extends SettingsMigration
 {

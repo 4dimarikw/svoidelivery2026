@@ -1,7 +1,5 @@
-{{-- Same value contract as <x-ui.input>. `selected` is marked by comparing
-     old($name, $value) against each option's key. A `multiple` select always
-     fills from the DOM under x-model — Alpine special-cases it, see
-     node_modules/alpinejs/src/directives/x-model.js. --}}
+{{-- Значение определяется по old(name, value); ключ совпавшего варианта получает selected. Множественный список
+   Alpine заполняет из DOM. См. node_modules/alpinejs/src/directives/x-model.js. --}}
 @props([
     'name',
     'options' => [],

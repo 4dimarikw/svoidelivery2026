@@ -353,11 +353,7 @@ class TelegramLoginTest extends TestCase
 
     public function test_a_normal_user_cannot_blank_their_email(): void
     {
-        // Для обычного (не-telegram) пользователя email обязателен — то же
-        // поведение, что было до появления Telegram-аккаунтов. requiredIf
-        // проверяется по текущему email ($user->email !== null), поэтому
-        // ничего не откатывается частично: невалидная отправка отклоняется
-        // целиком, включая имя.
+        // При наличии email поле обязательно. Невалидная отправка отклоняется целиком, включая изменение имени.
         $user = User::factory()->create();
         $originalEmail = $user->email;
         $originalName = $user->name;

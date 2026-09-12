@@ -11,24 +11,10 @@ use Illuminate\Support\Collection;
 use Infrastructure\Settings\CatalogImportSettings;
 
 /**
- * Проверяет инварианты реестра категорий, которые раньше держались только
- * «правильным порядком объявления» в config/catalog_import.php, а теперь,
- * когда реестр редактируется из MoonShine, могут быть нарушены руками:
- *
- * 1. type=alcohol + match_when ∈ {advent, no_abv, default} — не больше
- *    одного активного правила на каждое значение (CategorySlugResolver::
- *    slugForAlcoholWhen() берёт первое и молча затеняет остальные).
- * 2. type=alcohol + match_when=style — value (keyword) обязателен.
- * 3. type=contains — value (needle) обязателен, match_when должен быть пуст.
- * 4. type=accessory_title — value обязателен и глобально уникален среди
- *    активных правил (дубль тихо перезаписывается последним объявлением).
- * 5. CatalogImportSettings::fallback_slug должен указывать на существующую
- *    категорию. Активность категории — НЕ инвариант: импорт резолвит
- *    fallback по slug независимо от is_active (CategoryRegistry грузит
- *    категории без фильтра), а отключённая категория просто не показывает
- *    свои товары на витрине (ProductBuilder::inCategories()) — рабочий
- *    способ скрыть нераспознанные товары. Неактивный fallback — только
- *    заметка, не ошибка.
+ * Проверяет реестр категорий, редактируемый в MoonShine. Для alcohol значения advent, no_abv и default должны
+ * быть уникальны среди активных правил. Для alcohol/style и contains требуется value; у contains match_when
+ * должен быть пустым. Значения accessory_title обязательны и уникальны среди активных правил. fallback_slug
+ * должен указывать на существующую категорию; её неактивность допустима и скрывает товары с витрины.
  */
 class ValidateCategoryRegistryCommand extends Command
 {

@@ -16,53 +16,39 @@ use Laravel\Fortify\Fortify;
 
 class FortifyServiceProvider extends ServiceProvider
 {
-    /**
-     * Register any application services.
-     */
     public function register(): void
     {
-        //
     }
 
-    /**
-     * Bootstrap any application services.
-     */
     public function boot(): void
     {
         Fortify::createUsersUsing(CreateNewUser::class);
         Fortify::updateUserProfileInformationUsing(UpdateUserProfileInformation::class);
         Fortify::updateUserPasswordsUsing(UpdateUserPassword::class);
         Fortify::resetUserPasswordsUsing(ResetUserPassword::class);
-        // Inert with 2FA disabled — kept so enabling it later is a pure
-        // config change, no code to rediscover.
+        // Обработчик применяется при включённой двухфакторной аутентификации.
         Fortify::redirectUserForTwoFactorAuthenticationUsing(RedirectIfTwoFactorAuthenticatable::class);
 
         Fortify::loginView(fn () => view('auth.login'));
         Fortify::registerView(fn () => view('auth.register'));
         Fortify::requestPasswordResetLinkView(fn () => view('auth.forgot-password'));
 
-        // $request carries the reset token as a route parameter and the
-        // email as a query string param (see ResetPassword notification).
+        // Токен сброса приходит параметром маршрута, email — параметром строки запроса; см. ResetPassword.
         Fortify::resetPasswordView(fn (Request $request) => view('auth.reset-password', [
             'request' => $request,
         ]));
 
-        // Mandatory even though nothing links here: with 'views' => true,
-        // GET /user/confirm-password is registered unconditionally and
-        // Fortify has no default ConfirmPasswordViewResponse binding —
-        // without this the route 500s.
+        // При views=true Fortify регистрирует маршрут подтверждения пароля и требует явной привязки его
+        // представления.
         Fortify::confirmPasswordView(fn () => view('auth.confirm-password'));
 
-        // Same story as confirmPasswordView above: with emailVerification
-        // enabled, GET /email/verify is registered unconditionally and
-        // Fortify has no default VerifyEmailViewResponse binding.
+        // При включённой emailVerification Fortify требует явной привязки представления для GET /email/verify.
         Fortify::verifyEmailView(fn () => view('auth.verify-email'));
 
         RateLimiter::for('login', function (Request $request) {
             $throttleKey = Str::transliterate(Str::lower($request->input(Fortify::username())).'|'.$request->ip());
 
-            // Without a response callback, ThrottleRequests throws a bare
-            // 429 and the translated auth.throttle string is never used.
+            // Обработчик ответа возвращает переведённое сообщение auth.throttle при превышении лимита.
             return Limit::perMinute(5)->by($throttleKey)->response(
                 fn (Request $request, array $headers) => back()
                     ->withInput($request->except('password'))

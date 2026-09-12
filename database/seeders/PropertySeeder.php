@@ -9,9 +9,8 @@ use Illuminate\Database\Seeder;
 class PropertySeeder extends Seeder
 {
     /**
-     * From data/catalog-database-structure.md §4.10. `storage_table`/
-     * `storage_column` are metadata pointers for the application, not
-     * MySQL foreign keys — they say where a filterable value actually lives.
+     * Метаданные свойств из data/catalog-database-structure.md §4.10. storage_table и storage_column указывают
+     * расположение фильтруемого значения и не являются внешними ключами MySQL.
      */
     private const array PROPERTIES = [
         'volume' => ['name' => 'Объём', 'data_type' => 'reference', 'unit' => 'мл', 'storage_table' => 'products', 'storage_column' => 'volume_id'],
@@ -25,14 +24,9 @@ class PropertySeeder extends Seeder
     ];
 
     /**
-     * Category → property codes to attach, per §4.11's proposed initial set.
-     * `is_filterable` is true for everything here; the beer-only fields are
-     * left off non-beer categories entirely rather than attached-but-hidden.
-     *
-     * Keys are `categories.code`, derived by CategorySeeder as
-     * str_replace('-', '_', slug) — 'soft_drinks' here used to drift from
-     * the actual code ('non-alcoholic' slug → 'non_alcoholic' code), so that
-     * category silently got no properties; fixed to match reality.
+     * Начальные связи категорий и свойств из §4.11. Все перечисленные свойства доступны для фильтрации; пивные
+     * поля привязаны только к пивным категориям. Ключи соответствуют categories.code: дефисы slug заменены
+     * подчёркиваниями.
      */
     private const array CATEGORY_PROPERTIES = [
         'beer' => ['volume', 'container', 'abv', 'ibu', 'plato', 'ebc', 'beer_style', 'untappd'],
@@ -42,9 +36,6 @@ class PropertySeeder extends Seeder
         'sauce' => ['volume', 'container'],
     ];
 
-    /**
-     * Run the database seeds.
-     */
     public function run(): void
     {
         $properties = [];
@@ -63,10 +54,8 @@ class PropertySeeder extends Seeder
                 continue;
             }
 
-            // sync() would silently wipe admin-edited pivot values
-            // (is_required/is_filterable/is_visible/sort_order) on every
-            // re-run — only attach the initial set once, when the category
-            // has no properties yet.
+            // Начальные свойства привязываются только к категории без свойств. Это сохраняет значения связей,
+            // отредактированные администратором, при повторном запуске сидера.
             if ($category->properties()->exists()) {
                 continue;
             }

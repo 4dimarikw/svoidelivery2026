@@ -13,11 +13,8 @@ use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 /**
- * Шапка/аккаунт-панель (user-menu, mobile-nav, account-nav) раньше
- * дублировали SELECT'ы по favorites/addresses на каждый рендер — теперь
- * значения идут через FavoriteManager (мемоизирован на HTTP-запрос) и
- * User::addressesCount()/ordersCount() (мемоизированы на инстанс модели).
- * Тест фиксирует итоговое число запросов, а не только "не сломалось".
+ * Проверяет число запросов счётчиков шапки и аккаунта. FavoriteManager сохраняет результат на HTTP-запрос,
+ * User::addressesCount()/ordersCount() — на экземпляр модели.
  */
 class HeaderCounterQueriesTest extends TestCase
 {
@@ -44,17 +41,13 @@ class HeaderCounterQueriesTest extends TestCase
 
         $this->assertSame(1, $this->countTableQueries($log, 'favorites'));
         $this->assertSame(1, $this->countTableQueries($log, 'addresses'));
-        // 'home' не рендерит account-nav — только user-menu; счётчик заказов
-        // всё равно должен запрашиваться (и ровно один раз), т.к. user-menu
-        // теперь тоже его показывает.
+        // На home счётчик заказов в user-menu должен читаться ровно один раз.
         $this->assertSame(1, $this->countTableQueries($log, 'orders'));
     }
 
     public function test_account_profile_page_queries_favorites_and_addresses_once_each(): void
     {
-        // /account/profile рендерит и <x-ui.user-menu> (через header), и
-        // <x-ui.account-nav> — до фикса это удваивало оба счётчика. Заказы —
-        // тот же риск: у обоих меню теперь есть пункт "Мои заказы" со счётчиком.
+        // Страница профиля отображает user-menu и account-nav; общие счётчики должны читаться однократно.
         $user = User::factory()->create();
         Favorite::factory()->count(3)->create(['user_id' => $user->id]);
         Address::factory()->count(2)->create(['user_id' => $user->id]);

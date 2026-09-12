@@ -98,8 +98,7 @@ class ResolveContainerStageTest extends TestCase
 
     public function test_glass_bottle_detected_when_1c_omits_dot(): void
     {
-        // Регрессия: 1С иногда шлёт "ст бут." без точки после "ст" —
-        // раньше это проваливалось в общий маркер 'бут' => piece.
+        // Вариант «ст бут.» должен определять стеклянную тару, не попадая под общий маркер «бут».
         Container::query()->create(['code' => 'glass_bottle', 'name' => 'Стеклянная бутылка', 'is_active' => true]);
 
         $ctx = new ImportContext($this->row(['package' => 'кор. 12х0,45л ст бут.']));

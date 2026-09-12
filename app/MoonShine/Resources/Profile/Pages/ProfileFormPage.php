@@ -60,8 +60,7 @@ final class ProfileFormPage extends FormPage
         ];
     }
 
-    // Rules mirror App\Http\Controllers\Account\ProfileController::update()
-    // — same fields, same constraints, both entry points into the same table.
+    // Правила совпадают с ProfileController::update(): обе формы редактируют одни и те же данные профиля.
     protected function rules(DataWrapperContract $item): array
     {
         return [

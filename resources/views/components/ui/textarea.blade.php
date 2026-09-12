@@ -1,9 +1,5 @@
-{{-- Same value contract as <x-ui.input> (see that file's header). The one
-     difference: a textarea's value is its element content, not a `value`
-     attribute, so it's taken here as a `value` PROP and rendered as content —
-     slot content is deliberately not used as a value source, since that would
-     fight `x-model.fill` (which reads `el.value`, i.e. the text node) and is
-     an easy way to leak stray leading/trailing whitespace. --}}
+{{-- Контракт значения совпадает с x-ui.input. Свойство value выводится содержимым textarea; слот не используется
+   как источник значения, чтобы исключить лишние пробелы и сохранить работу x-model.fill. --}}
 @props([
     'name',
     'value' => null,

@@ -10,30 +10,17 @@ use Illuminate\Support\Facades\Cache;
 use Infrastructure\Settings\CatalogImportSettings;
 
 /**
- * Единая точка чтения реестра категорий. Раньше это были
- * `config('catalog_import.categories')` + `config('catalog_import.category_resolution')`;
- * теперь источник — таблицы `categories`/`category_match_rules` (флаги на
- * Category, правила в CategoryMatchRule) и `Infrastructure\Settings\CatalogImportSettings`
- * (глобальные маркеры сегментов, редактируются в MoonShine). Стейджи (Normalize,
- * Container, Volume, Brand, ProductIdentity, CategorySlugResolver) не читают
- * ни БД, ни settings напрямую — этот класс даёт им тот же типизированный
- * доступ, что и раньше, поменялось только наполнение.
- *
- * Результат кэшируется целиком (`CACHE_KEY`): catalog:import прогоняет
- * резолвер на каждой строке CSV (тысячи за запуск), поэтому запрос в БД на
- * строку недопустим. Кэш инвалидируется `Category`/`CategoryMatchRule::booted()`
- * и вручную при сохранении CatalogImportSettings (см. CatalogImportSettingsPage).
+ * Единая точка чтения реестра категорий из categories, category_match_rules и CatalogImportSettings. Этапы
+ * импорта получают типизированные данные через этот класс. Общий кеш исключает запросы к базе для каждой строки
+ * CSV; его очищают события Category и CategoryMatchRule и сохранение настроек импорта.
  */
 final class CategoryRegistry
 {
     public const CACHE_KEY = 'catalog.category_registry';
 
     /**
-     * Single invalidation entry point — clears both the cache entry AND the
-     * resolved container instance. CategoryRegistry is bound as a singleton
-     * (see AppServiceProvider) so catalog:import doesn't re-run the cache
-     * lookup on every CSV row; a bare Cache::forget() alone would leave that
-     * singleton holding a stale readonly copy for the rest of the process.
+     * Очищает запись кеша и singleton в контейнере. Сброс обоих уровней гарантирует загрузку актуального реестра
+     * при следующем обращении.
      */
     public static function flush(): void
     {
@@ -45,11 +32,8 @@ final class CategoryRegistry
     private readonly array $categories;
 
     /**
-     * Flat rule list in the SAME global priority order they were queried in
-     * (ORDER BY priority, id) — kept separate from $categories precisely so
-     * rulesOfType() doesn't have to reconstruct cross-category order from
-     * per-category grouping, which would silently fall back to category
-     * insertion (id) order instead of the admin-edited `priority` column.
+     * Плоский список правил в общем порядке priority, id. Хранится отдельно от категорий, чтобы rulesOfType()
+     * сохранял межкатегорийный порядок правил.
      *
      * @var list<array{slug: string, rule: array<string, mixed>}>
      */
@@ -109,13 +93,8 @@ final class CategoryRegistry
                 continue;
             }
 
-            // A blank value on a non-alcohol rule would otherwise compile
-            // into a match-everything branch downstream (accessory_title →
-            // empty keyword → empty regex alternative matches any title;
-            // contains → empty needle → str_contains(..., '') is always
-            // true). catalog:validate-registry flags this in the normal
-            // import path, but CategoryRegistry is constructible outside
-            // it, so guard here too.
+            // Пустое значение accessory_title или contains совпало бы с любым названием. Проверка нужна и при
+            // использовании реестра вне команды catalog:validate-registry.
             if ($rule->type !== CategoryMatchType::Alcohol && blank($rule->value)) {
                 continue;
             }
@@ -127,11 +106,8 @@ final class CategoryRegistry
                     'keyword' => $rule->match_when === CategoryMatchWhen::Style ? $rule->value : null,
                 ], static fn ($v) => $v !== null),
                 CategoryMatchType::Contains => ['type' => 'contains', 'needle' => $rule->value],
-                // CategorySlugResolver::resolveAccessoryTitleSlug() iterates
-                // rule['keywords'] ?? [] and flattens across all matching
-                // rules into one map regardless of grouping, so one DB row
-                // per keyword (vs. the old config's keywords-array-per-rule)
-                // produces an identical result.
+                // Каждая запись содержит одно ключевое слово. resolveAccessoryTitleSlug() объединяет слова
+                // подходящих правил в общую карту категорий.
                 CategoryMatchType::AccessoryTitle => ['type' => 'accessory_title', 'keywords' => [$rule->value]],
             }];
         }
@@ -195,9 +171,7 @@ final class CategoryRegistry
     }
 
     /**
-     * Все правила заданного type, в порядке `priority` (и `id` как
-     * тай-брейкер) — раньше порядок определялся объявлением в конфиге,
-     * теперь явной колонкой `category_match_rules.priority`.
+     * Правила заданного type в порядке priority, затем id.
      *
      * @return list<array{slug: string, rule: array<string, mixed>}>
      */

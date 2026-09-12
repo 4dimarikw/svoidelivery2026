@@ -190,7 +190,7 @@ final class SiteContentSeeder extends Seeder
             }
 
             // route_name === null — глобальная секция (не привязана к
-            // странице, см. миграцию make_site_sections_route_name_nullable),
+            // странице, см. миграцию 2026_08_06_120000_create_site_content_tables),
             // Route::has()-проверка и дедуп по паре route_name+fragment для
             // неё не имеют смысла: уникальность и так гарантирует key выше.
             // Явно null, а не пустая строка — опечатка/пропуск в fixture

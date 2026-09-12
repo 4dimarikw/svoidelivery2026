@@ -76,10 +76,8 @@ class ProfilePageTest extends TestCase
 
     public function test_ajax_update_returns_blank_200_without_x_redirect(): void
     {
-        // resources/js/ui.js: без заголовка X-Redirect uiForm.submit() не
-        // навигирует — только явный header означает редирект. Раньше
-        // response.url совпадал с PUT-only экшеном формы, и переход по нему
-        // GET'ом давал 405 (см. CLAUDE.md, "Private account area").
+        // uiForm.submit() переходит на другую страницу только по X-Redirect; URL ответа PUT-запроса не
+        // используется для навигации.
         $user = User::factory()->create();
 
         $response = $this->actingAs($user)

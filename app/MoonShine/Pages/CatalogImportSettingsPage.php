@@ -24,12 +24,8 @@ use MoonShine\UI\Fields\Text;
 use Services\CatalogImport\CategoryRegistry;
 
 /**
- * Настройки импорта каталога 1С: маркеры сегментов "Категория" для
- * CategorySlugResolver (читает их CategoryRegistry), предохранитель
- * обнуления остатков (см. ZeroOutStaleProductsAction), а также настройки,
- * перенесённые из GeneralSettings (product_status, new_days,
- * cache, last_catalog_update) — они логически про каталог/импорт, а не про
- * «общие» настройки сайта. Единственный писатель CatalogImportSettings.
+ * Настройки импорта каталога 1С: маркеры сегментов для CategorySlugResolver, защита обнуления остатков, статус
+ * товаров, период новинок, кеш и время обновления. Страница сохраняет CatalogImportSettings.
  */
 #[Icon('cog-6-tooth')]
 #[Group('moonshine.group.catalog', 'squares-2x2', translatable: true)]

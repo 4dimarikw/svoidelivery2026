@@ -87,7 +87,7 @@ final class UntappdBeerFormPage extends FormPage
             'style' => ['nullable', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
             'rating_count' => ['required', 'integer', 'min:0'],
-            // column is decimal(3,2) -> max 9.99, Untappd's rating is 0-5.
+            // Колонка decimal(3,2) допускает максимум 9,99; рейтинг Untappd находится в диапазоне 0–5.
             'rating_score' => ['nullable', 'numeric', 'between:0,9.99'],
             'label' => ['nullable', 'string', 'max:255'],
             'url' => ['nullable', 'string', 'max:2048'],

@@ -31,9 +31,6 @@ use SocialiteProviders\Telegram\Provider as TelegramProvider;
 
 class AppServiceProvider extends ServiceProvider
 {
-    /**
-     * Register any application services.
-     */
     public function register(): void
     {
         $this->app->singleton(RemoteImageDownloader::class);
@@ -53,11 +50,8 @@ class AppServiceProvider extends ServiceProvider
             OrderServiceProvider::class
         );
 
-        // Illuminate\Pipeline\Pipeline::carry() re-make()s every stage per
-        // CSV row, so a transient CategoryRegistry would re-run its
-        // Cache::rememberForever() lookup thousands of times per import.
-        // Singleton + explicit CategoryRegistry::flush() (see that class)
-        // keeps it to one lookup per process/until invalidated.
+        // Pipeline создаёт этапы для каждой строки CSV. Singleton CategoryRegistry ограничивает чтение кеша
+        // одним обращением на процесс до явного вызова flush().
         $this->app->singleton(CategoryRegistry::class);
 
         // Тот же мотив, что у CategoryRegistry выше — singleton +
@@ -77,9 +71,6 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(LoadSiteFooter::class);
     }
 
-    /**
-     * Bootstrap any application services.
-     */
     public function boot(): void
     {
         // Регистрация telegram-драйвера Socialite (форма для Laravel 11+, см.

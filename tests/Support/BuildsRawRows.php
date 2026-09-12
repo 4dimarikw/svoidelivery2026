@@ -5,9 +5,8 @@ namespace Tests\Support;
 use Services\CatalogImport\Dto\RawRow;
 
 /**
- * Строит RawRow из семантических ключей (совпадающих с config('catalog_import.columns'))
- * вместо русских заголовков CSV — так тест стейджа не завязан на текст заголовка.
- * Вынесено из tests/Unit/CategorySlugResolverTest.php, где жил оригинал.
+ * Создаёт RawRow из семантических ключей catalog_import.columns, чтобы тесты этапов не зависели от русских
+ * заголовков CSV.
  */
 trait BuildsRawRows
 {

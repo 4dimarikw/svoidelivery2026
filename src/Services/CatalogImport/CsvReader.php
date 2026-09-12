@@ -15,8 +15,8 @@ class CsvReader
      */
     public function read(string $path, string $encoding = 'Windows-1251', string $delimiter = ';', ?Closure $onMalformedRow = null): Generator
     {
-        // realpath rejects stream wrappers (php://, phar://, http://) — they return false.
-        // Caller is responsible for directory whitelisting if this is ever exposed via HTTP upload.
+        // realpath отклоняет обёртки потоков php://, phar:// и http://. При использовании через HTTP вызывающий
+        // код должен ограничивать допустимые каталоги.
         $realPath = realpath($path);
         if ($realPath === false) {
             throw new RuntimeException("CSV file not found: {$path}");
@@ -43,7 +43,7 @@ class CsvReader
                 }
 
                 if ($headers === null) {
-                    // Strip UTF-8 BOM from first header if present
+                    // Удаление UTF-8 BOM из первого заголовка.
                     $first = $row[0] ?? '';
                     if (str_starts_with($first, "\xEF\xBB\xBF")) {
                         $row[0] = substr($first, 3);

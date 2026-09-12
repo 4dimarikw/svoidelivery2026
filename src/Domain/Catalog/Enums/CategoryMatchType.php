@@ -3,9 +3,7 @@
 namespace Domain\Catalog\Enums;
 
 /**
- * Rule type interpreted by Services\CatalogImport\CategorySlugResolver, in
- * fixed priority order: Alcohol → Contains → AccessoryTitle → fallback.
- * See CategorySlugResolver::resolve() for the branch logic each type feeds.
+ * Тип правила CategorySlugResolver. Порядок проверки: Alcohol → Contains → AccessoryTitle → резервная категория.
  */
 enum CategoryMatchType: string
 {

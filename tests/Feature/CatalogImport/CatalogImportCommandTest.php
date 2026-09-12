@@ -72,7 +72,7 @@ class CatalogImportCommandTest extends TestCase
         Bus::fake();
         config(['catalog_import.stages' => ['MissingImportStageForFailureTest']]);
         $path = $this->writeCatalogCsv([$this->validCatalogRow()]);
-        // Full import uses TRUNCATE, which implicitly commits MySQL's test transaction.
+        // Полный импорт использует TRUNCATE, который неявно фиксирует тестовую транзакцию MySQL.
         $this->artisan('catalog:import', ['path' => $path, '--categories' => 'beer'])->assertExitCode(1);
         Bus::assertNotDispatched(UpdateCartPricesJob::class);
     }

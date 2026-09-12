@@ -14,8 +14,7 @@
     };
 @endphp
 
-{{-- flex + gap avoided deliberately (Safari < 14.1, see CLAUDE.md) — spacing
-     between icon and body is a margin on the body instead. --}}
+{{-- Интервал между иконкой и текстом задан margin для совместимости с Safari без flex-gap. --}}
 <div
     x-data="{ show: true }"
     x-show="show"

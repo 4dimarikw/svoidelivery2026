@@ -69,7 +69,7 @@ class SiteSection extends Model
     public function url(): ?string
     {
         // route_name = null — глобальная секция (см. миграцию
-        // make_site_sections_route_name_nullable), у неё в принципе нет
+        // 2026_08_06_120000_create_site_content_tables), у неё в принципе нет
         // собственного URL; такая секция никогда не участвует в меню, но
         // метод не должен падать, если его всё же вызовут. Не варнинг —
         // это ожидаемое состояние, а не рассинхрон с роутами.

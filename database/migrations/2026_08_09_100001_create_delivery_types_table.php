@@ -53,8 +53,6 @@ return new class extends Migration
 
     public function down(): void
     {
-        if (! app()->isProduction()) {
-            Schema::dropIfExists('delivery_types');
-        }
+        Schema::dropIfExists('delivery_types');
     }
 };

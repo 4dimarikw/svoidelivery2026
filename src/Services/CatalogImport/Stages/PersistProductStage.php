@@ -11,32 +11,11 @@ use Services\CatalogImport\Support\VolumeText;
 use Support\ValueObjects\Price;
 
 /**
- * Сохранение Product: создаёт новую плоскую запись в таблице products
- * (эта схема не разделяет товар/вариацию — price/stock/volume/container живут
- * на самом товаре) либо частично обновляет уже существующую.
- *
- * Логика:
- * Требует $ctx->brand и $ctx->category (иначе skip); пустой external_code
- * (КодТовара) тоже skip — это ключ уникальности повторного импорта.
- * Ключ уникальности: [external_code].
- * Товар теперь редактируется из админки (ProductResource), поэтому повторный
- * импорт больше не переписывает карточку целиком — иначе правки admin'а
- * терялись бы на следующем catalog:import. Для уже существующего товара
- * обновляются оперативные поля ($syncData): price/stock_quantity/in_stock,
- * весь объёмный блок (volume_id/container_id/package_units/packaging_raw —
- * 1С иногда изначально присылает неверный объём тары и правит его в
- * последующих выгрузках), а также name/article — но БЕЗ упоминания объёма
- * (VolumeText::strip(), см. DetectVolumeMismatchStage, которая параллельно
- * фиксирует расхождение объёма между Упаковкой и Наименованием/Артикулом).
- * ВАЖНО: это значит, что правка name/article из админки может быть
- * переписана следующим catalog:import, если 1С прислал другой текст —
- * осознанный трейд-офф ради синхронизации объёма. description/category_id/
- * status/flags/brand по-прежнему трогает только create-ветка (первый
- * импорт) или сама админка.
- * `flags` берётся из $ctx->attributes['flags'] (см. ResolveFlagsStage) и,
- * как и остальные создаваемые-один-раз поля, не пересчитывается повторным
- * импортом — если нужно освежить flags у существующего товара, это делает
- * админка, а не catalog:import.
+ * Создаёт товар или обновляет его по external_code. Требует brand, category и непустой код. Повторный импорт
+ * обновляет price, stock_quantity, in_stock, volume_id, container_id, package_units, packaging_raw, name и
+ * article; VolumeText удаляет упоминания объёма из текстов. Правки этих полей в админке могут быть перезаписаны
+ * выгрузкой 1С. description, category_id, status, flags и brand задаются импортом только при создании и затем
+ * редактируются в админке.
  */
 final class PersistProductStage implements ImportStage
 {

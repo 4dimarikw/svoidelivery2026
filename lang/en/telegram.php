@@ -1,8 +1,6 @@
 <?php
 
-// Copy for bot replies (App\Telegraph\WebhookHandler) — a different audience
-// than account.php (site page copy) or ui.php (<x-ui.*> component-internal
-// strings). Deliberately its own file.
+// Тексты ответов Telegram-бота для App\Telegraph\WebhookHandler.
 
 return [
     'already_linked' => 'This account is already linked to this chat.',

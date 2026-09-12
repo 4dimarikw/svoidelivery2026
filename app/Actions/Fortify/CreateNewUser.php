@@ -16,7 +16,7 @@ class CreateNewUser implements CreatesNewUsers
     use PasswordValidationRules;
 
     /**
-     * Validate and create a newly registered user.
+     * Проверяет данные и создаёт зарегистрированного пользователя.
      *
      * @param  array<string, string>  $input
      *
@@ -39,11 +39,8 @@ class CreateNewUser implements CreatesNewUsers
             ],
             'password' => $this->passwordRules(),
 
-            // One-time consent gate (design system §08). Two separate
-            // checkboxes, not one combined "age + terms" checkbox — some
-            // jurisdictions treat bundled consents as improper. Validated
-            // only; never persisted — see the create() call below and
-            // User::$fillable, neither of which references these keys.
+            // Возраст и принятие условий подтверждаются отдельными флажками. Согласия проверяются при
+            // регистрации и не сохраняются в модели пользователя.
             'age_confirmed' => ['accepted'],
             'terms_accepted' => ['accepted'],
 
@@ -54,9 +51,8 @@ class CreateNewUser implements CreatesNewUsers
             // SmartCaptchaRule сам no-op'ает в этом случае.
             'smart-token' => [new SmartCaptchaRule],
         ], [
-            // Custom messages live in the app-owned lang/{ru,en}/account.php,
-            // not validation.php — that file is managed by laravel-lang and
-            // gets overwritten by `composer post-update-cmd` → `artisan lang:update`.
+            // Сообщения приложения находятся в lang/{ru,en}/account.php. Файл validation.php управляется
+            // laravel-lang и перезаписывается командой lang:update.
             'age_confirmed.accepted' => __('account.register.age_gate_required'),
             'terms_accepted.accepted' => __('account.register.terms_gate_required'),
         ])->validate();

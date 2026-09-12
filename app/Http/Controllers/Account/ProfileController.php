@@ -23,9 +23,7 @@ class ProfileController extends Controller
         $bot = ! $user->telegramLinked() ? TelegramBot::current() : null;
 
         return view('account.profile', [
-            // profile can be null — legacy users, or users created before the
-            // CreateUserProfile listener existed. The view/form must be
-            // null-safe rather than assume it always exists.
+            // Профиль может отсутствовать; представление и форма должны корректно обрабатывать null.
             'profile' => $user->profile,
             'telegramBotUsername' => $bot?->username,
             'telegramLinkCode' => $bot ? TelegramLinkCode::issue($user, $bot) : null,
@@ -76,8 +74,7 @@ class ProfileController extends Controller
         $request->user()->profile()->updateOrCreate([], $validated);
 
         if ($request->wantsJson()) {
-            // Ajax path: Fortify-style blank success, no session('status') —
-            // the form shows its own inline success via Alpine `status`.
+            // При AJAX-запросе форма показывает успех через Alpine status; сообщение в сессии не требуется.
             return response()->json([], 200);
         }
 

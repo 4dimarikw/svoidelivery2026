@@ -8,13 +8,8 @@ use RuntimeException;
 use SimpleXMLElement;
 
 /**
- * Сборка XML заказа для 1С — выделена из UploadOrderToFTP, чтобы тот же
- * файл можно было приложить к письму-уведомлению (см.
- * HandleOrderCreated::notifyAdmin()), а не только заливать на FTP.
- *
- * Ожидает заказ с уже подгруженными orderCustomer/orderItems/
- * deliveryType — сам их не грузит (ответственность вызывающего, как и
- * раньше у UploadOrderToFTP::execute()).
+ * Собирает XML заказа для 1С и вложения в уведомления. Вызывающий код должен загрузить связи orderCustomer,
+ * orderItems и deliveryType.
  */
 class BuildOrderXml
 {
@@ -133,12 +128,8 @@ class BuildOrderXml
     }
 
     /**
-     * Добавление текстового узла с XML-экранированием значения.
-     *
-     * SimpleXMLElement::addChild() экранирует "<" сам, но "&" считает
-     * началом entity-ссылки — сырой "&" в значении рвёт узел (PHP-warning,
-     * узел остаётся пустым). Через этот хелпер обязаны идти все скалярные
-     * значения, не только Comment, как было раньше.
+     * Добавляет текстовый узел с XML-экранированием. SimpleXMLElement::addChild() воспринимает сырой амперсанд
+     * как начало ссылки на сущность, поэтому все скалярные значения проходят через этот метод.
      */
     private function addTextChild(SimpleXMLElement $parent, string $name, ?string $value): SimpleXMLElement
     {

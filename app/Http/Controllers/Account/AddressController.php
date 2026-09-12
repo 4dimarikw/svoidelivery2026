@@ -35,9 +35,8 @@ class AddressController extends Controller
         $request->user()->addresses()->create($this->validated($request));
 
         if ($request->wantsJson()) {
-            // The only ajax form in this feature that navigates elsewhere —
-            // X-Redirect is the sole channel uiForm.submit() will follow
-            // (see resources/js/ui.js — no fallback to response.url).
+            // Форма переходит на другую страницу только по заголовку X-Redirect, который обрабатывает
+            // uiForm.submit().
             return response()->json([], 200)->header('X-Redirect', route('account.addresses.index'));
         }
 
@@ -58,8 +57,7 @@ class AddressController extends Controller
         $address->update($this->validated($request));
 
         if ($request->wantsJson()) {
-            // Stays on the edit form, inline success — same pattern as the
-            // profile page, not a redirect.
+            // Форма остаётся на странице редактирования и показывает сообщение об успехе.
             return response()->json([], 200);
         }
 
@@ -72,8 +70,7 @@ class AddressController extends Controller
 
         $address->delete();
 
-        // No wantsJson branch — this form is deliberately mode="default"
-        // (plain POST-spoofed-DELETE + confirm()), not ajax.
+        // Форма использует обычную отправку с подменой метода на DELETE и подтверждением confirm().
         return redirect()->route('account.addresses.index')->with('status', 'address-deleted');
     }
 

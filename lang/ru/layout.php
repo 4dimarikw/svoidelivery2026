@@ -1,9 +1,7 @@
 <?php
 
-// App-owned header/mobile-nav chrome copy. Same ownership rule as account.php —
-// not in auth.php/validation.php (laravel-lang) and not in ui.php
-// (<x-ui.*> component-internal strings only). Footer text is CMS-driven now
-// (Domain\Content, type=footer_info, see resources/views/components/layouts/footer.blade.php).
+// Тексты шапки и мобильной навигации. Тексты подвала управляются CMS через Domain\Content, тип footer_info; см.
+// layouts/footer.blade.php.
 
 return [
     'nav' => [
@@ -12,7 +10,7 @@ return [
         'account' => 'Личный кабинет',
         'favorites' => 'Избранное',
         'cart' => 'Корзина',
-        // Добавлены для <x-ui.mobile-nav> — нижнего меню на мобиле.
+        // Нижняя мобильная навигация x-ui.mobile-nav.
         'catalog' => 'Каталог',
         'profile' => 'Профиль',
         'about' => 'О нас',

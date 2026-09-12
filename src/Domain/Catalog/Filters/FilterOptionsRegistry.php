@@ -12,29 +12,10 @@ use Domain\Catalog\Models\Volume;
 use Illuminate\Support\Facades\Cache;
 
 /**
- * Кешированные значения справочных фильтров каталога (categories, beer_styles,
- * manufacturers, volumes, containers) — раньше каждый из пяти AbstractFilter::values()
- * бил в БД напрямую при каждом рендере страницы каталога (5 SELECT на запрос).
- * Справочники меняются только из MoonShine-админки и при импорте — редко,
- * поэтому кешируем целиком, по образцу Services\CatalogImport\CategoryRegistry.
- *
- * Один общий CACHE_KEY на все пять справочников, а не пять отдельных ключей —
- * при CACHE_STORE=database (или любом другом сторе без Cache::many()) отдельные
- * ключи означали бы пять запросов к кешу вместо пяти запросов к самим таблицам,
- * то есть без выигрыша. Плюс мемоизация на HTTP-запрос через контейнер
- * (singleton) — items() зовёт values() для нескольких фильтров, и без неё
- * кеш читался бы 5 раз даже при hit.
- *
- * Инвалидация — через booted()-хуки на Category/BeerStyle/Manufacturer/Volume/
- * Container (saved/deleted). Массовые правки через query builder
- * (Container::query()->update(...)) эти хуки не поднимают — в таком случае
- * нужен явный flush() или `php artisan cache:clear`.
- *
- * Состояние хранится в контейнере (singleton, см. AppServiceProvider), не в
- * голой static-переменной — по тому же образцу, что и CategoryRegistry:
- * flush() дёргает app()->forgetInstance(), а не просто обнуляет свойство,
- * так что следующий app(self::class) гарантированно строит новый инстанс
- * с чтением Cache::rememberForever() заново, а не держит устаревшую копию.
+ * Кеш справочных фильтров categories, beer_styles, manufacturers, volumes и containers. Общий CACHE_KEY и
+ * singleton ограничивают число чтений кеша. События saved/deleted моделей очищают кеш; массовые изменения через
+ * построитель запросов требуют явного flush(). Метод flush() также сбрасывает экземпляр в контейнере, чтобы
+ * последующее обращение загрузило актуальные данные.
  */
 final class FilterOptionsRegistry
 {

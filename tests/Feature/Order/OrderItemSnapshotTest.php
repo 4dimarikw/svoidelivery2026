@@ -95,7 +95,7 @@ class OrderItemSnapshotTest extends TestCase
     public function test_replacing_product_refreshes_snapshot_but_other_edits_do_not(): void
     {
         $item = OrderItem::factory()->create();
-        $item->load('product'); // Stale relation must not supply replacement snapshot.
+        $item->load('product'); // Загруженная связь с другим товаром не должна использоваться для нового снимка позиции.
         $replacement = Product::factory()->create(['name' => 'Замена', 'brand' => null]);
         $item->update(['product_id' => $replacement->id]);
         $this->assertSame('Замена', $item->fresh()->product_title);

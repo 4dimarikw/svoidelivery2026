@@ -6,13 +6,8 @@ use Domain\Content\Models\ContentBlock;
 use Domain\Content\Models\SiteSection;
 
 /**
- * Отдаёт единственный опубликованный блок глобальной секции `footer`
- * (SiteSection.route_name = null, см. миграцию
- * make_site_sections_route_name_nullable) — калька с LoadSiteMenu: вынесено
- * из LoadPublicPage (тот отдаёт секции по конкретному route_name, подвал же
- * должен быть виден на любой странице сразу), singleton
- * (AppServiceProvider::register()), мемоизация на HTTP-запрос, без
- * persistent-кеша по той же причине, что у LoadSiteMenu.
+ * Загружает опубликованный блок глобальной секции footer с route_name=null для публичных страниц. Singleton
+ * сохраняет результат в пределах HTTP-запроса; постоянный кеш не используется.
  */
 final class LoadSiteFooter
 {

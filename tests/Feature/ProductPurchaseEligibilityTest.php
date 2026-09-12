@@ -78,7 +78,7 @@ class ProductPurchaseEligibilityTest extends TestCase
         $product = $this->product();
         cart()->increment($product);
         $token = cart()->checkoutToken();
-        cart()->cartItems(); // Intentionally warm product and reference caches.
+        cart()->cartItems(); // Предварительно заполняем кеш товара и справочников.
         $address = Address::factory()->for(auth()->user())->create();
         $this->disable($product, $state);
         $cartBefore = Cart::sole()->getAttributes();

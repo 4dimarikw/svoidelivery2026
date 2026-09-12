@@ -5,7 +5,7 @@ return [
         ['key' => 'home', 'title' => 'Каталог', 'route_name' => 'home', 'fragment' => '', 'sort_order' => 10],
         ['key' => 'about', 'title' => 'О нас', 'route_name' => 'about', 'fragment' => '', 'sort_order' => 0],
         // route_name = null — глобальная секция, не привязанная к странице
-        // (см. миграцию make_site_sections_route_name_nullable), нужна
+        // (см. миграцию 2026_08_06_120000_create_site_content_tables), нужна
         // подвалу сайта (Domain\Content\Actions\Content\LoadSiteFooter).
         ['key' => 'footer', 'title' => 'Подвал сайта', 'route_name' => null, 'fragment' => '', 'sort_order' => 30],
     ],

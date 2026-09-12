@@ -113,10 +113,8 @@ final class CategoryFormPage extends FormPage
                                 Switcher::make(__('moonshine.category.fields.pivot_is_visible'), 'is_visible'),
                                 Number::make(__('moonshine.category.fields.pivot_sort_order'), 'sort_order'),
                             ])
-                            // pivotModalMode() needs the main record saved
-                            // first — the field hides itself on the create
-                            // form until then. Fine here: category has to
-                            // exist before it can have properties attached.
+                            // pivotModalMode() показывает поле после сохранения категории: свойства
+                            // привязываются к существующей записи.
                             ->pivotModalMode()
                             ->creatable(),
                     ])->icon('adjustments-vertical')->canSee(fn() => $isAdmin),

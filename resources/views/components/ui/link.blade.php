@@ -12,9 +12,8 @@
         default => 'text-teal-800 hover:text-ink-900',
     };
 
-    // match(), not "text-$size" interpolation — Tailwind's JIT scanner can't
-    // see a class name assembled at runtime; every sibling component (chip,
-    // badge, alert) resolves its size/tone the same explicit way.
+    // Полные имена классов в match() доступны сканеру Tailwind; сборка имени из переменных во время выполнения
+    // не поддерживается.
     $sizeClass = match ($size) {
         'micro' => 'text-micro',
         'body-m' => 'text-body-m',

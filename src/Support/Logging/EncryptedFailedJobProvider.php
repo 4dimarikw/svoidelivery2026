@@ -27,7 +27,7 @@ final class EncryptedFailedJobProvider extends DatabaseUuidFailedJobProvider
         if ($record !== null) {
             $envelope = json_decode($record->payload, true);
             if (isset($envelope['encrypted_failed_payload'])) {
-                // Расшифровываем только для повторного запуска. Старые записи совместимы.
+                // Расшифровывает данные для повторного запуска; поддерживает также записи без шифрования.
                 $record->payload = Crypt::decryptString($envelope['encrypted_failed_payload']);
             }
         }

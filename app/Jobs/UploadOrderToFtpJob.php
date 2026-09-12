@@ -12,7 +12,9 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 
-/** Старые сериализованные jobs содержат orderId. Сеть обслуживает новый worker outbox. */
+/**
+ * Задания с orderId обеспечивают привязку к заказу; сетевую отправку выполняет обработчик сохранённых доставок.
+ */
 class UploadOrderToFtpJob implements ShouldBeUnique, ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;

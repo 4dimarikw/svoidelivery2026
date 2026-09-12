@@ -172,13 +172,8 @@ class CheckoutTest extends TestCase
         $this->assertSame('pending', $delivery->state);
         $this->assertCount(0, Storage::disk('ftp')->allFiles(config('order.ftp_upload.dir')));
 
-        // Та же цепочка → notifyAdmin() — письмо ставится в очередь, не
-        // отправляется синхронно (см. HandleOrderCreated::notifyAdmin()).
-        // amount тоже проверяем здесь: регрессия на OrderProcess::run() —
-        // без её $order->refresh() перед event(new OrderCreated($order))
-        // $mail->order->amount оставался бы 0 (снят PersistOrder ещё до
-        // появления позиций), хотя в БД (см. $order->fresh() выше) сумма
-        // всегда была верной — два разных объекта Order в памяти.
+        // Уведомление ставится в очередь. OrderProcess обновляет модель перед OrderCreated, чтобы письмо
+        // получило сумму, пересчитанную после создания позиций.
         Mail::assertQueued(
             NewOrderCreated::class,
             fn (NewOrderCreated $mail) => $mail->order->id === $order->id
@@ -187,12 +182,8 @@ class CheckoutTest extends TestCase
     }
 
     /**
-     * Регрессия: HTML-форма шлёт все значения строками, включая числовой
-     * address_id ('1', не 1) — CustomerDTO::fromRequest() раньше падал
-     * TypeError'ом на строгой типизации (?int + strict_types=1), потому
-     * что не приводил его к int. Телефон тоже проверяем в «сыром» виде
-     * с пробелами/скобками — prepareForValidation() должен привести его
-     * к каноническому +7XXXXXXXXXX перед сохранением.
+     * HTML-форма передаёт address_id строкой: CustomerDTO должен привести его к int. Телефон с пробелами и
+     * скобками нормализуется в +7XXXXXXXXXX перед сохранением.
      */
     public function test_store_accepts_string_typed_form_fields(): void
     {
@@ -410,8 +401,7 @@ class CheckoutTest extends TestCase
         $response->assertSessionHasErrors('checkout');
         $this->assertDatabaseMissing('orders', ['user_id' => $user->id]);
 
-        // Раньше отказ по бизнес-правилу нигде не логировался — единственная
-        // точка, где накапливается статистика отказов оформления.
+        // Отказ по бизнес-правилу записывается в журнал оформления.
         Event::assertDispatched(OrderCreationFailed::class, function (OrderCreationFailed $event) use ($user): bool {
             $this->assertSame($user->id, $event->userId);
             $this->assertSame('business_rejected', $event->reason);
@@ -422,11 +412,8 @@ class CheckoutTest extends TestCase
     }
 
     /**
-     * Регрессия: CheckProductInStock раньше смотрел только на флаг in_stock,
-     * не на фактический остаток — заказ на количество, превышающее склад
-     * (другой заказ успел частично раскупить товар между добавлением в
-     * корзину и оформлением), проходил, а списание в
-     * UpdateProductStockQuantity молча упиралось в max(0, ...).
+     * Оформление отклоняется, если запрошенное количество превышает текущий остаток, включая изменение остатков
+     * после добавления в корзину.
      */
     public function test_rejects_when_cart_quantity_exceeds_available_stock(): void
     {
@@ -457,10 +444,8 @@ class CheckoutTest extends TestCase
     }
 
     /**
-     * Регрессия: UpdateProductStockQuantity раньше писал только
-     * stock_quantity, оставляя in_stock=true у полностью раскупленного
-     * товара — тот расходился с Product::availableStock() и, например,
-     * оставался кликабельным в каталоге (см. Domain\Cart\CartManager).
+     * Полное списание остатка устанавливает stock_quantity=0 и in_stock=false, согласуя доступность товара с
+     * Product::availableStock().
      */
     public function test_store_clears_in_stock_flag_when_order_exhausts_the_stock(): void
     {

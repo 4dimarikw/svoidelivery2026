@@ -76,9 +76,7 @@ class ProductSeoTest extends TestCase
             "Пиво 'Балтика' Жигулёвское 0,5 л ст. бут.",
             $seo->title,
         );
-        // title (products.name) — единственный источник в description; ни
-        // производитель, ни пивные поля (style/abv/объём) там больше не
-        // участвуют (SyncProductSeoAction::buildDescription()).
+        // Описание SEO строится из названия товара; производитель и пивные атрибуты в него не входят.
         $this->assertSame(
             'Пиво Жигулёвское. ',
             $seo->description,
@@ -133,9 +131,7 @@ class ProductSeoTest extends TestCase
 
     public function test_changing_price_does_not_touch_seo(): void
     {
-        // Цена не входит ни в один SEO-текст (магазин не занимается оптом,
-        // цену и «купить» из шаблона убрали) — реальное изменение цены не
-        // должно трогать seo, как и в обычном price/stock-ре-импорте.
+        // Изменение цены не запускает синхронизацию SEO: цена не входит в SEO-тексты.
         $product = Product::factory()->create(['price' => 100]);
         $seoId = Seo::where('url', route('product.show', $product, absolute: false))->value('id');
 

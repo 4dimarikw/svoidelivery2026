@@ -1,9 +1,7 @@
 <?php
 
-// App-owned catalog page copy (home / route `home`). Not in ui.php — that's
-// reserved for strings internal to <x-ui.*>, not page copy. Not in
-// auth.php/validation.php/pagination.php — those are managed by laravel-lang
-// and get overwritten on `composer post-update-cmd` → `artisan lang:update`.
+// Тексты страницы каталога. ui.php содержит тексты компонентов x-ui; файлы auth.php, validation.php и
+// pagination.php управляются laravel-lang и перезаписываются lang:update.
 
 return [
     'title' => 'Catalog',
@@ -15,8 +13,7 @@ return [
         'volume' => 'Volume',
         'container' => 'Container',
         'price' => 'Price, ₽',
-        // Generic — shared by price/ABV/IBU range filters, not price-only
-        // despite the "range_" name (see pages/catalog/filters/*-range.blade.php).
+        // Общие подписи диапазонов цены, крепости и IBU; см. шаблоны фильтров *-range.blade.php.
         'range_min' => 'from',
         'range_max' => 'to',
         'in_stock' => 'In stock only',
@@ -42,9 +39,8 @@ return [
     'empty' => 'No products match the selected filters.',
     'new' => 'New',
     'out_of_stock' => 'Out of stock',
-    // "Buy" is wired up (Domain\Cart) — turns into a quantity stepper after
-    // the first click, see product-card.blade.php. Out of stock: the same
-    // button is just disabled (cart-stepper.blade.php), text stays the same.
+    // Кнопка покупки после добавления товара показывает изменение количества. При отсутствии товара кнопка
+    // отключена и сохраняет текст.
     'buy' => 'Buy',
     'add_to_favorites' => 'Add to favorites',
     'remove_from_favorites' => 'Remove from favorites',
@@ -53,16 +49,15 @@ return [
     'retry' => 'Retry',
 
     'cart' => [
-        // Stepper −/+ button aria-labels (design-system.html, §06).
+        // Доступные подписи кнопок уменьшения и увеличения количества; см. design-system.html §06.
         'increase' => 'Add one more',
         'decrease' => 'Remove one',
-        // CartController::rejectUnavailable() — item sold out after the page
-        // was rendered (in_stock/stock_quantity drifted apart), CartManager's
-        // clamping refused to add anything.
+        // Сообщение отказа CartController::rejectUnavailable(), если доступность товара изменилась после
+        // отображения страницы.
         'unavailable' => 'This item is out of stock and cannot be ordered.',
     ],
 
-    // Product page (route `product.show`, pages/product.blade.php).
+    // Страница товара: маршрут product.show, шаблон pages/product.blade.php.
     'product' => [
         'specs' => 'Specifications',
         'description' => 'Description',

@@ -43,7 +43,6 @@ class OrderItemIndexPage extends IndexPage
 
             BelongsTo::make(__('moonshine.order_item.fields.product'), 'product', resource: ProductResource::class),
 
-            //            BelongsTo::make(__('moonshine.order_item.fields.order'), 'order', resource: OrderResource::class),
         ];
     }
 

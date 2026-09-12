@@ -1,10 +1,7 @@
 <?php
 
-// App-owned auth/account copy (login, register, password reset). Not in
-// auth.php/passwords.php/validation.php — those are managed by
-// laravel-lang/common and get overwritten by `composer post-update-cmd` →
-// `artisan lang:update`. Not in ui.php either — that's reserved for
-// <x-ui.*> component-internal strings, not page copy.
+// Тексты страниц аутентификации и аккаунта. Файлы auth.php, passwords.php и validation.php управляются
+// laravel-lang/common и перезаписываются lang:update; ui.php содержит тексты компонентов x-ui.
 
 return [
     'field' => [

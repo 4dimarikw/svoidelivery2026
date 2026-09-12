@@ -32,12 +32,12 @@ final class CategorySlugResolver
         $firstLevel = trim(explode('>', $rawCategory)[0]);
         $catLower = mb_strtolower($rawCategory);
 
-        // Branch 1: alcoholic products
+        // Алкогольные товары.
         if ($firstLevel === $this->registry->alcoholMarker()) {
             return $this->resolveAlcoholicSlug($row, $catLower);
         }
 
-        // Branch 2: type=contains — first declared category whose needle matches wins.
+        // Правила contains: побеждает первое совпадение в порядке приоритета.
         foreach ($this->registry->rulesOfType('contains') as ['slug' => $slug, 'rule' => $rule]) {
             $needle = mb_strtolower((string) ($rule['needle'] ?? ''));
             if ($needle !== '' && str_contains($catLower, $needle)) {
@@ -45,18 +45,18 @@ final class CategorySlugResolver
             }
         }
 
-        // Branch 3: accessories / companion goods
+        // Сопутствующие товары и аксессуары.
         if ($firstLevel === $this->registry->accessoryMarker()) {
             return $this->resolveAccessoryTitleSlug($row);
         }
 
-        // Branch 4: catch-all
+        // Резервная категория.
         return $this->registry->fallback();
     }
 
     private function resolveAlcoholicSlug(RawRow $row, string $catLower): string
     {
-        // a. Advent collections (special seasonal)
+        // Сезонные адвент-наборы.
         if (str_contains($catLower, mb_strtolower($this->registry->adventMarker()))) {
             $slug = $this->slugForAlcoholWhen('advent');
             if ($slug !== null) {
@@ -64,7 +64,7 @@ final class CategorySlugResolver
             }
         }
 
-        // b. No ABV → non-alcoholic beverage
+        // Отсутствие крепости определяет безалкогольные напитки.
         if (blank($row->get(config('catalog_import.columns.abv')))) {
             $slug = $this->slugForAlcoholWhen('no_abv');
             if ($slug !== null) {
@@ -72,7 +72,7 @@ final class CategorySlugResolver
             }
         }
 
-        // c. Style-based routing (mead / cider / sauce / ...), declaration order wins
+        // Определение категории по стилю в порядке приоритета правил.
         $style = mb_strtolower($row->get(config('catalog_import.columns.beer_style')));
 
         foreach ($this->registry->rulesOfType('alcohol') as ['slug' => $slug, 'rule' => $rule]) {
@@ -107,10 +107,8 @@ final class CategorySlugResolver
         $keywordToSlug = [];
         foreach ($this->registry->rulesOfType('accessory_title') as ['slug' => $slug, 'rule' => $rule]) {
             foreach ($rule['keywords'] ?? [] as $keyword) {
-                // CategoryRegistry::loadCategories() already drops blank
-                // values, but the registry is constructible outside that
-                // path — a blank keyword here would collapse to an empty
-                // regex alternative that matches every title at offset 0.
+                // Пустое ключевое слово совпало бы с любым названием. Проверка сохраняется и для реестра,
+                // созданного вне loadCategories().
                 if (blank($keyword)) {
                     continue;
                 }

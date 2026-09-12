@@ -17,7 +17,7 @@ class WebhookHandler extends BaseWebhookHandler
             trim(($sender?->firstName() ?? '').' '.($sender?->lastName() ?? '')),
         );
 
-        // Reply only after commit; retries can confirm the persisted link.
+        // Ответ отправляется после фиксации транзакции; повторный запрос подтверждает сохранённую привязку.
         $this->reply(__('telegram.'.$result->value));
     }
 }

@@ -110,9 +110,6 @@ class MoonshinePermissionSeeder extends Seeder
         ],
     ];
 
-    /**
-     * Run the database seeds.
-     */
     public function run(): void
     {
         $roleId = MoonshineUserRole::query()->firstOrCreate(['name' => 'Manager'])->getKey();

@@ -26,7 +26,6 @@
     ])->filter();
 
     $rating = spec_number($beer?->untappdBeer?->rating_score);
-//    $ratingCount = $beer?->untappdBeer?->rating_count;
 
     $cartQuantity = auth()->check() ? app(CartManager::class)->quantityOf($product) : 0;
 
@@ -89,9 +88,6 @@
                         @if ($rating)
                             <x-ui.chip tone="warn">
                                 <x-ui.icon-untappd :size="12" class="mr-1"/>{{ $rating }}
-                                {{--                                @if ($ratingCount)--}}
-                                {{--                                    <span class="ml-1 text-ink-500">({{ $ratingCount }})</span>--}}
-                                {{--                                @endif--}}
                             </x-ui.chip>
                         @endif
                         @if (! $product->isAvailable())

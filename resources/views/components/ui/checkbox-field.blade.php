@@ -1,5 +1,4 @@
-{{-- Not a <x-ui.field> — a checkbox's label WRAPS the input (the design
-     system's `.check` layout), it doesn't sit above it in a labelled grid. --}}
+{{-- Подпись оборачивает флажок вместе с полем ввода. --}}
 @props([
     'name',
     'value' => '1',

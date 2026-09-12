@@ -8,17 +8,9 @@ use Domain\Catalog\Models\Product;
 use Leeto\Seo\Models\Seo;
 
 /**
- * Держит строку `seo` (lee-to/laravel-seo-by-url) в актуальном состоянии для
- * товара — title/description/keywords/text (OG + JSON-LD Product/Offer).
- * Вынесено из Product::booted() отдельным классом, чтобы модель не
- * разрасталась вёрсткой SEO-копирайта — её дело только решать, когда синкать
- * (Product::SEO_WATCHED_ATTRIBUTES), а как именно собрать текст — забота
- * этого Action'а.
- *
- * Пакет матчит строку `seo` по `url`, никакой связи с моделью нет
- * ("Not tied to entities" — так задумано автором), поэтому переименование
- * товара (self-healing slug, Product::getSlugOptions()) обязано само
- * переносить/чистить строку — иначе она осиротеет на старом урле навсегда.
+ * Синхронизирует SEO товара: title, description, keywords и text с OG и JSON-LD. Модель определяет момент
+ * синхронизации через SEO_WATCHED_ATTRIBUTES, действие формирует текст. Пакет связывает SEO по URL, поэтому при
+ * изменении slug действие обновляет или удаляет запись по прежнему адресу.
  */
 final class SyncProductSeoAction
 {

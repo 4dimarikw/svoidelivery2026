@@ -29,8 +29,7 @@ class CatalogController extends Controller
                 // пива; beerDetails есть не у всех товаров (аксессуары), но
                 // eager-load всё равно нужен, иначе N+1 по каждой карточке.
                 ->with(['category', 'manufacturer', 'volume', 'container', 'media', 'beerDetails.beerStyle', 'beerDetails.untappdBeer'])
-            // Порядок сортировки задаёт SortFilter внутри пайплайна выше
-            // (ProductBuilder::sorted()) — здесь больше нет хардкода.
+            // Порядок сортировки задаёт SortFilter через ProductBuilder::sorted().
         )
             ->paginate(24)
             ->withQueryString();

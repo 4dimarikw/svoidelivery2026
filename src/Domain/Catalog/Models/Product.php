@@ -160,7 +160,7 @@ class Product extends Model implements HasMedia
     }
 
     /**
-     * Query-скоупы вынесены в ProductBuilder — см. этот класс, не Product.
+     * Методы запросов каталога определены в ProductBuilder.
      */
     public function newEloquentBuilder($query): ProductBuilder
     {
@@ -168,34 +168,10 @@ class Product extends Model implements HasMedia
     }
 
     /**
-     * Автоматика для lee-to/laravel-seo-by-url живёт в SyncProductSeoAction
-     * (title/description/keywords/OG/JSON-LD — см. Domain\Catalog\Actions),
-     * не здесь — модель только решает, КОГДА синкать, сборка текста её не
-     * касается.
-     *
-     * wasRecentlyCreated || wasChanged(self::SEO_WATCHED_ATTRIBUTES) — не
-     * "пиши всегда на saved()": catalog:import (PersistProductStage) гоняет
-     * update(['price'=>..,'stock_quantity'=>..,'in_stock'=>..]) по всему
-     * каталогу на каждом повторном импорте (тысячи строк). Ни цена, ни
-     * brand не входят ни в один SEO-текст (магазин не занимается оптом —
-     * цену/«купить» убрали из шаблона; title строится из name, не brand —
-     * см. SyncProductSeoAction), поэтому их в списке нет; но
-     * name/in_stock/volume_id/container_id/category_id/manufacturer_id
-     * всё ещё влияют на текст (name — везде, наличие — в JSON-LD
-     * Offer.availability, остальные — в title/description/JSON-LD name),
-     * их приходится наблюдать. wasChanged() всё равно сравнивает значения,
-     * а не факт наличия ключа в update(): повторный импорт с теми же
-     * значениями по-прежнему не пишет ничего.
-     *
-     * Известное ограничение: PersistProductStage создаёт Product раньше,
-     * чем PersistBeerDetailsStage/PersistProductImageStage добавляют
-     * beerDetails/картинку (config/catalog_import.php:76,77,90) — у только
-     * что импортированного товара первая seo-строка выйдет без картинки,
-     * досоздать некому (BeerProductDetail — другая модель). Касается
-     * только первого прохода нового товара при bulk-импорте; админка/
-     * тесты/фабрики получают уже полностью загруженный $product.
-     * Полноценный фикс — отдельный финальный stage в пайплайне, вне рамок
-     * этой правки.
+     * Модель запускает SyncProductSeoAction при создании или изменении SEO_WATCHED_ATTRIBUTES. Название, наличие
+     * и справочные связи влияют на SEO; цена и brand в SEO-текст не входят. Повторное сохранение тех же значений
+     * не запускает синхронизацию. При импорте товар создаётся до beerDetails и изображения, поэтому первая
+     * SEO-запись может не содержать изображения; эти этапы сами не запускают синхронизацию SEO.
      */
     private const SEO_WATCHED_ATTRIBUTES = [
         'slug', 'name', 'in_stock',
@@ -255,8 +231,8 @@ class Product extends Model implements HasMedia
     }
 
     /**
-     * Collection name is read from `catalog_import.untappd_image.collection`
-     * by PersistProductImageStage — keep the two in sync if this changes.
+     * PersistProductImageStage читает имя коллекции из catalog_import.untappd_image.collection; значения должны
+     * совпадать.
      */
     public function registerMediaCollections(): void
     {

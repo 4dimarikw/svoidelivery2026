@@ -6,12 +6,8 @@ use Domain\Catalog\Enums\ProductStatus;
 use Spatie\LaravelSettings\Settings;
 
 /**
- * Настройки импорта каталога 1С. Изначально — только глобальные маркеры для
- * CategorySlugResolver (см. CategoryRegistry), но со временем сюда же
- * переехали настройки обнуления остатков (zero_out_*) и часть настроек,
- * ранее живших в GeneralSettings (product_status, new_days, cache,
- * last_catalog_update) — они относятся к каталогу/импорту, а не к
- * «общим» настройкам сайта.
+ * Настройки импорта каталога 1С: маркеры категорий, обнуление остатков, статус товаров, период новинок, кеш и
+ * время обновления.
  */
 class CatalogImportSettings extends Settings
 {
@@ -21,7 +17,9 @@ class CatalogImportSettings extends Settings
 
     public string $advent_marker = 'адвент';
 
-    /** Slug of the category new/unmatched rows fall back to. */
+    /**
+     * Slug резервной категории для строк, не сопоставленных с правилами.
+     */
     public string $fallback_slug = 'not-defined';
 
     /**
@@ -48,10 +46,14 @@ class CatalogImportSettings extends Settings
     /** Дата последнего успешного импорта каталога (строка, не читается кодом). */
     public ?string $last_catalog_update = null;
 
-    /** Не используется ни одним читателем кода — перенесено из GeneralSettings как есть. */
+    /**
+     * Параметр сохраняется в настройках; в текущем коде не читается.
+     */
     public bool $cache = false;
 
-    /** Наценка. Не используется ни одним читателем кода — перенесено из GeneralSettings как есть. */
+    /**
+     * Наценка сохраняется в настройках; в текущем коде не применяется.
+     */
     public int $extra_charge = 0;
 
     public static function group(): string

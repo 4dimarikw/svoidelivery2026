@@ -65,16 +65,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::delete('cart/{product}', [CartController::class, 'destroy'])->name('cart.destroy');
     Route::delete('cart', [CartController::class, 'clear'])->name('cart.clear');
 
-    // Оформление больше не отдельная страница — только POST-эндпоинт формы,
-    // встроенной в /cart (CartController::index(), pages/cart.blade.php).
-    // GET-роута (и OrderController::index()) больше нет. История уже
-    // оформленных заказов — account.orders.* выше.
+    // Оформление заказа принимает POST формы со страницы /cart. История заказов доступна через маршруты
+    // account.orders.*.
     Route::post('checkout', [OrderController::class, 'store'])->name('checkout.store');
 });
 
-// Local-only preview of the <x-ui.*> component library — proves the value
-// contract (Blade/old()/$errors vs x-model) works end-to-end without
-// laravel/fortify installed. See CLAUDE.md.
+// Локальная страница проверки компонентов x-ui: значения Blade, old(), ошибки и привязки x-model. См. CLAUDE.md.
 if (app()->environment('local')) {
     Route::view('/ui-kit', 'ui-kit')->name('ui-kit');
 

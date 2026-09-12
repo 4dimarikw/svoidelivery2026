@@ -1,7 +1,6 @@
 <x-layouts.auth :title="__('account.login.title')">
     <x-ui.auth-card :title="__('account.login.title')" :subtitle="__('account.login.subtitle')">
-        {{-- Fortify's PasswordResetResponse redirects HERE (route('login'))
-             with session('status') = trans('passwords.reset'). --}}
+        {{-- PasswordResetResponse перенаправляет на login с переведённым сообщением passwords.reset в сессии. --}}
         <x-ui.status-alert class="mb-5" />
 
         <x-ui.form :action="route('login.store')" mode="default">

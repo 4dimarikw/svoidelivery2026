@@ -2,9 +2,7 @@
     <x-ui.auth-card :title="__('account.reset.title')" :subtitle="__('account.reset.subtitle')">
         <x-ui.form :action="route('password.update')" mode="default">
             <div class="grid gap-3.5">
-                {{-- Plain hidden input, not <x-ui.input> — the latter would
-                     attach the visible `.input` control class to an
-                     invisible field. --}}
+                {{-- Скрытое поле без классов оформления видимого элемента ввода. --}}
                 <input type="hidden" name="token" value="{{ $request->route('token') }}">
 
                 <x-ui.input-field

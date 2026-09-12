@@ -3,11 +3,8 @@
 namespace App\Events;
 
 /**
- * Infrastructure\Jobs\RefreshProductMediaJob не смог перезалить изображение
- * товара — попадает в event_logs через App\Listeners\PersistEventLog
- * (автодискавери по LoggableEvent). Диспатчится из failed() джобы; товар в
- * этот момент уже без старой картинки (clearMediaCollection() выполняется
- * первой) и без новой — событие error-уровня, требует ручного вмешательства.
+ * Ошибка обновления изображения товара регистрируется через PersistEventLog из failed() задания
+ * RefreshProductMediaJob. Событие содержит сведения для диагностики сбоя загрузки.
  */
 final readonly class CatalogProductMediaRefreshFailed implements LoggableEvent
 {

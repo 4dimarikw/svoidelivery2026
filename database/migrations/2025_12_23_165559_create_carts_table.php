@@ -21,14 +21,13 @@ return new class extends Migration
                 ->cascadeOnDelete()
                 ->cascadeOnUpdate();
 
+            $table->uuid('checkout_token')->nullable();
             $table->timestamps();
         });
     }
 
     public function down(): void
     {
-        if (! app()->isProduction()) {
-            Schema::dropIfExists('carts');
-        }
+        Schema::dropIfExists('carts');
     }
 };

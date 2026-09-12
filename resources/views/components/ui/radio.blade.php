@@ -1,5 +1,5 @@
-{{-- Same reasoning as <x-ui.checkbox> re: x-model — no `checked` is emitted
-     when x-model is present; seed state from PHP via <x-ui.form :state>. --}}
+{{-- При x-model атрибут checked не выводится; начальное состояние передаётся через state формы, как у
+   x-ui.checkbox. --}}
 @props([
     'name',
     'value',

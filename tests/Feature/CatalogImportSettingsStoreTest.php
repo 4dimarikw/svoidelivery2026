@@ -30,8 +30,7 @@ class CatalogImportSettingsStoreTest extends TestCase
             'moonshine_user_role_id' => MoonshineUserRole::DEFAULT_ROLE_ID,
         ]);
 
-        // Категория 'not-defined' уже существует — её сеет data-миграция
-        // 2026_08_03_100200_seed_category_registry_from_config.php.
+        // Категория not-defined создаётся миграцией categories.
         Category::query()->firstOrCreate(['slug' => 'not-defined'], Category::factory()->raw());
 
         $page = app(CatalogImportSettingsPage::class);

@@ -38,11 +38,8 @@
                     required
                 />
 
-                {{-- Two separate consents, not one combined checkbox — some
-                     jurisdictions treat bundled age+terms consent as
-                     improper. Validated in
-                     app/Actions/Fortify/CreateNewUser.php; neither key is
-                     ever persisted to `users`. --}}
+                {{-- Возраст и принятие условий подтверждаются раздельно. CreateNewUser проверяет оба согласия без
+                   сохранения их в users. --}}
                 <x-ui.checkbox-field name="age_confirmed" :label="__('account.register.age_gate')" />
                 <x-ui.checkbox-field name="terms_accepted" :label="__('account.register.terms_gate')" />
 

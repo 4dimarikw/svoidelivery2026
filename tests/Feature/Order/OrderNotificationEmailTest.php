@@ -80,13 +80,7 @@ class OrderNotificationEmailTest extends TestCase
     }
 
     /**
-     * Регрессия: 15.08 в 07:48 сбой resetFtpConnection() (отсутствующий
-     * league/flysystem-ftp) улетел необработанным из UploadOrderToFTP —
-     * HandleOrderCreated::handle() до notifyAdmin() тогда не доходил.
-     * Сегодняшний UploadOrderToFTP сам ловит Throwable, но HandleOrderCreated
-     * теперь дублирует эту защиту на своём уровне — письмо должно уйти,
-     * даже если UploadOrderToFTP когда-нибудь снова начнёт пробрасывать
-     * исключения наружу.
+     * Сбой FTP-доставки не должен отменять отправку уведомления о заказе.
      */
     public function test_ftp_upload_throwing_does_not_prevent_notification_email(): void
     {

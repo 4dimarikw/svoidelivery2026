@@ -126,13 +126,8 @@
                         @if ($addresses->isEmpty())
                             <p class="text-body-m text-ink-500">{{ __('order.address_none') }}</p>
                         @else
-                            {{-- addressComments — карта id адреса → его комментарий
-                                 (например «домофон 45»), один раз на весь список;
-                                 x-on:change ниже подставляет его в общий
-                                 state.comment формы (уходит выше по цепочке Alpine-
-                                 scope до <x-ui.form>), полностью заменяя то, что
-                                 было в поле — так решил продукт: без защиты от
-                                 затирания ручного ввода. --}}
+                            {{-- addressComments сопоставляет адреса с комментариями. Выбор адреса полностью
+                               заменяет state.comment формы, включая введённый вручную текст. --}}
                             <div class="grid gap-3" x-data="{ addressComments: @js($addresses->pluck('comment', 'id')) }">
                                 @foreach ($addresses as $address)
                                     <x-ui.radio
@@ -251,20 +246,8 @@
                 @php
                     $checkoutError = $errors->first('checkout') ?: $errors->first('checkout_key');
                 @endphp
-                {{-- Не <x-ui.error-alert> — тот читает errorFor() из
-                     Alpine-scope ближайшего x-data="uiForm(...)" предка по
-                     ДОМ-дереву, а этот блок — сосед #checkout-form (в
-                     сайдбаре), не потомок, с тех пор как submit переехал в
-                     cart-summary. mode="ajax" одним пропом это не чинит:
-                     он только заставляет Blade сгенерировать x-show/x-text
-                     с вызовом errorFor(), а вызвать его здесь всё равно
-                     не из чего — метод физически не виден вне <form>,
-                     обращение к нему кидает ReferenceError в консоль, и
-                     плашка так и не появляется. Вместо errorFor() читаем
-                     $store.checkout.error, куда x-effect на самой форме
-                     зеркалит то же значение (resources/js/cart.js) — тот
-                     же приём, что уже применён для submitting/спиннера
-                     кнопки выше. --}}
+                {{-- Панель находится вне DOM-области uiForm. Ошибка читается из store.checkout.error, куда форма
+                   копирует её через x-effect; состояние отправки передаётся тем же способом. --}}
                 <div
                     x-show="$store.checkout.error"
                     @if (! $checkoutError) style="display: none" @endif

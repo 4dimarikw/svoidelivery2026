@@ -14,11 +14,7 @@ use SimpleXMLElement;
 use Tests\TestCase;
 
 /**
- * Domain\Order\Actions\BuildOrderXml — выделена из UploadOrderToFTP, чтобы
- * тот же XML можно было приложить к письму (Domain\Order\Mail\NewOrderCreated,
- * см. HandleOrderCreated::notifyAdmin()). Разметка/поведение не менялись при
- * выносе — эти тесты дублируют то, что раньше молчаливо проверялось только
- * через UploadOrderToFtpTest (успешная выгрузка на фейковый диск).
+ * Проверяет XML заказа, собираемый BuildOrderXml для передачи в 1С и вложения в уведомления.
  */
 class BuildOrderXmlTest extends TestCase
 {

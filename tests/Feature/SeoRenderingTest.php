@@ -10,17 +10,9 @@ use Leeto\Seo\SeoManager;
 use Tests\TestCase;
 
 /**
- * Seo::create()/updateOrCreate() are deliberately NOT used to seed rows
- * here — Leeto\Seo\Models\Seo::boot() fires flushCache() on created/updated,
- * which resolves the seo() singleton (SeoManager) right there and then,
- * snapshotting request()->getRequestUri() at THAT moment. In a real request
- * that's harmless (the manager instance dies with the process); in a
- * feature test the container — and thus the singleton — is shared across
- * both the seeding step and the later $this->get() call, so seeding via
- * the model would freeze the manager on the WRONG url before the request
- * we're actually testing even starts. Raw DB::table('seo')->insert() writes
- * the row without touching the model/events, so seo() only ever resolves
- * inside the real request below, against the real request url.
+ * Начальные SEO-записи создаются через DB::table(), чтобы события модели не инициализировали SeoManager до
+ * HTTP-запроса. Контейнер теста общий для подготовки данных и запроса; singleton должен запомнить URL
+ * проверяемого запроса.
  */
 class SeoRenderingTest extends TestCase
 {
@@ -39,30 +31,22 @@ class SeoRenderingTest extends TestCase
 
     public function test_seo_row_title_wins_over_an_explicit_title_prop(): void
     {
-        // layouts/app.blade.php: seo()->meta()->title() ?? $title ?: config('app.name')
-        // — the seo-table row for the current url takes priority over a
-        // page's own :title prop (cart.blade.php passes :title explicitly,
-        // resources/views/pages/cart.blade.php) when one exists.
+        // В layouts/app.blade.php SEO-заголовок текущего URL имеет приоритет над переданным свойством title
+        // страницы.
         $this->seedSeoRow('/cart', 'From Seo Table');
 
         $response = $this->actingAs(User::factory()->create())->get(route('cart.index'));
 
         $response->assertOk();
         $response->assertSee('<title>From Seo Table</title>', false);
-        // "Корзина" (account.cart.title) legitimately still appears elsewhere
-        // on the page (mobile-nav link label) — assert only the <title> tag
-        // itself doesn't contain it, not the whole response body.
+        // Текст «Корзина» допустим в мобильной навигации; проверяется только содержимое тега title.
         $response->assertDontSee('<title>'.__('account.cart.title').'</title>', false);
     }
 
     public function test_page_without_a_seo_row_shows_app_name_not_its_own_title_prop(): void
     {
-        // Without a matching seo row, seo()->meta()->title() still resolves
-        // non-null (package default = config('seo.default.title') = APP_NAME),
-        // so the :title prop (cart's own __('account.cart.title')) never
-        // actually surfaces here either — the ?? never reaches it. This
-        // locks in the current (accepted) behavior: every page without its
-        // own seo row shows APP_NAME, regardless of what :title it passed.
+        // Без SEO-записи пакет возвращает config('seo.default.title'), поэтому оператор ?? не использует title
+        // страницы. Проверяется отображение APP_NAME по умолчанию.
         $response = $this->actingAs(User::factory()->create())->get(route('cart.index'));
 
         $response->assertOk();

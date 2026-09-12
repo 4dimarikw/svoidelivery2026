@@ -68,12 +68,9 @@ class Manufacturer extends Model
     }
 
     /**
-     * Suffix numbering starts at 2 ("name", "name-2", "name-3", ...) to match
-     * this project's existing slug convention elsewhere. Update-time
-     * regeneration is disabled: normalized_name (see booted() below) is the
-     * import's firstOrCreate() matching key, and slug is left alone for the
-     * same reason an admin rename shouldn't silently change it — the row
-     * should still be found and updated, not re-created, on the next import.
+     * Суффиксы slug начинаются с 2: name, name-2, name-3. При обновлении slug не пересоздаётся. normalized_name
+     * служит ключом firstOrCreate() при импорте и сохраняет идентичность записи после переименования
+     * администратором.
      */
     public function getSlugOptions(): SlugOptions
     {
@@ -85,13 +82,8 @@ class Manufacturer extends Model
     }
 
     /**
-     * `normalized_name` is NOT NULL UNIQUE but nothing else generates it —
-     * the import (ResolveBrandStage) always supplies it explicitly, so this
-     * only fills gaps left by other callers (admin CRUD, factories,
-     * tinker). Create-only, for the same reason as the slug above: it's the
-     * import's firstOrCreate() matching key, so recomputing it on an update
-     * (e.g. an admin rename) would make the next import miss this row and
-     * insert a duplicate instead of matching it.
+     * normalized_name обязателен и уникален. Импорт задаёт его явно; обработчик creating заполняет значение для
+     * админки, фабрик и других вызовов. При обновлении ключ сохраняется, чтобы импорт находил ту же запись.
      */
     protected static function booted(): void
     {

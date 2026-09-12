@@ -22,8 +22,6 @@ class User extends Authenticatable implements MustVerifyEmail
     use HasFactory, Notifiable;
 
     /**
-     * The attributes that are mass assignable.
-     *
      * @var list<string>
      */
     protected $fillable = [
@@ -33,8 +31,6 @@ class User extends Authenticatable implements MustVerifyEmail
     ];
 
     /**
-     * The attributes that should be hidden for serialization.
-     *
      * @var list<string>
      */
     protected $hidden = [
@@ -43,8 +39,6 @@ class User extends Authenticatable implements MustVerifyEmail
     ];
 
     /**
-     * Get the attributes that should be cast.
-     *
      * @return array<string, string>
      */
     protected function casts(): array
@@ -125,11 +119,7 @@ class User extends Authenticatable implements MustVerifyEmail
     }
 
     /**
-     * Без этого переопределения Laravel угадывает класс фабрики по
-     * умолчанию как `Database\Factories\Domain\Auth\Models\UserFactory` (не
-     * существует) — конвенция резолвит только модели под `App\`/`App\Models\`,
-     * а `User` при переезде в `Domain\Auth\Models` (см. CLAUDE.md) выпал из
-     * неё. `User::factory()` был полностью сломан до этого фикса.
+     * Явная фабрика для модели Domain\Auth\Models\User, расположенной вне стандартного пространства App\Models.
      */
     protected static function newFactory(): Factory
     {

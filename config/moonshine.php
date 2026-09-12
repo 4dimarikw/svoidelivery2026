@@ -35,24 +35,24 @@ return [
         'safari-pinned-tab' => '/vendor/moonshine/safari-pinned-tab.svg',
     ],
 
-    // Default flags
+    // Основные параметры.
     'use_migrations' => true,
     'use_notifications' => true,
     'use_database_notifications' => true,
     'use_routes' => true,
     'use_profile' => true,
 
-    // Routing
+    // Маршрутизация.
     'domain' => env('MOONSHINE_DOMAIN'),
     'prefix' => env('MOONSHINE_ROUTE_PREFIX', 'admin'),
     'page_prefix' => env('MOONSHINE_PAGE_PREFIX', 'page'),
     'resource_prefix' => env('MOONSHINE_RESOURCE_PREFIX', 'resource'),
     'home_route' => 'moonshine.index',
 
-    // Error handling
+    // Обработка ошибок.
     'not_found_exception' => MoonShineNotFoundException::class,
 
-    // Middleware
+    // Промежуточные обработчики запросов.
     'middleware' => [
         ConvertEmptyStringsToNull::class,
         EncryptCookies::class,
@@ -65,12 +65,12 @@ return [
         ChangeLocale::class,
     ],
 
-    // Storage
+    // Хранилище.
     'disk' => 'public',
     'disk_options' => [],
     'cache' => 'file',
 
-    // Authentication and profile
+    // Аутентификация и профиль.
     'auth' => [
         'enabled' => true,
         'guard' => 'moonshine',
@@ -81,7 +81,7 @@ return [
         'pipelines' => [],
     ],
 
-    // Authentication and profile
+    // Аутентификация и профиль.
     'user_fields' => [
         'username' => 'email',
         'password' => 'password',
@@ -89,7 +89,7 @@ return [
         'avatar' => 'avatar',
     ],
 
-    // Layout, palette, pages, forms
+    // Макет, палитра, страницы и формы.
     'layout' => MoonShineLayout::class,
     'palette' => PurplePalette::class,
 
@@ -105,7 +105,7 @@ return [
         'error' => ErrorPage::class,
     ],
 
-    // Localizations
+    // Локализация.
     'locale' => 'ru',
     'locale_key' => ChangeLocale::KEY,
     'locales' => [

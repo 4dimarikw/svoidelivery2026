@@ -44,6 +44,7 @@ return new class extends Migration
                 ->default(0)
                 ->index();
 
+            $table->uuid('checkout_key')->nullable()->unique();
             $table->timestamps();
 
             $table->index(['status', 'created_at']);
@@ -53,8 +54,6 @@ return new class extends Migration
 
     public function down(): void
     {
-        if (! app()->isProduction()) {
-            Schema::dropIfExists('orders');
-        }
+        Schema::dropIfExists('orders');
     }
 };

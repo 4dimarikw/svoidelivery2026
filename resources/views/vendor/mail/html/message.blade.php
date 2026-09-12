@@ -1,13 +1,13 @@
 <x-mail::layout>
-    {{-- Header3 --}}
+    {{-- Шапка. --}}
     <x-slot:header>
         <x-mail::header :url="config('app.url')"></x-mail::header>
     </x-slot:header>
 
-    {{-- Body --}}
+    {{-- Основное содержимое. --}}
     {!! $slot !!}
 
-    {{-- Subcopy --}}
+    {{-- Дополнительный текст. --}}
     @isset($subcopy)
         <x-slot:subcopy>
             <x-mail::subcopy>
@@ -16,7 +16,7 @@
         </x-slot:subcopy>
     @endisset
 
-    {{-- Footer --}}
+    {{-- Подвал. --}}
     <x-slot:footer>
         <x-mail::footer>
             © {{ date('Y') }} {{ config('app.name') }}. {{ __('All rights reserved.') }}

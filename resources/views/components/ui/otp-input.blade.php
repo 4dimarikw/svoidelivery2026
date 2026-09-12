@@ -1,7 +1,5 @@
-{{-- A single input, not `length` boxes. Multi-box OTP inputs break browser
-     autofill, screen readers and paste; this one field with
-     autocomplete="one-time-code" gets all three for free and matches the
-     brand's mono/wide-tracking idiom. Same value contract as <x-ui.input>. --}}
+{{-- Единое поле одноразового кода поддерживает автозаполнение one-time-code, вставку и средства чтения с экрана.
+   Контракт значения совпадает с x-ui.input. --}}
 @props([
     'name' => 'code',
     'length' => 6,

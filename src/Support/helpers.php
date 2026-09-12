@@ -8,11 +8,8 @@ use Services\ProductFlagsManager;
 
 if (! function_exists('ui_id')) {
     /**
-     * Deterministic DOM id for a form field name, shared between <x-ui.field>
-     * and its control so both sides compute the same id without passing it
-     * back and forth. Deliberately NOT Str::uuid() — a random id would change
-     * on every render, breaking Alpine/morph-based DOM diffing and making
-     * tests that assert on ids flaky.
+     * Детерминированный DOM id по имени поля. Компоненты x-ui.field и элемент ввода вычисляют одинаковый
+     * идентификатор, стабильный при повторном рендере и обновлении DOM.
      */
     function ui_id(string $name): string
     {
@@ -22,11 +19,9 @@ if (! function_exists('ui_id')) {
 
 if (! function_exists('normalize_name')) {
     /**
-     * Canonical matching key for catalog dictionary rows (Manufacturer,
-     * BeerStyle): lowercased, whitespace-collapsed, trimmed. This is what
-     * `normalized_name` stores, and what the import's firstOrCreate() keys on
-     * — so admin screens must produce byte-identical output or a re-import
-     * will fail to match and insert a duplicate row.
+     * Канонический ключ сопоставления Manufacturer и BeerStyle: нижний регистр, обрезанные края и схлопнутые
+     * пробелы. normalized_name и firstOrCreate() импорта используют этот формат; админка должна формировать
+     * идентичное значение.
      */
     function normalize_name(string $name): string
     {

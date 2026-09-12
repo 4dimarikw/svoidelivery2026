@@ -50,9 +50,7 @@ final class UntappdRepository implements UntappdInterface
 
             return UntappdApiResponse::fromResponse($response);
         } catch (RequestException $e) {
-            // Log::channel('database') не существует в config/logging.php — раньше
-            // это бросало InvalidArgumentException прямо изнутри этого catch,
-            // подменяя исходную ошибку. report() уходит в default-стек логов.
+            // report() передаёт исходную ошибку стандартному обработчику исключений приложения.
             report($e);
 
             return match ($e->response->getStatusCode()) {

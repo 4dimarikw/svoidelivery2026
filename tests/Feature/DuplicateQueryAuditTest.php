@@ -14,11 +14,8 @@ use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 /**
- * Фиксирует число запросов к таблицам, которые раньше читались дважды за
- * рендер (аудит вьюх): cart_items/profiles/addresses на /cart (оформление
- * встроено туда же, отдельной страницы /checkout больше нет), addresses на
- * /account/addresses. Контроллеры переиспользуют уже прогретые
- * CartManager/коллекции вместо повторного чтения тех же строк.
+ * Проверяет число запросов к cart_items, profiles и addresses на странице корзины и к addresses на странице
+ * адресов. Контроллеры переиспользуют данные CartManager и загруженные коллекции.
  */
 class DuplicateQueryAuditTest extends TestCase
 {

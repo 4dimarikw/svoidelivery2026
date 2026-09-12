@@ -1,10 +1,7 @@
 <?php
 
-// App-owned auth/account copy (login, register, password reset). Not in
-// auth.php/passwords.php/validation.php — those are managed by
-// laravel-lang/common and get overwritten by `composer post-update-cmd` →
-// `artisan lang:update`. Not in ui.php either — that's reserved for
-// <x-ui.*> component-internal strings, not page copy.
+// Тексты страниц аутентификации и аккаунта. Файлы auth.php, passwords.php и validation.php управляются
+// laravel-lang/common и перезаписываются lang:update; ui.php содержит тексты компонентов x-ui.
 
 return [
     'field' => [
@@ -88,8 +85,8 @@ return [
         'resend' => 'Resend verification email',
     ],
 
-    // Registration/password-reset honeypot & throttling, SmartCaptcha — see
-    // config/security.php, Infrastructure\Rules\HoneypotRule/SmartCaptchaRule.
+    // Сообщения защиты форм: ловушка ботов, ограничение частоты запросов и SmartCaptcha. См. config/security.php
+    // и правила HoneypotRule/SmartCaptchaRule.
     'security' => [
         'form_rejected' => 'Could not submit the form. Please reload the page and try again.',
         'form_expired' => 'This form has expired. Please reload the page and fill it in again.',
@@ -157,8 +154,8 @@ return [
         'added' => 'Product added to cart.',
         'removed' => 'Product removed from cart.',
         'cleared' => 'Cart cleared.',
-        // no-JS fallback for CartController::rejectUnavailable() — same text
-        // as catalog.cart.unavailable (JSON branch), different string scope.
+        // Сообщение CartController::rejectUnavailable() для формы без JavaScript; соответствует
+        // catalog.cart.unavailable в JSON-ответе.
         'unavailable' => 'This item is out of stock and cannot be ordered.',
         'has_unavailable' => 'Your cart contains items that are out of stock. Remove them to place the order.',
     ],

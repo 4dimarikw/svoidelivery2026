@@ -13,8 +13,6 @@ class ContainerFactory extends Factory
     protected $model = Container::class;
 
     /**
-     * Define the model's default state.
-     *
      * @return array<string, mixed>
      */
     public function definition(): array

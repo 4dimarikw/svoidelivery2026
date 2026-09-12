@@ -8,9 +8,8 @@ use Illuminate\Database\Seeder;
 class ContainerSeeder extends Seeder
 {
     /**
-     * From data/catalog-database-structure.md §4.4, one code per
-     * `config('catalog_import.container_map')` value — ResolveContainerStage
-     * warns "container code not seeded" for any code missing here.
+     * Коды тары из data/catalog-database-structure.md §4.4 соответствуют значениям catalog_import.container_map.
+     * ResolveContainerStage сообщает об отсутствующем коде.
      */
     private const array CONTAINERS = [
         'pet_keg' => ['name' => 'ПЭТ-кег', 'label' => 'пэт кег', 'is_active' => false],
@@ -23,9 +22,6 @@ class ContainerSeeder extends Seeder
         'gas_cylinder' => ['name' => 'Газовый баллон', 'label' => 'газ. баллон', 'is_active' => false],
     ];
 
-    /**
-     * Run the database seeds.
-     */
     public function run(): void
     {
         foreach (self::CONTAINERS as $code => $row) {

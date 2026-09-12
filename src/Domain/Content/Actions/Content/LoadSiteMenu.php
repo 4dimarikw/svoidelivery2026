@@ -7,21 +7,9 @@ use Domain\Content\Models\SiteMenuItem;
 use Illuminate\Support\Collection;
 
 /**
- * Строит публичное дерево меню `main` — вынесено из LoadPublicPage, чтобы
- * View Composer (см. AppServiceProvider::boot()) мог отдать $menu в шапку и
- * нижнюю мобильную панель на любой странице, а не только на home/about,
- * чьи контроллеры вызывают LoadPublicPage напрямую.
- *
- * Регистрируется как singleton (AppServiceProvider::register()) и
- * мемоизирует дерево на HTTP-запрос — без этого composer и LoadPublicPage
- * строили бы дерево дважды на одном рендере home/about.
- *
- * Персистентный Cache::rememberForever() (как у FilterOptionsRegistry)
- * сознательно не используется: порядок пунктов меняется стрелками
- * MoonShine через nested set (_lft/_rgt пишутся напрямую, минуя обычные
- * save()-хуки), кеш там протухал бы молча. Меню — самое часто редактируемое
- * место CMS, две лишние SELECT на запрос дешевле риска показать стухший
- * порядок.
+ * Строит публичное дерево меню main для View Composer и LoadPublicPage. Singleton сохраняет результат на
+ * HTTP-запрос. Постоянный кеш не используется: перестановка пунктов через nested set меняет _lft/_rgt напрямую,
+ * минуя события save().
  */
 final class LoadSiteMenu
 {

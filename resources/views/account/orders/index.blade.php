@@ -32,7 +32,6 @@
                         </div>
 
                         <div class="flex items-center space-x-4">
-                            {{-- <x-ui.badge :tone="$statusTone($order->status->value())">{{ $order->status->humanValue() }}</x-ui.badge> --}}
                             <span class="font-mono text-body-m text-ink-900">{{ $order->amount }}</span>
                         </div>
                     </div>

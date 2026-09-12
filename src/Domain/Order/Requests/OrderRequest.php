@@ -11,9 +11,6 @@ use Support\Rules\RussianPhoneNumber;
 
 class OrderRequest extends FormRequest
 {
-    /**
-     * Determine if the user is authorized to make this request.
-     */
     public function authorize(): bool
     {
         return auth()->check();
@@ -33,8 +30,6 @@ class OrderRequest extends FormRequest
     }
 
     /**
-     * Get the validation rules that apply to the request.
-     *
      * @return array<string, ValidationRule|array|string>
      */
     public function rules(): array
@@ -61,12 +56,8 @@ class OrderRequest extends FormRequest
     private function customerRules(): array
     {
         return [
-            // Способ доставки/оплаты клиент больше не выбирает — публичное
-            // оформление заказа фиксировано на «Служба доставки»/«При
-            // получении» (OrderController::store(), config/order.php).
-            // delivery_type_id/payment_method_id в теле запроса, если
-            // пришли, здесь не валидируются и контроллером не читаются.
-            // Раз доставка всегда с адресом, address_id — required.
+            // Публичное оформление использует фиксированные способы доставки и оплаты из config/order.php.
+            // Переданные клиентом delivery_type_id и payment_method_id не используются. Адрес обязателен.
 
             // Владение адресом проверяется уже здесь (defense in depth) —
             // второй раз в Processes\AssignCustomer, тот же паттерн, что

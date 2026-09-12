@@ -17,6 +17,10 @@ return new class extends Migration
             // стирать сам чат, тот может ещё пригодиться боту.
             $table->foreignId('user_id')->nullable()->constrained()->nullOnDelete();
 
+            // Удаление администратора сохраняет чат для работы бота.
+            $table->foreignId('moonshine_user_id')->nullable()
+                ->constrained('moonshine_users')->nullOnDelete();
+
             $table->string('chat_id');
             $table->string('name')->nullable();
 
@@ -27,6 +31,7 @@ return new class extends Migration
             // Тот же принцип, что unique(['chat_id', 'telegraph_bot_id']) —
             // один привязанный чат на пользователя на бота.
             $table->unique(['user_id', 'telegraph_bot_id']);
+            $table->unique(['moonshine_user_id', 'telegraph_bot_id']);
         });
     }
 

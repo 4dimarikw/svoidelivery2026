@@ -13,7 +13,9 @@ class SiteSettings extends Settings
     // в MoonShine на "Настройки сайта" (SiteSettingsPage).
     public bool $telegram_autologin;
 
-    /** Email тестового пользователя для кнопки "Тестовый заказ" (OrderIndexPage::createTestOrder()). Перенесено из GeneralSettings. */
+    /**
+     * Email тестового пользователя для кнопки «Тестовый заказ» в OrderIndexPage::createTestOrder().
+     */
     public ?string $test_user_email = null;
 
     /**
@@ -22,7 +24,9 @@ class SiteSettings extends Settings
      */
     public ?string $notify_email = null;
 
-    /** Лимит обновлений Untappd за прогон. Не используется ни одним читателем кода — перенесено из GeneralSettings как есть. */
+    /**
+     * Лимит обновлений Untappd за прогон сохраняется в настройках; в текущем коде не применяется.
+     */
     public int $untappd_update_limit = 0;
 
     public static function group(): string

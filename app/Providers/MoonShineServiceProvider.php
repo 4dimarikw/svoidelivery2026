@@ -15,12 +15,8 @@ class MoonShineServiceProvider extends ServiceProvider
      */
     public function boot(CoreContract $core): void
     {
-        // autoload() already discovers every ResourceContract/PageContract
-        // under the configured namespace (App\MoonShine\..., incl.
-        // resources' own Pages\*). Chaining an explicit ->resources([...])/
-        // ->pages([...]) call before it — as this used to do — registered
-        // the same classes twice (verified via
-        // getResources()/getPages() each printing every entry twice).
+        // autoload() обнаруживает ресурсы и страницы в пространстве App\MoonShine, включая Pages внутри
+        // ресурсов.
         $core->autoload();
     }
 }

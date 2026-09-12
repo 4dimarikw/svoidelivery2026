@@ -11,13 +11,8 @@ use Services\CatalogImport\Dto\RawRow;
 use Tests\TestCase;
 
 /**
- * Прогоняет все 4 ветки CategorySlugResolver (alcohol/contains/
- * accessory_title/fallback) — регрессия против переезда реестра из
- * config/catalog_import.php в БД. Не сеет фикстуры вручную: migration
- * 2026_08_03_100200_seed_category_registry_from_config уже транспланти-
- * рует ровно тот реестр, что раньше жил в конфиге, и RefreshDatabase
- * прогоняет её на каждый тестовый прогон — так тест заодно проверяет,
- * что смигрированные данные резолвят slug идентично старому конфигу.
+ * Проверяет четыре ветви CategorySlugResolver: alcohol, contains, accessory_title и резервную категорию.
+ * Используется стартовый реестр, создаваемый исходными миграциями через RefreshDatabase.
  */
 class CategorySlugResolverTest extends TestCase
 {
@@ -120,9 +115,8 @@ class CategorySlugResolverTest extends TestCase
     }
 
     /**
-     * Регрессия: admin-редактируемое ключевое слово с "/" раньше ломало
-     * альтернацию (preg_quote() без делимитера не экранирует "/") — см.
-     * CategorySlugResolver::resolveAccessoryTitleSlug().
+     * Ключевое слово с / должно корректно экранироваться для регулярного выражения в
+     * resolveAccessoryTitleSlug().
      */
     public function test_accessory_keyword_containing_slash_does_not_break_the_pattern(): void
     {
@@ -163,9 +157,8 @@ class CategorySlugResolverTest extends TestCase
     }
 
     /**
-     * Регрессия: правило accessory_title с пустым value раньше собиралось в
-     * keywords => [null] → пустая ветка альтернации → матчит offset 0 любого
-     * названия. CategoryRegistry теперь отфильтровывает такие правила.
+     * Правило accessory_title с пустым value отфильтровывается CategoryRegistry и не совпадает с произвольным
+     * названием.
      */
     public function test_blank_accessory_keyword_does_not_match_everything(): void
     {

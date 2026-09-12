@@ -1,11 +1,6 @@
-{{-- Checkbox/radio can't use x-model.fill — Alpine's .fill guard only fires
-     on [undefined, null, ''], and a checkbox bound to `{ agree: false }` has
-     getValue() === false, which is never in that list. So under x-model this
-     component emits NO `checked` attribute at all; the caller must seed state
-     from PHP via <x-ui.form :state="[...]"> (Path C). Without x-model, this
-     falls back to plain Blade (Path A) — including old()-repopulation handling
-     for unchecked checkboxes (they don't submit, so old($name) alone would
-     wrongly restore the default after a failed POST). --}}
+{{-- При x-model атрибут checked не выводится: начальное состояние задаёт x-ui.form через state. x-model.fill не
+   заполняет логическое false. Без x-model используются Blade и old() с учётом того, что снятый флажок не
+   отправляет значение. --}}
 @props([
     'name',
     'value' => '1',

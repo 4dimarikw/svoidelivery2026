@@ -33,8 +33,6 @@ return new class extends Migration
 
     public function down(): void
     {
-        if (! app()->isProduction()) {
-            Schema::dropIfExists('favorites');
-        }
+        Schema::dropIfExists('favorites');
     }
 };

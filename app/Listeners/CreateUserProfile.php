@@ -7,10 +7,8 @@ use Illuminate\Auth\Events\Registered;
 class CreateUserProfile
 {
     /**
-     * Auto-provision an empty profile row right after registration — every
-     * field is nullable, so this is just a 1:1 placeholder the user fills
-     * in later. Not wired into CreateNewUser itself; this listener is the
-     * single place that owns "what happens after a user registers".
+     * Создаёт пустой профиль после регистрации. Все поля профиля допускают null и заполняются пользователем.
+     * Обработчик определяет создание профиля независимо от CreateNewUser.
      */
     public function handle(Registered $event): void
     {

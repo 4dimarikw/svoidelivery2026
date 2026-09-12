@@ -81,9 +81,7 @@ class SyncUntappdBeersCommand extends Command
             ['Ошибок', $failed],
         ]);
 
-        // Раньше команда всегда возвращала SUCCESS без единой записи в
-        // журнале, даже при 100% ошибок — единственный след оставался в
-        // выводе консоли планировщика, который никто не читает.
+        // Итог синхронизации записывается в журнал, включая прогоны с ошибками для всех записей.
         event(new UntappdBeerSyncBatchCompleted(
             candidates: $beers->count(),
             synced: $synced,

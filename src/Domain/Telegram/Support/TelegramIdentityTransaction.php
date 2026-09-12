@@ -8,7 +8,10 @@ use Illuminate\Support\Facades\DB;
 
 final class TelegramIdentityTransaction
 {
-    /** Null locks all bots for account-wide unlink. Callbacks must not send network requests. */
+    /**
+     * При null блокируются все боты для отвязки аккаунта. Обработчики внутри транзакции не должны отправлять
+     * сетевые запросы.
+     */
     public function run(?array $botIds, Closure $callback): mixed
     {
         return DB::transaction(function () use ($botIds, $callback) {

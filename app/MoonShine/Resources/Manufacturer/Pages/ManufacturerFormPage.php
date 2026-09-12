@@ -46,8 +46,8 @@ final class ManufacturerFormPage extends FormPage
     {
         return [
             'name' => ['required', 'string', 'max:255'],
-            // 'required' only on update — on create, a blank slug is filled
-            // in by Manufacturer::booted()'s creating hook.
+            // Slug обязателен при обновлении; при создании пустое значение заполняет обработчик creating модели
+            // Manufacturer.
             'slug' => [
                 ...$item->getKey() !== null ? ['required'] : ['nullable'],
                 'string', 'max:255',

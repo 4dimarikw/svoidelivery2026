@@ -67,8 +67,7 @@ class OrderCustomerFormPage extends FormPage
             'first_name' => ['string', 'required'],
             'last_name' => ['string', 'required'],
             'phone' => ['string', 'required'],
-            // nullable в админке — старые заказы созданы до появления этого
-            // поля и не обязаны иметь значение задним числом.
+            // Поле допускает null: ссылка на мессенджер необязательна для заказчика.
             'messenger_url' => ['nullable', 'string', 'max:255'],
             'city' => $addressRule,
             'address' => $addressRule,

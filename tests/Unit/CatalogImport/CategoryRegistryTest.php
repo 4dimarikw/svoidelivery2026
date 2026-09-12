@@ -10,9 +10,8 @@ use Services\CatalogImport\CategoryRegistry;
 use Tests\TestCase;
 
 /**
- * migration 2026_08_03_100200_seed_category_registry_from_config уже сеет
- * валидный реестр ('beer' и т.д.) — эти тесты добавляют категории/правила
- * поверх него с уникальными slug, как ValidateCategoryRegistryCommandTest.
+ * Исходные миграции создают стартовый реестр. Тесты добавляют категории и правила с уникальными slug, как
+ * ValidateCategoryRegistryCommandTest.
  */
 class CategoryRegistryTest extends TestCase
 {
@@ -95,8 +94,7 @@ class CategoryRegistryTest extends TestCase
 
     public function test_rule_with_blank_value_is_skipped(): void
     {
-        // Регрессия: пустое value на accessory_title раньше собиралось в
-        // keywords => [null] → пустая ветка альтернации → матчит всё подряд.
+        // Правило accessory_title с пустым value должно отфильтровываться, чтобы не совпадать с любым названием.
         $category = $this->makeCategory(['slug' => 'test-blank-value', 'code' => 'test_blank_value']);
 
         CategoryMatchRule::query()->create([

@@ -44,10 +44,7 @@ class HeaderUserMenuTest extends TestCase
 
         $response = $this->actingAs($user)->get(route('home'));
 
-        // Убрана отдельная иконка-ссылка избранного в шапке (осталась только
-        // как пункт выпадающего меню, см. user-menu.blade.php) — её
-        // aria-label больше не должен встречаться (текст "Избранное" сам по
-        // себе так же встречается в пункте меню — по нему не отличить).
+        // Избранное доступно через пункт выпадающего меню user-menu; отдельная иконка в шапке не выводится.
         $response->assertDontSee('aria-label="'.__('layout.nav.favorites').'"', false);
     }
 }

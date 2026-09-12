@@ -1,11 +1,5 @@
-{{-- Ajax success (`status === 'ok'`, set by uiForm.submit() on a blank 200)
-     has no session('status') to read — Fortify only sets that when the
-     request did NOT ask for JSON. The three session-status codes below are
-     the no-JS fallback only (plain POST-back after a real page reload):
-     Fortify's own PROFILE_INFORMATION_UPDATED / PASSWORD_UPDATED constants
-     are untranslated raw strings ('profile-information-updated' /
-     'password-updated') — <x-ui.status-alert> would print them verbatim, so
-     they're mapped to real copy here instead of being handed to it. --}}
+{{-- AJAX-форма показывает успех через Alpine status. После обычной отправки и перезагрузки используются сообщения
+   сессии; коды Fortify преобразуются в переведённый текст. --}}
 @php
     $noJsStatusMessage = match (session('status')) {
         'profile-information-updated' => __('account.profile.basic_updated'),
@@ -28,7 +22,7 @@
             <x-ui.alert tone="ok">{{ $noJsStatusMessage }}</x-ui.alert>
         @endif
 
-        {{-- Section 1 — name + email, Fortify's own endpoint. --}}
+        {{-- Имя и email редактируются через обработчик Fortify. --}}
         <x-ui.surface tone="paper-2" class="rounded-sm border border-hairline p-6">
             <h2 class="mb-5 font-display text-heading-s uppercase text-ink-900">{{ __('account.profile.basic_title') }}</h2>
 
@@ -73,7 +67,7 @@
             </x-ui.form>
         </x-ui.surface>
 
-        {{-- Section 2 — structured profile fields (Domain\Profile\Models\Profile). --}}
+        {{-- Поля профиля Domain\Profile\Models\Profile. --}}
         <x-ui.surface tone="paper-2" class="rounded-sm border border-hairline p-6">
             <h2 class="mb-5 font-display text-heading-s uppercase text-ink-900">{{ __('account.profile.details_title') }}</h2>
 

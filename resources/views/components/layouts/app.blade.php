@@ -1,11 +1,7 @@
 @props(['title' => null])
     <!doctype html>
-{{-- scroll-pt-24: шапка теперь sticky (см. layouts/header.blade.php) и
-     перекрывает верх любого элемента, к которому браузер прыгает по
-     #fragment — skip-link на #main ниже и любой CMS-пункт меню с
-     #якорем в url (nav-menu.blade.php). Число — оценка с запасом под обе
-     высоты шапки (mobile/sm:+), не токен, тот же дух, что у pb-20 на
-     мобильной панели (site.blade.php). --}}
+{{-- scroll-pt-24 оставляет место под закреплённую шапку при переходе к якорям, включая #main и ссылки CMS-меню.
+   Отступ рассчитан на мобильную и широкую шапку. --}}
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="h-full scroll-pt-24">
 <head>
     <meta charset="utf-8">

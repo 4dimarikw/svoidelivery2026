@@ -5,9 +5,8 @@
 ])
 
 @php
-    // Split the localized "Resend in :seconds s" string around the
-    // placeholder so Alpine can splice in the live countdown without
-    // depending on the exact wording/spacing of the translation.
+    // Перевод разделяется по заполнителю :seconds, чтобы Alpine вставлял отсчёт независимо от формулировки
+    // сообщения.
     $waitTemplate = __('ui.resend.wait', ['seconds' => '§']);
     [$waitPrefix, $waitSuffix] = explode('§', $waitTemplate) + ['', ''];
 @endphp

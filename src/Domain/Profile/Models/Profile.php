@@ -16,18 +16,15 @@ class Profile extends Model
     protected $table = 'user_profiles';
 
     protected $fillable = [
-        // Mass-assignable so factories/tests can create() with an explicit
-        // owner — same rationale as Address::$fillable's user_id (see there).
-        // No controller ever request-validates this key (ProfileController
-        // uses $user->profile()->updateOrCreate(), which sets the FK itself).
+        // user_id доступен массовому присваиванию для фабрик и тестов. Контроллер не принимает его из запроса:
+        // связь profile()->updateOrCreate() задаёт владельца сама.
         'user_id',
         'first_name',
         'last_name',
         'patronymic',
         'phone',
-        // Ссылки на соцсети/мессенджеры — единая json-колонка вместо
-        // отдельной строки под каждую сеть (была vk_url/telegram_url),
-        // см. config/social.php и socialLink()/socialLinks() ниже.
+        // Ссылки на социальные сети и мессенджеры хранятся в social_links в формате JSON. См. config/social.php
+        // и методы socialLink()/socialLinks().
         'social_links',
         'default_order_comment',
         // Пишутся только Domain\Telegram\Actions\CheckTelegramBotAvailabilityAction,
@@ -58,8 +55,7 @@ class Profile extends Model
     }
 
     /**
-     * "Фамилия Имя Отчество" — the conventional Russian display order.
-     * Null when nothing has been filled in yet.
+     * Полное имя в порядке «Фамилия Имя Отчество»; null, если все поля пусты.
      */
     public function getFullNameAttribute(): ?string
     {

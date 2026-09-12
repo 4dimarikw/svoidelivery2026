@@ -6,15 +6,9 @@ use Domain\Catalog\Models\Category;
 use Illuminate\Database\Seeder;
 
 /**
- * Bootstraps the initial category list. The full registry (behavioural
- * import flags + slug-resolution rules) now lives in the `categories`/
- * `category_match_rules` tables and is editable in MoonShine — see
- * Services\CatalogImport\CategoryRegistry. This seeder only guarantees each
- * category row exists with its name/code; it never overwrites an existing
- * row, so admin edits made after the initial seed survive re-runs.
- *
- * `code` is derived from slug by replacing `-` with `_` (historical
- * convention of this project, see data/catalog-database-structure.md §4.1).
+ * Гарантирует наличие стартовых категорий по slug, не перезаписывая правки администратора. Полный реестр и
+ * правила импорта создаются миграциями и редактируются в MoonShine. code получается заменой дефисов slug на
+ * подчёркивания.
  */
 class CategorySeeder extends Seeder
 {
@@ -34,9 +28,6 @@ class CategorySeeder extends Seeder
         'souvenir-glasses' => 'Сувенирные бокалы',
     ];
 
-    /**
-     * Run the database seeds.
-     */
     public function run(): void
     {
         foreach (self::CATEGORIES as $slug => $name) {

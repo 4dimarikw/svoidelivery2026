@@ -1,9 +1,6 @@
 <x-layouts.auth :title="__('account.verify.title')">
     <x-ui.auth-card :title="__('account.verify.title')" :subtitle="__('account.verify.subtitle')">
-        {{-- Fortify::VERIFICATION_LINK_SENT ('verification-link-sent') is an
-             untranslated raw constant — <x-ui.status-alert> would print it
-             verbatim, so it's mapped to real copy here instead (same
-             technique as resources/views/account/profile.blade.php). --}}
+        {{-- Код Fortify::VERIFICATION_LINK_SENT преобразуется в переведённое сообщение. --}}
         @if (session('status') === 'verification-link-sent')
             <x-ui.alert tone="ok" class="mb-5">{{ __('account.verify.sent') }}</x-ui.alert>
         @elseif (session('status') === 'verification-throttled')

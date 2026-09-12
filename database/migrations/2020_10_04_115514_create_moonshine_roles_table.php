@@ -6,10 +6,8 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use MoonShine\Laravel\Models\MoonshineUserRole;
 
-return new class () extends Migration {
-    /**
-     * Run the migrations.
-     */
+return new class extends Migration
+{
     public function up(): void
     {
         Schema::create('moonshine_user_roles', static function (Blueprint $table): void {
@@ -26,9 +24,6 @@ return new class () extends Migration {
         ]);
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::dropIfExists('moonshine_user_roles');

@@ -1,5 +1,4 @@
-{{-- Renders session('status') — the session key Fortify's controllers use
-     for one-off success messages (password reset link sent, etc). --}}
+{{-- Однократное сообщение об успехе из session('status'), используемое обработчиками Fortify. --}}
 @props([
     'key' => 'status',
     'tone' => 'ok',

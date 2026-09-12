@@ -10,10 +10,8 @@ use InvalidArgumentException;
 
 abstract class OrderState
 {
-    // Пусто по умолчанию — каждый наследник переопределяет своим набором
-    // допустимых переходов (см. NewOrderState и т.д.). Раньше здесь стоял
-    // OrderStatuses::class — enum, не state-класс, чего transitionTo()
-    // ниже (сравнивает get_class($state)) никогда бы не нашла в списке.
+    // Каждый класс состояния задаёт допустимые переходы. transitionTo() сравнивает классы состояний с этим
+    // списком.
     protected array $allowedTransitions = [];
 
     public function __construct(

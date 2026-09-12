@@ -1,6 +1,5 @@
-{{-- `mode` is the ONLY key any component in this library reads via @aware —
-     see CLAUDE.md. Descendants (<x-ui.error>, form-actions submit state,
-     etc.) pick it up from however the caller wrote it here. --}}
+{{-- mode — единственный параметр библиотеки, наследуемый через @aware. Его читают вложенные компоненты ошибок и
+   действий формы. --}}
 @props([
     'action',
     'method' => 'POST',

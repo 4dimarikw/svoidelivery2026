@@ -24,10 +24,8 @@ use Services\CatalogImport\Stages\ResolveVolumeStage;
 
 return [
     /*
-    |--------------------------------------------------------------------------
-    | Download CSV Paths
-    |--------------------------------------------------------------------------
-    */
+     * Пути загрузки CSV.
+     */
 
     'download_dir' => 'app/private/catalog/',
     'base_ftp_file' => env('DB_1C_FTP_BASE_FILE'),
@@ -44,19 +42,10 @@ return [
     'report_log_dir' => 'logs/catalog-import/',
 
     /*
-    |--------------------------------------------------------------------------
-    | Pipeline stages
-    |--------------------------------------------------------------------------
-    | Each stage is a class implementing ImportStage. Reorder, add, or replace
-    | individual stages to change how a specific attribute is resolved.
-    |
-    | ResolvePriceStage validates price before any database/integration stages.
-    | ResolveCategoryStage then runs so that $ctx->category is available to
-    | NormalizeRowStage (price-exempt check) and ResolveBrandStage (per-category
-    | default_brand). It must also run before ResolveBeerStyleStage.
-    | ResolveBeerStyleStage also syncs Untappd data (via Untappd facade)
-    | and absorbs the former ResolveUntappdRefStage logic.
-    */
+     * Этапы импорта реализуют ImportStage. ResolvePriceStage проверяет цену до обращений к базе и интеграциям.
+     * ResolveCategoryStage подготавливает категорию для NormalizeRowStage, ResolveBrandStage и
+     * ResolveBeerStyleStage. ResolveBeerStyleStage также синхронизирует данные Untappd.
+     */
     'stages' => [
         ResolvePriceStage::class,
         ResolveCategoryStage::class,
@@ -132,19 +121,10 @@ return [
     ],
 
     /*
-    |--------------------------------------------------------------------------
-    | Categories — единый реестр (свойства + правила резолва slug)
-    |--------------------------------------------------------------------------
-    | Переехал в БД: таблицы `categories` (флаги expects_container/
-    | expects_volume/price_exempt/name_from_article/default_brand/
-    | container_code) и `category_match_rules` (правила резолва slug,
-    | приоритет — колонка `priority`), плюс глобальные маркеры сегментов
-    | (alcohol_marker/accessory_marker/advent_marker/fallback_slug) в
-    | Infrastructure\Settings\CatalogImportSettings. Управляется из MoonShine
-    | (раздел «Категории»). Единственная точка чтения — CategoryRegistry;
-    | CategorySlugResolver и Resolve*-стейджи по-прежнему обращаются только
-    | к ней и не знают, что источник сменился.
-    */
+     * Реестр категорий хранится в categories и category_match_rules, глобальные маркеры импорта — в
+     * CatalogImportSettings. Управляется через MoonShine. CategoryRegistry предоставляет данные
+     * CategorySlugResolver и этапам Resolve*.
+     */
 
     /*
     |--------------------------------------------------------------------------
@@ -192,10 +172,8 @@ return [
     ],
 
     /*
-    |--------------------------------------------------------------------------
-    | CSV file settings
-    |--------------------------------------------------------------------------
-    */
+     * Настройки формата CSV.
+     */
     'encoding' => 'Windows-1251',
     'delimiter' => ';',
 

@@ -12,20 +12,16 @@ use Illuminate\Support\Str;
  */
 class UserFactory extends Factory
 {
-    // Явно, а не по умолчанию: Factory::modelName() угадывает класс модели по
-    // имени фабрики через App\Models\{Basename} → App\{Basename}; когда
-    // App\Models\User не существует (User переехал в Domain\Auth\Models —
-    // см. CLAUDE.md), угадывание молча уходит в несуществующий App\User.
+    // Модель задаётся явно, поскольку User находится в Domain\Auth\Models и не соответствует стандартным путям
+    // поиска модели по имени фабрики.
     protected $model = User::class;
 
     /**
-     * The current password being used by the factory.
+     * Пароль, используемый фабрикой.
      */
     protected static ?string $password;
 
     /**
-     * Define the model's default state.
-     *
      * @return array<string, mixed>
      */
     public function definition(): array
@@ -40,7 +36,7 @@ class UserFactory extends Factory
     }
 
     /**
-     * Indicate that the model's email address should be unverified.
+     * Состояние пользователя с неподтверждённым адресом электронной почты.
      */
     public function unverified(): static
     {

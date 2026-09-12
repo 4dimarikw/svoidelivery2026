@@ -2,7 +2,7 @@
     <main id="main" class="mx-auto max-w-page px-6 py-12">
         <h1 class="mb-8 font-display text-display-l uppercase text-ink-900">UI Kit</h1>
 
-        {{-- ————————————————————————————————————————— Buttons ————— --}}
+        {{-- Кнопки. --}}
         <section class="mb-12">
             <h2 class="mb-4 font-mono text-label uppercase text-ink-500">Buttons</h2>
             <div class="flex flex-wrap items-center gap-3">
@@ -25,7 +25,7 @@
             </div>
         </section>
 
-        {{-- ————————————————————————————————————————— Icons ————— --}}
+        {{-- Иконки. --}}
         <section class="mb-12">
             <h2 class="mb-4 font-mono text-label uppercase text-ink-500">Icons</h2>
             <div class="flex flex-wrap gap-4">
@@ -38,7 +38,7 @@
             </div>
         </section>
 
-        {{-- ————————————————————————————————————————— Chips / badges ————— --}}
+        {{-- Метки и бейджи. --}}
         <section class="mb-12">
             <h2 class="mb-4 font-mono text-label uppercase text-ink-500">Chips &amp; badges</h2>
             <div class="flex flex-wrap items-center gap-2">
@@ -55,7 +55,7 @@
             </div>
         </section>
 
-        {{-- ————————————————————————————————————————— Breadcrumbs ————————— --}}
+        {{-- Навигационная цепочка. --}}
         <section class="mb-12">
             <h2 class="mb-4 font-mono text-label uppercase text-ink-500">Breadcrumbs</h2>
             <x-ui.breadcrumbs :items="[
@@ -65,7 +65,7 @@
             ]" />
         </section>
 
-        {{-- ————————————————————————————————————————— Alerts ————— --}}
+        {{-- Уведомления. --}}
         <section class="mb-12 grid gap-3">
             <h2 class="font-mono text-label uppercase text-ink-500">Alerts</h2>
             <x-ui.alert tone="ok" title="Готово!">Ссылка для сброса пароля отправлена на почту.</x-ui.alert>
@@ -74,18 +74,15 @@
             <x-ui.alert tone="info" dismissible>Мы позвоним для подтверждения заказа — трубку брать не нужно.</x-ui.alert>
         </section>
 
-        {{-- ————————————————————————————————————————— Standalone controls ————— --}}
+        {{-- Отдельные элементы ввода. --}}
         <section class="mb-12 grid max-w-md gap-4">
             <h2 class="font-mono text-label uppercase text-ink-500">Controls</h2>
 
             <x-ui.input-field name="demo_email" label="E-mail" type="email" placeholder="you@mail.ru" />
             <x-ui.input-field name="demo_readonly" label="Только чтение" value="ул. Беговая, 7" readonly />
 
-            {{-- Path B demo: x-model on a text-like control gets rewritten to
-                 x-model.fill and the server value keeps rendering — reload
-                 this page and the input below should still read "Свои".
-                 Inspect the element: the attribute in the DOM is
-                 x-model.fill="draft", not x-model. --}}
+            {{-- При x-model текстовое поле получает x-model.fill и серверное значение. После перезагрузки значение
+               «Свои» должно сохраняться. --}}
             <div x-data="{ draft: '' }">
                 <x-ui.field label="Path B — x-model.fill" for="f-demo-fill">
                     <x-ui.input name="demo_fill" id="f-demo-fill" value="Свои" x-model="draft" />
@@ -109,7 +106,7 @@
                 <x-ui.otp-input name="demo_otp" length="6" />
             </x-ui.field>
 
-            {{-- Deliberately forced invalid, to preview the error state without a POST. --}}
+            {{-- Принудительное состояние ошибки для предварительного просмотра без отправки формы. --}}
             <x-ui.field label="С ошибкой" for="f-demo-invalid" help="Введите номер полностью — 11 цифр">
                 <x-ui.input name="demo_invalid" id="f-demo-invalid" invalid value="+7 (9" />
             </x-ui.field>
@@ -118,7 +115,7 @@
             <x-ui.spinner />
         </section>
 
-        {{-- ————————————————————————————————————————— Auth forms (live) ————— --}}
+        {{-- Рабочие формы аутентификации. --}}
         <section class="mb-12">
             <h2 class="mb-4 font-mono text-label uppercase text-ink-500">Auth forms — mode="default"</h2>
             <x-ui.auth-card title="С возвращением" subtitle="Войдите, чтобы заказывать как свои">
@@ -146,10 +143,8 @@
                         <x-ui.input-field name="email" label="E-mail" type="email" placeholder="you@mail.ru" required />
                         <x-ui.password-field name="password" label="Пароль" autocomplete="new-password" required />
 
-                        {{-- Path C by hand: checkbox can't use x-model.fill (see
-                             CLAUDE.md), so its state is seeded from PHP via the
-                             form's :state prop and bound directly, not through
-                             <x-ui.checkbox-field>. --}}
+                        {{-- Начальное состояние флажка задаётся из PHP через state формы; логическое значение не
+                           заполняется через x-model.fill. --}}
                         <label class="flex items-center text-body-m text-ink-700 cursor-pointer">
                             <input type="checkbox" name="agree" value="1" x-model="state.agree" class="check-control">
                             <span class="ml-2.5">Мне есть 18 лет, принимаю условия сервиса</span>
@@ -186,12 +181,12 @@
             </x-ui.auth-card>
         </section>
 
-        {{-- ————————————————————————————————————————— 2FA preview ————— --}}
+        {{-- Предварительный просмотр двухфакторной аутентификации. --}}
         <section class="mb-12 grid max-w-md gap-6">
             <h2 class="font-mono text-label uppercase text-ink-500">Two-factor (invented, no design-system source)</h2>
 
             <x-ui.qr-panel alt="QR-код для настройки приложения-аутентификатора" secret="JBSWY3DPEHPK3PXP">
-                {{-- Placeholder: Fortify's real twoFactorQrCodeSvg() output goes here. --}}
+                {{-- Место для SVG-кода, возвращаемого twoFactorQrCodeSvg(). --}}
                 <svg width="160" height="160" viewBox="0 0 160 160"><rect width="160" height="160" fill="#fff" /><rect x="10" y="10" width="30" height="30" fill="#1A1410" /><rect x="120" y="10" width="30" height="30" fill="#1A1410" /><rect x="10" y="120" width="30" height="30" fill="#1A1410" /></svg>
             </x-ui.qr-panel>
 

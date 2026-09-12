@@ -1,4 +1,4 @@
-{{-- Shared by create.blade.php and edit.blade.php. $address is null on create. --}}
+{{-- Общая форма создания и редактирования адреса; при создании address равен null. --}}
 @php
     $action = $address ? route('account.addresses.update', $address) : route('account.addresses.store');
     $method = $address ? 'PUT' : 'POST'; // store() is POST-only, update() is PUT — Route::resource convention

@@ -45,11 +45,8 @@ class CartTest extends TestCase
     }
 
     /**
-     * Регрессия: товар с in_stock=true, но stock_quantity=0 (рассинхрон —
-     * например, раскуплен в ноль при оформлении заказа, см.
-     * Domain\Order\Processes\UpdateProductStockQuantity) раньше отвечал
-     * тихим 200 и ничего не добавлял в корзину. CartController::increase()
-     * теперь отдаёт 422, ничего не создавая.
+     * Товар с in_stock=true и stock_quantity=0 недоступен для добавления в корзину. Запрос должен вернуть 422
+     * без создания позиции.
      */
     public function test_increase_rejects_a_product_with_no_available_stock(): void
     {
@@ -106,9 +103,7 @@ class CartTest extends TestCase
 
     public function test_increase_json_response_reports_the_updated_line_amount(): void
     {
-        // Регрессия: сумма строки в корзине (cart-line.blade.php) раньше не
-        // реагировала на +/- в степпере, потому что lineAmount в JSON-ответе
-        // вообще не было.
+        // JSON-ответ содержит lineAmount для обновления суммы строки после изменения количества.
         $user = User::factory()->create();
         $product = Product::factory()->create(['price' => 100, 'stock_quantity' => 5, 'in_stock' => true]);
 
@@ -195,10 +190,8 @@ class CartTest extends TestCase
     }
 
     /**
-     * Регрессия: без no-store браузер по RFC 9111 §4.2.4 вправе показать
-     * закешированную /cart при навигации кнопкой «Назад», даже если
-     * Cache-Control: no-cache (то, что Laravel отдаёт по умолчанию) —
-     * пользователь видел старое количество после ajax-изменения в корзине.
+     * Ответ корзины содержит no-store, чтобы браузер не использовал кешированный HTTP-ответ с неактуальным
+     * количеством при навигации назад.
      */
     public function test_index_response_is_not_stored(): void
     {

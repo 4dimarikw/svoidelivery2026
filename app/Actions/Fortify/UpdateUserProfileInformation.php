@@ -12,7 +12,7 @@ use Laravel\Fortify\Contracts\UpdatesUserProfileInformation;
 class UpdateUserProfileInformation implements UpdatesUserProfileInformation
 {
     /**
-     * Validate and update the given user's profile information.
+     * Проверяет и обновляет данные профиля пользователя.
      *
      * @param  array<string, string>  $input
      *
@@ -23,13 +23,9 @@ class UpdateUserProfileInformation implements UpdatesUserProfileInformation
         Validator::make($input, [
             'name' => ['required', 'string', 'max:255'],
 
-            // У аккаунта, созданного через Telegram, email может
-            // отсутствовать — Telegram его не отдаёт. Обязателен только для
-            // тех, у кого он уже есть (обычная регистрация) — так нельзя
-            // обнулить существующий email пустой отправкой, но и нечего
-            // требовать у того, у кого email не было изначально. Проверяем
-            // по текущему email, не по отдельному запросу к telegraph_chats —
-            // тот же структурный сигнал, что и в User::hasVerifiedEmail().
+            // Telegram не предоставляет email. Поле обязательно, если у пользователя уже указан адрес: пустая
+            // отправка не должна его обнулять. Текущий email служит тем же признаком, что и в
+            // User::hasVerifiedEmail().
             'email' => [
                 Rule::requiredIf(fn () => $user->email !== null),
                 'nullable',
@@ -63,7 +59,7 @@ class UpdateUserProfileInformation implements UpdatesUserProfileInformation
     }
 
     /**
-     * Update the given verified user's profile information.
+     * Обновляет данные пользователя с подтверждённым адресом электронной почты.
      *
      * @param  array<string, string>  $input
      */

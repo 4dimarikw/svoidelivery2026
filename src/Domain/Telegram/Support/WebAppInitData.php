@@ -30,13 +30,8 @@ final class WebAppInitData
     ) {}
 
     /**
-     * null — initData отсутствует, подпись не совпала или auth_date протух.
-     *
-     * $reason — заполняется причиной отказа (out-параметр), когда возвращён
-     * null: ошибка полей, времени, подписи или user. Нужен вызывающему коду
-     * (TelegramLoginController), чтобы отличить подделку подписи от
-     * протухшей/неполной сессии — раньше все причины схлопывались в один
-     * null без возможности их различить.
+     * Возвращает null при отсутствии initData, неверной подписи, истёкшем auth_date или ошибке данных
+     * пользователя. Выходной параметр reason позволяет TelegramLoginController различать причины отказа.
      */
     public static function verify(mixed $initData, string $botToken, ?string &$reason = null): ?self
     {

@@ -1,6 +1,4 @@
-{{-- Renders <h1> — the design system's own markup uses <h3> because the
-     mockup is one long document with its own heading hierarchy; a real auth
-     page's title is the top-level heading. --}}
+{{-- Заголовок страницы аутентификации имеет уровень h1. --}}
 @props([
     'title',
     'subtitle' => null,

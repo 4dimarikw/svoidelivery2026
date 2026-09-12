@@ -6,7 +6,7 @@ export default {
         './storage/framework/views/*.php',
         './resources/**/*.blade.php',
         './resources/**/*.js',
-        // add './app/View/Components/**/*.php' ONLY if a class-based component is ever introduced
+        // Классовые компоненты из app/View/Components требуют добавления этого пути в content.
     ],
     theme: {
         extend: {
@@ -43,7 +43,7 @@ export default {
                     950: '#120E0A',
                 },
 
-                // object form so `bg-rust` still works AND the tints/text-safe shade are named
+                // Объект сохраняет класс bg-rust и именованные оттенки для текста и фона.
                 rust: {
                     DEFAULT: '#B14A2B',
                     50: '#F3E2DA',
@@ -57,7 +57,7 @@ export default {
                     DEFAULT: '#FBBC04', // рейтинг Untappd, design-system.html §06 .card .rate
                 },
 
-                // alert tints, promoted from magic hex in the design system
+                // Оттенки уведомлений.
                 warn: {
                     50: '#F6ECD4',
                     200: '#DFC98F',
@@ -69,7 +69,7 @@ export default {
                     700: '#7A2E14',
                 },
 
-                // hairlines — literal rgba, no color-mix (design system §12)
+                // Тонкие границы заданы rgba без color-mix; см. дизайн-систему §12.
                 rule: 'rgba(15,46,55,.14)',
                 hairline: 'rgba(26,20,16,.12)',
                 'field-line': 'rgba(26,20,16,.16)',
@@ -99,7 +99,7 @@ export default {
                 ],
             },
 
-            // design system section 04 (type scale). Additive — text-sm/text-base etc. still exist.
+            // Шкала типографики из дизайн-системы §04 дополняет стандартные text-sm и text-base.
             fontSize: {
                 'display-xl': ['88px', {lineHeight: '80px', letterSpacing: '-0.015em', fontWeight: '800'}],
                 'display-l': ['60px', {lineHeight: '56px', letterSpacing: '0', fontWeight: '700'}],
@@ -118,7 +118,7 @@ export default {
                 badge: ['10px', {lineHeight: '14px', letterSpacing: '0.12em'}],
             },
 
-            // deliberately non-colliding keys — do NOT override tracking-tight etc.
+            // Имена не пересекаются со стандартными tracking-tight и другими утилитами.
             letterSpacing: {
                 'brand-tight': '-0.015em',
                 'brand-snug': '-0.01em',
@@ -132,9 +132,7 @@ export default {
                 otp: '0.40em',
             },
 
-            // The design system OMITS these three keys — the main addition of this config.
-            // NOTE: this REPLACES Tailwind's default sm/md/lg shadows project-wide,
-            // making every shadow teal-tinted (rgba(15,46,55,…)), never neutral black.
+            // Тени sm, md и lg используют бирюзовый оттенок rgba(15,46,55,…) во всём проекте.
             boxShadow: {
                 sm: '0 1px 0 rgba(15,46,55,.06), 0 1px 2px rgba(15,46,55,.08)',
                 md: '0 6px 14px -6px rgba(15,46,55,.18), 0 2px 4px rgba(15,46,55,.08)',
@@ -153,8 +151,8 @@ export default {
                 fav: ['0 0 2px rgba(250,246,236,.95)', '0 1px 3px rgba(15,46,55,.25)'],
             },
 
-            // NOTE: redefines stock meanings — md 6px→3px, lg 8px→4px, xl 12px→6px.
-            // Intentional: the brand is deliberately near-square. `rounded-full` survives.
+            // Радиусы скругления: md — 3px, lg — 4px, xl — 6px. Класс rounded-full сохраняет стандартное
+            // значение.
             borderRadius: {
                 DEFAULT: '2px',
                 xs: '0px',

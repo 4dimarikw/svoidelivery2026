@@ -12,43 +12,28 @@ use Services\Untappd\DTOs\BeerResponseDTO;
 use Services\Untappd\Facades\Untappd;
 
 /**
- * Резолвит стиль пива и синкает Untappd-данные при наличии UntappdRef.
- *
- * Алгоритм:
- * 1. Парсит `UntappdRef` → $ctx->attributes['untappd_ref'] (int|null).
- * 2. Если UntappdRef задан:
- *    a. Cache-first: ищем в untappd_beers по beer_id. Если найдено и есть description —
- *       берём стиль без HTTP.
- *    b. Cache miss ИЛИ найденная запись без description (например, синкана до появления
- *       колонки) → `Untappd::get("beer/info/$beerId", ['db' => 1])`:
- *       - Успех → upsert untappd_beers (включая description), диспатч UntappdBeerSynced;
- *         стиль = $beer->beer_style.
- *       - Ошибка → warning в $ctx, диспатч UntappdBeerSyncFailed; используем ранее
- *         найденную cache-запись (если была) и переходим к fallback.
- * 3. Fallback: если стиль пуст → берём `СтильПива` из CSV.
- * 4. Если итоговый стиль непуст → BeerStyle::firstOrCreate по normalized_name
- *    (NOT NULL unique, моделью не генерируется); name заполняется явно, slug
- *    генерируется BeerStyle::getSlugOptions() (Spatie\Sluggable\HasSlug)
- *    через её собственный creating-listener.
- * 5. Всегда вызывает $next($ctx).
+ * Определяет стиль пива и синхронизирует Untappd по UntappdRef. Запись с заполненным description используется
+ * без HTTP; при отсутствии записи или описания выполняется запрос beer/info и сохраняется результат. При ошибке
+ * используются доступные данные кеша, затем поле СтильПива из CSV. Непустой стиль сопоставляется через
+ * firstOrCreate() по normalized_name; slug генерирует модель. Выполнение продолжается через next().
  */
 final class ResolveBeerStyleStage implements ImportStage
 {
     public function __invoke(ImportContext $ctx, Closure $next): ImportContext
     {
-        // Step 1: parse UntappdRef
+        // Разбор UntappdRef.
         $raw = $ctx->row->get(config('catalog_import.columns.untappd_ref'));
         $untappdRef = $raw !== '' && is_numeric($raw) ? (int) $raw : null;
         $ctx->attributes['untappd_ref'] = $untappdRef;
 
-        // Step 2: Untappd-first style resolution (cache-first)
+        // Определение стиля через Untappd с приоритетом кеша.
         $styleName = null;
 
         if ($untappdRef !== null) {
             $beer = UntappdBeer::query()->where('beer_id', $untappdRef)->first();
 
-            // Cache-miss, или cache-запись без description (синкана до появления колонки) —
-            // дозапрашиваем; при ошибке API держимся ранее найденной cache-записи.
+            // При отсутствии записи или description запрашиваем API; при ошибке используем найденную запись
+            // кеша.
             if (($beer === null || $beer->description === null) && ! $ctx->dryRun) {
                 $beer = $this->fetchAndStore($untappdRef, $ctx) ?? $beer;
             }
@@ -60,12 +45,12 @@ final class ResolveBeerStyleStage implements ImportStage
             }
         }
 
-        // Step 3: fallback to CSV column
+        // Резервное значение стиля из CSV.
         if (blank($styleName)) {
             $styleName = $ctx->row->get(config('catalog_import.columns.beer_style'));
         }
 
-        // Step 4: resolve BeerStyle model
+        // Сопоставление модели BeerStyle.
         if (! blank($styleName)) {
             $normalized = normalize_name($styleName);
 

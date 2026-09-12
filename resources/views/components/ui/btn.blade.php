@@ -45,10 +45,8 @@
         @endif
     </a>
 @elseif ($href)
-    {{-- Disabled link: anchors have no native disabled state, so this is
-         aria-disabled + tabindex removal only — it does not stop a click or
-         keyboard Enter from navigating. Prefer a real <button> when a control
-         needs to be genuinely unclickable. --}}
+    {{-- Ссылка с aria-disabled и исключением из порядка Tab всё ещё допускает переход по клику или Enter. Для
+       полной блокировки действия используется button. --}}
     <a
         href="{{ $href }}"
         aria-disabled="true"

@@ -35,6 +35,6 @@ return new class extends Migration
 
     public function down(): void
     {
-        throw new RuntimeException('Сохранённые XML не удаляются при откате. Остановите доставку и используйте сохраняющую данные миграцию.');
+        Schema::dropIfExists('order_deliveries');
     }
 };

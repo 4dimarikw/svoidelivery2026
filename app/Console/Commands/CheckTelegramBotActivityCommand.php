@@ -116,9 +116,8 @@ class CheckTelegramBotActivityCommand extends Command
             }
         }
 
-        // Раньше команда всегда возвращала SUCCESS без единой записи в
-        // журнале — результат прогона напрямую сужает аудиторию VK-рассылки
-        // (BroadcastVkPostJob фильтрует по profiles.is_bot_active).
+        // Результат проверки доступности бота записывается в журнал; is_bot_active определяет аудиторию
+        // BroadcastVkPostJob.
         event(new TelegramActivityCheckCompleted(
             processed: $processed,
             active: $active,

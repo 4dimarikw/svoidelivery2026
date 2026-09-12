@@ -21,8 +21,8 @@ return new class extends Migration
             // Плоский каталог (products), вариаций товара в проекте нет —
             // FK на products, не на product_variations.
             $table->foreignIdFor(Product::class)
-                ->constrained()
-                ->cascadeOnDelete()
+                ->constrained(indexName: 'order_items_product_restrict_foreign')
+                ->restrictOnDelete()
                 ->cascadeOnUpdate();
 
             // decimal(12,2) — рубли, как products.price/cart_items.price;
@@ -33,6 +33,11 @@ return new class extends Migration
             $table->unsignedInteger('quantity')
                 ->default(1);
 
+            // Снимок товара сохраняет сведения на момент оформления заказа.
+            $table->string('product_name', 512);
+            $table->string('product_external_code', 64);
+            $table->string('product_brand')->nullable();
+
             $table->timestamps();
 
             $table->index(['order_id', 'product_id']);
@@ -42,8 +47,6 @@ return new class extends Migration
 
     public function down(): void
     {
-        if (! app()->isProduction()) {
-            Schema::dropIfExists('order_items');
-        }
+        Schema::dropIfExists('order_items');
     }
 };

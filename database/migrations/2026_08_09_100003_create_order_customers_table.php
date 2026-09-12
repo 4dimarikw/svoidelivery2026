@@ -29,6 +29,8 @@ return new class extends Migration
                 ->nullable()
                 ->index();
 
+            $table->string('messenger_url')->nullable();
+
             // Снимок Domain\Profile\Models\Address на момент заказа (та же
             // логика, что у CartItem::price — цена/адрес снимаются в момент
             // действия, не живая ссылка на изменяемую запись). Все поля
@@ -52,8 +54,6 @@ return new class extends Migration
 
     public function down(): void
     {
-        if (! app()->isProduction()) {
-            Schema::dropIfExists('order_customers');
-        }
+        Schema::dropIfExists('order_customers');
     }
 };

@@ -11,7 +11,7 @@ use Tests\TestCase;
 
 /**
  * Подвал сайта — единственная CMS-секция без route_name (глобальная, см.
- * миграцию make_site_sections_route_name_nullable и
+ * миграцию 2026_08_06_120000_create_site_content_tables и
  * Domain\Content\Actions\Content\LoadSiteFooter): должна быть видна на
  * любой публичной странице сразу, не только на той, что её создала.
  */

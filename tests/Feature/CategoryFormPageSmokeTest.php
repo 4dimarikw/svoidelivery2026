@@ -9,13 +9,9 @@ use MoonShine\Laravel\Models\MoonshineUserRole;
 use Tests\TestCase;
 
 /**
- * Regression for the "Resource is required for RelationRepeater (matchRules)"
- * FieldException from laravel.log — caused by a stale Composer optimized
- * classmap not including newly-added App\MoonShine\Resources\CategoryMatchRule\*
- * classes (MoonShine resolves RelationRepeater's `resource:` via
- * OptimizerCollection::getFiltered(), which reads ClassLoader::getClassMap(),
- * not the filesystem). Fixed with `composer dump-autoload`; this test hits
- * the actual admin route to prove the form renders end-to-end.
+ * Проверяет рендер формы категории с RelationRepeater для matchRules через реальный маршрут админки. MoonShine
+ * обнаруживает ресурсы через оптимизированную карту классов Composer; она должна содержать CategoryMatchRule и
+ * его страницы.
  */
 class CategoryFormPageSmokeTest extends TestCase
 {

@@ -20,7 +20,9 @@ final class UpdateCartPrices
             fn (Cart $cart, Collection $items) => $this->updateLocked($items), cartId: $cartId);
     }
 
-    /** Caller must hold CartTransaction locks. Returns descriptions of changed prices. */
+    /**
+     * Вызывающий код должен удерживать блокировки CartTransaction. Возвращает описания изменённых цен.
+     */
     public function updateLocked(Collection $items): array
     {
         $changes = [];

@@ -115,8 +115,7 @@ final class UserFormPage extends FormPage
                 Rule::unique('users', 'email')->ignore($item->getKey()),
             ],
             'email_verified_at' => ['nullable', 'date'],
-            // password: 'hashed' cast on the model hashes it automatically —
-            // never call Hash::make() here.
+            // Преобразование hashed в модели автоматически хеширует пароль.
             'password' => [
                 ...$item->getKey() !== null ? ['sometimes', 'nullable'] : ['required'],
                 PasswordRule::defaults(),

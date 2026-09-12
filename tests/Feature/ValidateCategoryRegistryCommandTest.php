@@ -11,11 +11,8 @@ use Infrastructure\Settings\CatalogImportSettings;
 use Tests\TestCase;
 
 /**
- * migration 2026_08_03_100200_seed_category_registry_from_config already
- * transplants a valid registry into every RefreshDatabase-migrated test DB,
- * so these tests add EXTRA rules on top of it (with unique slugs/keywords
- * that don't collide with the migrated ones) rather than recreating
- * 'beer'/'mead'/'not-defined'/etc. from scratch.
+ * Исходные миграции создают корректный реестр категорий. Тесты добавляют к нему правила с уникальными slug и
+ * ключевыми словами, проверяя нарушения ограничений.
  */
 class ValidateCategoryRegistryCommandTest extends TestCase
 {
@@ -38,8 +35,8 @@ class ValidateCategoryRegistryCommandTest extends TestCase
 
     public function test_fails_on_duplicate_default_alcohol_rule(): void
     {
-        // 'beer' already carries the sole active alcohol/default rule from
-        // the seed migration — adding a second one anywhere else must fail.
+        // Категория beer содержит активное правило alcohol/default; второе такое правило должно вызвать ошибку
+        // проверки.
         $extra = $this->makeCategory('test-extra-default', 'Тестовая доп. категория');
 
         CategoryMatchRule::query()->create([

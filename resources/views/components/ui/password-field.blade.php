@@ -32,9 +32,8 @@
             class="absolute inset-y-0 right-0 flex items-center px-3.5 text-ink-500"
             tabindex="-1"
         >
-            {{-- Both icons render server-side; Alpine only toggles which is
-                 visible — a component's `name` prop is resolved at render
-                 time and can't be swapped reactively via x-bind. --}}
+            {{-- Обе иконки создаются на сервере; Alpine переключает их видимость. Свойство name компонента
+               определяется при рендере и не меняется через x-bind. --}}
             <span x-show="!show"><x-ui.icon name="eye" size="18" /></span>
             <span x-show="show" x-cloak><x-ui.icon name="eye-off" size="18" /></span>
         </button>

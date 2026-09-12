@@ -1,14 +1,5 @@
-{{-- Port of the design system's `.acc-nav` (design-system.html lines
-     297-305) as inline utilities — single consumer, no pseudo-elements, no
-     native-control reset, so it doesn't earn a place in app.css's
-     @layer components (see CLAUDE.md's "where CSS lives" rule).
-
-     No icons (the mockup has none) — same "don't stub dead links" rule as
-     <x-layouts.header>: payments/promo codes have no page and stay unlinked,
-     favorites/orders do (see Domain\Favorite, Domain\Order, CLAUDE.md).
-     Cart is NOT here — it's a standalone page
-     (/cart, pages/cart.blade.php), not part of the account area; see
-     <x-layouts.header> for its icon+counter instead. --}}
+{{-- Навигация личного кабинета оформлена утилитами Tailwind по design-system.html §07. Ссылки ведут на
+   существующие страницы профиля, заказов, адресов и избранного; корзина доступна отдельно через шапку. --}}
 @props(['active' => null]) {{-- 'profile' | 'orders' | 'addresses' | 'favorites' --}}
 
 @php

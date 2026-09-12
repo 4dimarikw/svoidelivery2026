@@ -2,7 +2,8 @@
 
 use Spatie\LaravelSettings\Migrations\SettingsMigration;
 
-return new class extends SettingsMigration {
+return new class extends SettingsMigration
+{
     public function up(): void
     {
         $this->migrator->add('vk_sync.last_update', null);
@@ -12,5 +13,16 @@ return new class extends SettingsMigration {
         $this->migrator->add('vk_sync.active', false);
         $this->migrator->add('vk_sync.post_status', 'draft');
         $this->migrator->add('vk_sync.post_types', ['post']);
+    }
+
+    public function down(): void
+    {
+        $this->migrator->deleteIfExists('vk_sync.post_types');
+        $this->migrator->deleteIfExists('vk_sync.post_status');
+        $this->migrator->deleteIfExists('vk_sync.active');
+        $this->migrator->deleteIfExists('vk_sync.cron');
+        $this->migrator->deleteIfExists('vk_sync.count');
+        $this->migrator->deleteIfExists('vk_sync.domain');
+        $this->migrator->deleteIfExists('vk_sync.last_update');
     }
 };

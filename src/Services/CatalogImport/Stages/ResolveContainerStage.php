@@ -33,7 +33,7 @@ final class ResolveContainerStage implements ImportStage
     {
         $slug = $ctx->category?->slug;
 
-        // Step 1 — categories not flagged container: true are skipped.
+        // Категории без требования тары пропускаются.
         if ($slug === null || ! $this->categories->expectsContainer($slug)) {
             return $next($ctx);
         }
@@ -44,7 +44,7 @@ final class ResolveContainerStage implements ImportStage
             // Step 2 — category has a fixed container_code, Упаковка ignored.
             $code = $fixedCode;
         } else {
-            // Step 3 — detect from Упаковка column only.
+            // Определение тары по колонке «Упаковка».
             $package = (string) $ctx->row->get(config('catalog_import.columns.package'));
             $code = $this->detectCode($package);
 

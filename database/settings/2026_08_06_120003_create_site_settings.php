@@ -3,11 +3,8 @@
 use Spatie\LaravelSettings\Migrations\SettingsMigration;
 
 /**
- * Общие настройки сайта: site_name, автовход через Telegram Mini App
- * (telegram_autologin), а также настройки, изначально жившие в
- * GeneralSettings (test_user_email, notify_email, untappd_update_limit) —
- * SiteSettings единственный класс настроек с полноценной общей страницей
- * в админке. См. Infrastructure\Settings\SiteSettings.
+ * Общие настройки сайта: название, автовход Telegram Mini App, тестовый пользователь, адрес уведомлений и лимит
+ * обновления Untappd. Редактируются на странице SiteSettings.
  */
 return new class extends SettingsMigration
 {

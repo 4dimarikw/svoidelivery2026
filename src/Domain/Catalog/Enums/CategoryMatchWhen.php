@@ -3,9 +3,8 @@
 namespace Domain\Catalog\Enums;
 
 /**
- * Sub-branch of CategoryMatchType::Alcohol, checked by
- * CategorySlugResolver::resolveAlcoholicSlug() in this fixed order:
- * Advent → NoAbv → Style → DefaultRule. Meaningless for other match types.
+ * Условие правила Alcohol. Порядок проверки в resolveAlcoholicSlug(): Advent → NoAbv → Style → DefaultRule. Для
+ * других типов не применяется.
  */
 enum CategoryMatchWhen: string
 {

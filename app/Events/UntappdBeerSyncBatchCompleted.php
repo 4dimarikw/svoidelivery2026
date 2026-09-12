@@ -3,11 +3,8 @@
 namespace App\Events;
 
 /**
- * Итог прогона `php artisan untappd:sync-beers` — попадает в event_logs через
- * App\Listeners\PersistEventLog (автодискавери по LoggableEvent, как и
- * UntappdBeerSynced/UntappdBeerSyncFailed, которые уже диспатчатся на каждое
- * пиво). Команда раньше возвращала self::SUCCESS даже при 100% ошибок, и
- * прогон не оставлял в журнале ни одной записи об этом.
+ * Итог команды untappd:sync-beers записывается в event_logs через PersistEventLog. События UntappdBeerSynced и
+ * UntappdBeerSyncFailed отражают результаты отдельных записей.
  */
 final readonly class UntappdBeerSyncBatchCompleted implements LoggableEvent
 {

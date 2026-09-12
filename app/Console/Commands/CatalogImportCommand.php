@@ -30,10 +30,8 @@ class CatalogImportCommand extends Command
 
     public function handle(CsvParserService $service, Catalog1cFtpClient $ftp, ImportReportLogger $logger, CatalogImportSettings $catalogImportSettings): int
     {
-        // Реестр категорий редактируется из MoonShine — префлайт ловит
-        // нарушения инвариантов (дубли alcohol/when, пустые value и т.п.),
-        // которые раньше были невозможны при единственном источнике —
-        // config/catalog_import.php. См. ValidateCategoryRegistryCommand.
+        // Проверка реестра перед импортом выявляет дубли правил и пустые значения, введённые через MoonShine.
+        // См. ValidateCategoryRegistryCommand.
         if ($this->call('catalog:validate-registry') !== self::SUCCESS) {
             $this->error('Импорт отменён: реестр категорий не прошёл проверку (см. вывод catalog:validate-registry выше).');
 

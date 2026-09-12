@@ -1,27 +1,7 @@
-{{--
-    Value contract — read this before touching this file.
-
-    A text input can receive its value three ways, chosen automatically:
-
-      A. Plain Blade (no x-model on the tag)
-         → renders `value="{{ old($name, $value) }}"` as normal.
-
-      B. Alpine, seeded from the DOM ($fill=true, the default, is why you may
-         see BOTH `x-model.fill="…"` and a `value="…"` attribute in the
-         rendered HTML — that is not dead markup, do not "clean it up".
-         Alpine's `x-model.fill` only overwrites its state on init when the
-         state is empty/undefined/null; otherwise the server `value` is the
-         seed. `old()` keeps working with zero effort from the caller.
-         See node_modules/alpinejs/src/directives/x-model.js — the `.fill`
-         guard is `[undefined, null, ''].includes(getValue())`.
-
-      C. Alpine, seeded from PHP ($fill=false) — caller is using
-         <x-ui.form :state="[...]"> and wants Alpine's state, not this
-         component, to own the value. No `value` attribute is emitted.
-
-    `type="password"` NEVER round-trips a value in any mode — old() does not
-    repopulate passwords, and neither does this component.
---}}
+{{-- Без x-model значение выводится через old(name, value). При fill=true компонент сочетает value и x-model.fill:
+   DOM заполняет только пустое, null или undefined состояние Alpine. При fill=false значение задаёт state формы,
+   атрибут value не выводится. Пароль не восстанавливается ни в одном режиме. См.
+   node_modules/alpinejs/src/directives/x-model.js. --}}
 @props([
     'name',
     'value' => null,

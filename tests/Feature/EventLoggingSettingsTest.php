@@ -16,10 +16,8 @@ use MoonShine\Laravel\Models\MoonshineUserRole;
 use Tests\TestCase;
 
 /**
- * App\Listeners\PersistEventLog — единственный сток для всех
- * App\Events\LoggableEvent — теперь читает Infrastructure\Settings\
- * EventLoggingSettings::$disabled_event_types и молча пропускает запись
- * event_logs для отключённых типов (App\MoonShine\Pages\EventLoggingSettingsPage).
+ * PersistEventLog читает EventLoggingSettings::disabled_event_types и не сохраняет отключённые типы событий в
+ * event_logs.
  */
 class EventLoggingSettingsTest extends TestCase
 {

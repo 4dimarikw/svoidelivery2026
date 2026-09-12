@@ -12,13 +12,8 @@ use MoonShine\Laravel\Models\MoonshineUserRole;
 use Tests\TestCase;
 
 /**
- * Регрессия на SiteMenuItemIndexPage::fields() — колонка "Родитель" у
- * корневого пункта (parent_id = null) рисовалась не пустой, а собственным
- * label строки. Причина: MoonShine всё равно вызывает formatted-колбэк
- * BelongsTo, подставляя `$relation->getModel()`
- * (ModelRelationField::toFormattedValue), а nestedset-отношение
- * SiteMenuItem::parent() (`->setModel($this)`) в этой роли отдаёт саму
- * текущую строку.
+ * Проверяет пустую колонку «Родитель» у корневого пункта меню. Обработчик formatted должен учитывать parent_id,
+ * поскольку nestedset-связь может возвращать текущую модель для корневой записи.
  */
 class SiteMenuItemIndexPageTest extends TestCase
 {
@@ -49,8 +44,7 @@ class SiteMenuItemIndexPageTest extends TestCase
 
         $response->assertOk();
 
-        // До фикса label попадал в разметку дважды: колонка "Подпись" и
-        // колонка "Родитель" (там, где должно быть пусто).
+        // Подпись корневого пункта отображается только в колонке «Подпись».
         self::assertSame(1, substr_count($response->getContent(), 'Корневой пункт'));
     }
 

@@ -6,9 +6,8 @@ use Domain\Catalog\Models\Category;
 use Domain\Catalog\Models\Container;
 
 /**
- * Per-import cache of read-only reference data (categories, containers).
- * Loaded once before the row loop to eliminate N+1 queries in Resolve* stages.
- * Invariant: both tables are small reference data (< ~1000 rows total) — fits comfortably in RAM.
+ * Кеш справочников категорий и тары на один импорт. Загружается до обработки строк, исключая повторные запросы в
+ * этапах Resolve*. Рассчитан на небольшие справочники, помещающиеся в память.
  */
 class LookupCache
 {

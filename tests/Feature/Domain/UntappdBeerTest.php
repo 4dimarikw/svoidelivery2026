@@ -12,8 +12,7 @@ class UntappdBeerTest extends TestCase
 
     public function test_relative_url_is_prefixed_with_the_untappd_domain(): void
     {
-        // Реальный формат, который пишет ResolveBeerStyleStage до этого
-        // фикса — старые засинканные записи в БД останутся такими.
+        // Относительный путь Untappd допустим как входное значение и должен нормализоваться при чтении.
         $beer = UntappdBeer::factory()->create(['url' => '/b/hop-machine/12345']);
 
         $this->assertSame('https://untappd.com/b/hop-machine/12345', $beer->url);

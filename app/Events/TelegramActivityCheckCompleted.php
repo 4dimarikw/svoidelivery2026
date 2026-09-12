@@ -3,12 +3,8 @@
 namespace App\Events;
 
 /**
- * Итог прогона `php artisan telegram:check-activity` — попадает в event_logs
- * через App\Listeners\PersistEventLog (автодискавери по LoggableEvent).
- * Результат напрямую сужает аудиторию VK→Telegram рассылки
- * (Infrastructure\Jobs\BroadcastVkPostJob фильтрует по is_bot_active), поэтому
- * команда раньше возвращавшая self::SUCCESS без единой записи в журнале была
- * слепым пятном.
+ * Итог команды telegram:check-activity записывается в event_logs через PersistEventLog. Проверенная доступность
+ * бота определяет аудиторию VK→Telegram рассылки по is_bot_active.
  */
 final readonly class TelegramActivityCheckCompleted implements LoggableEvent
 {

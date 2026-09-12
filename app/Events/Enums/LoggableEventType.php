@@ -5,18 +5,9 @@ declare(strict_types=1);
 namespace App\Events\Enums;
 
 /**
- * Перечень значений LoggableEvent::eventType(), встречающихся в проекте —
- * не источник истины для App\Listeners\PersistEventLog (он сравнивает по
- * сырой строке), а реестр для UI (App\MoonShine\Pages\EventLoggingSettingsPage
- * строит переключатели циклом по cases()). Новый LoggableEvent без своего
- * case здесь просто не получит тумблера в админке и продолжит логироваться
- * как раньше — безопасный дефолт, не ломает существующие события.
- *
- * По одному case на УНИКАЛЬНУЮ строку eventType(): App\Events\FeedbackSentSuccess
- * и App\Events\FeedbackSentFailed делят одну строку ('ProfileController.feedbackSent'),
- * значит и один переключатель. Две "чужеродные" по формату строки
- * (GetPostFromVk.sync_failed, ProfileController.feedbackSent) — уже
- * существующие исторические имена, не переименовываются здесь.
+ * Реестр типов событий для переключателей журналирования в MoonShine. PersistEventLog сравнивает строковые
+ * значения eventType(). Тип без записи в перечислении журналируется без отдельного переключателя. События с
+ * одинаковым eventType(), включая FeedbackSentSuccess и FeedbackSentFailed, используют один переключатель.
  */
 enum LoggableEventType: string
 {

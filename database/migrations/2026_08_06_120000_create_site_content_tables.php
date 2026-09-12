@@ -4,14 +4,15 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration {
+return new class extends Migration
+{
     public function up(): void
     {
         Schema::create('site_sections', function (Blueprint $table): void {
             $table->id();
             $table->string('key')->unique();
             $table->string('title');
-            $table->string('route_name');
+            $table->string('route_name')->nullable();
             $table->string('fragment')->default('');
             $table->unsignedInteger('sort_order')->default(0);
             $table->boolean('is_active')->default(true);

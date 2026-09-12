@@ -25,12 +25,8 @@
         <button
             type="submit"
             :aria-pressed="favorited"
-            {{-- hover:text-rust живёт только в динамической ветке — статичный
-                 класс с той же специфичностью (0,2,0 против 0,1,0 у
-                 text-tan-500) побеждал бы :class всегда, включая залипающий
-                 :hover после тапа на мобильном (снятие с избранного —
-                 единственное направление на /account/favorites, и как раз
-                 то, что это маскировало). --}}
+            {{-- hover:text-rust задаётся только динамически, чтобы класс наведения не перекрывал цвет состояния
+               избранного, включая сохраняющийся :hover после касания на мобильном. --}}
             :class="favorited ? 'text-rust' : 'text-tan-500 hover:text-rust'"
             class="grid h-[34px] w-[34px] place-items-center drop-shadow-fav transition"
             :aria-label="favorited ? @js(__('catalog.remove_from_favorites')) : @js(__('catalog.add_to_favorites'))"

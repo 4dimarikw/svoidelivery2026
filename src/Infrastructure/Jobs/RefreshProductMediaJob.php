@@ -19,9 +19,6 @@ class RefreshProductMediaJob implements ShouldQueue
 
     public int $tries = 3;
 
-    /**
-     * Create a new job instance.
-     */
     public function __construct(
         public Product $product,
         public string $imageUrl,
@@ -29,12 +26,9 @@ class RefreshProductMediaJob implements ShouldQueue
     ) {}
 
     /**
-     * Execute the job.
-     *
-     * Коллекция main настроена как singleFile: Media Library удаляет прежний
-     * файл только после проверки и сохранения нового файла и его конверсий.
-     * Предварительная очистка уничтожила бы старое изображение при отказе
-     * MIME/размера или записи на диск.
+     * Коллекция main настроена как singleFile: Media Library удаляет предыдущее изображение после проверки и
+     * сохранения нового файла и его конверсий. Это сохраняет изображение при отказе проверки MIME, размера или
+     * записи на диск.
      *
      * @throws FileCannotBeAdded
      */

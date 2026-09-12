@@ -1,9 +1,7 @@
 <?php
 
-// App-owned labels for our custom app/MoonShine/Resources/* classes (field
-// labels, resource titles, menu group names). MoonShine's own admin::ui.*
-// strings (moonshine_users, roles) stay in the package's own translations —
-// this file only covers resources we authored.
+// Подписи собственных ресурсов app/MoonShine/Resources: поля, заголовки и группы меню. Встроенные строки
+// admin::ui.* находятся в переводах пакета MoonShine.
 
 return [
     'group' => [

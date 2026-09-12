@@ -63,8 +63,8 @@ final class BeerStyleFormPage extends FormPage
         return [
             'parent_id' => ['nullable', 'integer', 'exists:beer_styles,id'],
             'name' => ['required', 'string', 'max:255'],
-            // 'required' only on update — on create, a blank slug is filled
-            // in by BeerStyle::booted()'s creating hook.
+            // Slug обязателен при обновлении; при создании пустое значение заполняет обработчик creating модели
+            // BeerStyle.
             'slug' => [
                 ...$item->getKey() !== null ? ['required'] : ['nullable'],
                 'string', 'max:255',

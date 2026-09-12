@@ -1,8 +1,5 @@
-{{-- Focused on mount so screen readers announce it immediately after a
-     failed POST redirect. Relies on <x-ui.alert tone="err"> already setting
-     role="alert" on its own root — no extra role/x-data added here (alert
-     already carries its own x-data for the dismiss button; a second x-data
-     on the same element would just overwrite it). --}}
+{{-- После неуспешной отправки блок получает фокус для объявления ошибок средствами чтения с экрана. Роль alert и
+   состояние закрытия задаёт x-ui.alert. --}}
 @props([
     'bag' => 'default',
     'only' => [],

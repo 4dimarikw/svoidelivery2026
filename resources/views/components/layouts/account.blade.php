@@ -1,6 +1,5 @@
-{{-- Private account area (profile, addresses). Wraps <x-layouts.site> for
-     header/footer chrome, adds the account sidebar nav in a 12-col grid —
-     stacks to one column below `lg:`. --}}
+{{-- Макет личного кабинета с шапкой, подвалом и боковой навигацией. Сетка из 12 колонок становится одноколоночной
+   ниже lg. --}}
 @props([
     'title' => null,
     'active' => null, // 'profile' | 'orders' | 'addresses'

@@ -40,8 +40,6 @@ return new class extends Migration
 
     public function down(): void
     {
-        if (! app()->isProduction()) {
-            Schema::dropIfExists('cart_items');
-        }
+        Schema::dropIfExists('cart_items');
     }
 };

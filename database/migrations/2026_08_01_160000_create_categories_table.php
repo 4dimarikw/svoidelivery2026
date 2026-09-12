@@ -2,20 +2,71 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
+    private const array CATEGORIES = [
+        'beer' => [
+            'name' => 'Пиво',
+            'expects_container' => true,
+            'expects_volume' => true,
+        ],
+        'mead' => [
+            'name' => 'Мёд',
+            'expects_container' => true,
+            'expects_volume' => true,
+        ],
+        'cider' => [
+            'name' => 'Сидр',
+            'expects_container' => true,
+            'expects_volume' => true,
+        ],
+        'non-alcoholic' => [
+            'name' => 'Безалкогольные напитки',
+            'expects_container' => true,
+            'expects_volume' => true,
+        ],
+        'sauce' => [
+            'name' => 'Соус',
+            'expects_container' => true,
+            'expects_volume' => true,
+        ],
+        'not-defined' => [
+            'name' => 'не определена',
+        ],
+        'pet-tare-packages' => [
+            'name' => 'ПЭТ ТАРА ПАКЕТЫ',
+            'expects_container' => true,
+            'expects_volume' => true,
+            'container_code' => 'pet',
+        ],
+        'for-beer' => [
+            'name' => 'К пиву',
+        ],
+        'clothes' => [
+            'name' => 'Одежда',
+        ],
+        'attributes' => [
+            'name' => 'Атрибутика',
+        ],
+        'souvenirs' => [
+            'name' => 'Сувениры',
+        ],
+        'probes' => [
+            'name' => 'Пробники',
+            'expects_container' => true,
+            'expects_volume' => true,
+        ],
+        'souvenir-glasses' => [
+            'name' => 'Сувенирные бокалы',
+        ],
+    ];
+
     /**
-     * Run the migrations.
-     *
-     * expects_container/expects_volume/price_exempt/name_from_article/
-     * default_brand/container_code — behavioural flags for the CatalogImport
-     * pipeline, formerly the per-category keys in
-     * config('catalog_import.categories') (`container`, `volume`,
-     * `price_exempt`, `default_brand`, `name_from_article`,
-     * `container_code`). Prefixed `expects_*` so `expects_container` isn't
-     * confused with `products.container_id`.
+     * Параметры категорий управляют этапами импорта: требования к таре и объёму, обработка цены, название из
+     * артикула и значения бренда и тары по умолчанию.
      */
     public function up(): void
     {
@@ -30,16 +81,22 @@ return new class extends Migration
             $table->boolean('price_exempt')->default(false);
             $table->boolean('name_from_article')->default(false);
             $table->string('default_brand')->nullable();
-            // Free-text tare code, matched by ResolveContainerStage against
-            // containers.code — no FK, same as the config value was a bare string.
+            // Код тары сопоставляется с containers.code в ResolveContainerStage; внешний ключ не используется.
             $table->string('container_code', 64)->nullable();
             $table->timestamps();
         });
+
+        $now = now();
+        foreach (self::CATEGORIES as $slug => $attributes) {
+            DB::table('categories')->insert(array_merge($attributes, [
+                'slug' => $slug,
+                'code' => str_replace('-', '_', $slug),
+                'created_at' => $now,
+                'updated_at' => $now,
+            ]));
+        }
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::dropIfExists('categories');

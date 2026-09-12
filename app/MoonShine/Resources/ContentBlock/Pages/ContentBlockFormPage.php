@@ -59,10 +59,6 @@ final class ContentBlockFormPage extends FormPage
         if ($type !== null) {
             $fields[] = Box::make('Содержимое', [
                 Json::make('Поля блока', 'content')->fields($type->blockFields())->object()->stopFilteringEmpty(),
-                //                ...array_map(
-                //                    static fn (string $collection) => MediaLibrary::make('Изображение: '.$collection, $collection)->allowedExtensions(['jpg', 'jpeg', 'png', 'webp']),
-                //                    $type->mediaCollections(),
-                //                ),
                 ...array_map(
                     static fn (string $collection) => MediaLibrary::make('Изображение: '.$collection, $collection)
                         ->keepOriginalFileName()

@@ -83,10 +83,8 @@ class CategoryRegistryCacheTest extends TestCase
 
     public function test_registry_is_bound_as_a_singleton_and_flush_resets_it(): void
     {
-        // catalog:import re-resolves CategoryRegistry via the pipeline
-        // container per CSV row (Illuminate\Pipeline\Pipeline::carry()) —
-        // it must stay the same instance across those resolutions, or the
-        // Cache::rememberForever() guard in the constructor is pointless.
+        // Pipeline получает CategoryRegistry для каждой строки CSV. Контейнер должен возвращать один экземпляр,
+        // чтобы кеш не читался повторно.
         $first = app(CategoryRegistry::class);
         $second = app(CategoryRegistry::class);
         $this->assertSame($first, $second);

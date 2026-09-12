@@ -101,14 +101,8 @@ class Category extends Model
     }
 
     /**
-     * Category + its match rules are cached wholesale by CategoryRegistry —
-     * catalog:import evaluates the resolver once per CSV row (thousands per
-     * run), so a per-row query is out. Any admin edit here or on
-     * CategoryMatchRule must invalidate that cache immediately.
-     *
-     * FilterOptionsRegistry::flush() тоже сбрасывается здесь — список
-     * категорий для витринного фильтра каталога кешируется отдельно (см. её
-     * докблок), но по тому же событию.
+     * CategoryRegistry кеширует категории и правила импорта. События изменения модели очищают этот кеш и
+     * отдельный кеш витринных фильтров FilterOptionsRegistry.
      */
     protected static function booted(): void
     {
@@ -123,15 +117,9 @@ class Category extends Model
     }
 
     /**
-     * `slug` is the CatalogImport pipeline's category identity key — it's
-     * the config/catalog_import.php registry key, set explicitly by
-     * CategorySeeder and matched on by CategorySlugResolver/
-     * CatalogImportCommand — never derived from `name`. preventOverwrite()
-     * makes generation a pure fallback: it only fires if slug is still
-     * null (e.g. a future ad-hoc Category::create() without one), and never
-     * touches an already-set slug again, on either create or update — so a
-     * CategorySeeder re-run (which updates name/code but never slug) can't
-     * drift a category's slug away from its config key.
+     * Slug служит ключом категории для CategorySlugResolver и импорта. Начальные значения задаются миграциями и
+     * CategorySeeder. preventOverwrite() разрешает генерацию только при отсутствии slug и сохраняет заданный
+     * ключ при изменении названия.
      */
     public function getSlugOptions(): SlugOptions
     {

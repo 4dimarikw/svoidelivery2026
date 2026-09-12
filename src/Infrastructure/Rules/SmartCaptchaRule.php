@@ -23,8 +23,6 @@ class SmartCaptchaRule implements ValidationRule
     public bool $implicit = true;
 
     /**
-     * Run the validation rule.
-     *
      * @param  Closure(string): PotentiallyTranslatedString  $fail
      */
     public function validate(string $attribute, mixed $value, Closure $fail): void

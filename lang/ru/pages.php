@@ -1,8 +1,7 @@
 <?php
 
-// App-owned copy for standalone content pages (pages/*.blade.php) that
-// aren't the catalog (catalog.php) and aren't auth/account screens
-// (account.php). Not in layout.php — that's header/footer chrome only.
+// Тексты отдельных информационных страниц pages/*.blade.php. Каталог использует catalog.php, аккаунт —
+// account.php, оформление навигации — layout.php.
 
 return [
     'about' => [

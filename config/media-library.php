@@ -29,198 +29,165 @@ use Spatie\MediaLibrary\Support\UrlGenerator\DefaultUrlGenerator;
 return [
 
     /*
-     * The disk on which to store added files and derived images by default. Choose
-     * one or more of the disks you've configured in config/filesystems.php.
+     * Диск для исходных медиафайлов из config/filesystems.php.
      */
     'disk_name' => env('MEDIA_DISK', 'public'),
 
     /*
-     * The disk on which to store conversions (thumbnails, etc.) and responsive images
-     * when no disk is specified explicitly on the media collection or via
-     * `storingConversionsOnDisk()`. When left null, conversions are stored on the
-     * same disk as the original media — preserving previous behavior.
-     *
-     * This is useful when the originals live on a remote disk (e.g. S3) but the
-     * generated derivatives should stay local for faster access and lower egress.
+     * Диск для преобразованных изображений, если он не указан в коллекции или storingConversionsOnDisk(). При
+     * null используется диск исходного файла.
      */
     'conversions_disk_name' => env('MEDIA_CONVERSIONS_DISK', null),
 
     /*
-     * The maximum file size of an item in bytes.
-     * Adding a larger file will result in an exception.
+     * Максимальный размер файла в байтах. Превышение вызывает исключение.
      */
     'max_file_size' => 1024 * 1024 * 10, // 10MB
 
     /*
-     * Uploads whose file name contains any of these extensions will be rejected.
-     * The check looks at every extension in the file name, so a file named
-     * `malicious.php.jpg` is blocked as well. Matching is case-insensitive
-     * and a leading dot is optional.
-     *
-     * The default list lives on the `FileAdder` class so the shipped config
-     * and the in-code fallback (used when the config is cached without the
-     * key) cannot drift. Override here to extend or shrink it.
+     * Запрещённые расширения проверяются во всех частях имени без учёта регистра, включая php в имени
+     * shell.php.jpg. По умолчанию используется список FileAdder.
      */
     'disallowed_extensions' => FileAdder::$defaultDisallowedExtensions,
 
     /*
-     * When this is set to an array of extensions, only uploads whose final
-     * extension is in the list will be accepted. Matching is case-insensitive
-     * and a leading dot is optional. The `disallowed_extensions` list above
-     * is still enforced, so an interior dangerous segment (such as the `php`
-     * in `shell.php.jpg`) is rejected even if the final extension is allowed.
-     * Leave `null` to disable allowlisting.
+     * Список разрешённых конечных расширений без учёта регистра; null отключает ограничение. Запрещённые
+     * промежуточные расширения по-прежнему отклоняются.
      */
     'allowed_extensions' => null,
 
     /*
-     * This queue connection will be used to generate derived and responsive images.
-     * Leave empty to use the default queue connection.
+     * Подключение очереди для преобразования изображений; пустое значение использует подключение по умолчанию.
      */
     'queue_connection_name' => env('QUEUE_CONNECTION', 'sync'),
 
     /*
-     * This queue will be used to generate derived and responsive images.
-     * Leave empty to use the default queue.
+     * Очередь преобразования изображений; пустое значение использует очередь по умолчанию.
      */
     'queue_name' => env('MEDIA_QUEUE', ''),
 
     /*
-     * By default all conversions will be performed on a queue.
+     * Выполнение преобразований изображений через очередь.
      */
     'queue_conversions_by_default' => env('QUEUE_CONVERSIONS_BY_DEFAULT', true),
 
     /*
-     * Should database transactions be run after database commits?
+     * Запуск преобразований после фиксации транзакции базы данных.
      */
     'queue_conversions_after_database_commit' => env('QUEUE_CONVERSIONS_AFTER_DB_COMMIT', true),
 
     /*
-     * The fully qualified class name of the media model.
+     * Класс модели медиафайла.
      */
     'media_model' => Media::class,
 
     /*
-     * The fully qualified class name of the media observer.
+     * Класс наблюдателя модели медиафайла.
      */
     'media_observer' => MediaObserver::class,
 
     /*
-     * When enabled, media collections will be serialised using the default
-     * laravel model serialization behaviour.
-     *
-     * Keep this option disabled if using Media Library Pro components (https://medialibrary.pro)
+     * Стандартная сериализация моделей Laravel. Для компонентов Media Library Pro эту настройку следует
+     * отключить: https://medialibrary.pro.
      */
     'use_default_collection_serialization' => false,
 
     /*
-     * The fully qualified class name of the model used for temporary uploads.
-     *
-     * This model is only used in Media Library Pro (https://medialibrary.pro)
+     * Модель временных загрузок Media Library Pro: https://medialibrary.pro.
      */
-    // 'temporary_upload_model' => TemporaryUpload::class,
 
     /*
-     * When enabled, Media Library Pro will only process temporary uploads that were uploaded
-     * in the same session. You can opt to disable this for stateless usage of
-     * the pro components.
+     * Обработка временных загрузок Media Library Pro только в рамках сессии загрузки. Отключение позволяет
+     * работать без состояния сессии.
      */
     'enable_temporary_uploads_session_affinity' => true,
 
     /*
-     * When enabled, Media Library pro will generate thumbnails for uploaded file.
+     * Создание миниатюр для загруженных файлов Media Library Pro.
      */
     'generate_thumbnails_for_temporary_uploads' => true,
 
     /*
-     * This is the class that is responsible for naming generated files.
+     * Класс формирования имён создаваемых файлов.
      */
     'file_namer' => DefaultFileNamer::class,
 
     /*
-     * The class that contains the strategy for determining a media file's path.
+     * Класс определения пути медиафайла.
      */
     'path_generator' => DefaultPathGenerator::class,
 
     /*
-     * The class that contains the strategy for determining how to remove files.
+     * Класс удаления медиафайлов.
      */
     'file_remover_class' => DefaultFileRemover::class,
 
     /*
-     * Here you can specify which path generator should be used for the given class.
+     * Генераторы путей для отдельных классов моделей.
      */
     'custom_path_generators' => [
-        // Model::class => PathGenerator::class
-        // or
-        // 'model_morph_alias' => PathGenerator::class
     ],
 
     /*
-     * When urls to files get generated, this class will be called. Use the default
-     * if your files are stored locally above the site root or on s3.
+     * Класс генерации URL медиафайлов.
      */
     'url_generator' => DefaultUrlGenerator::class,
 
     /*
-     * Moves media on updating to keep path consistent. Enable it only with a custom
-     * PathGenerator that uses, for example, the media UUID.
+     * Перемещение медиафайла при обновлении пути. Требует собственного PathGenerator, например на основе UUID.
      */
     'moves_media_on_update' => false,
 
     /*
-     * Whether to activate versioning when urls to files get generated.
-     * When activated, this attaches a ?v=xx query string to the URL.
+     * Версионирование URL добавляет параметр ?v=xx.
      */
     'version_urls' => false,
 
     /*
-     * The media library will try to optimize all converted images by removing
-     * metadata and applying a little bit of compression. These are
-     * the optimizers that will be used by default.
+     * Оптимизаторы преобразованных изображений удаляют метаданные и сжимают файлы.
      */
     'image_optimizers' => [
         Jpegoptim::class => [
-            '-m85', // set maximum quality to 85%
-            '--force', // ensure that progressive generation is always done also if a little bigger
-            '--strip-all', // this strips out all text information such as comments and EXIF data
-            '--all-progressive', // this will make sure the resulting image is a progressive one
+            '-m85', // Максимальное качество — 85%.
+            '--force', // Прогрессивное кодирование даже при увеличении размера файла.
+            '--strip-all', // Удаление текстовых метаданных, включая комментарии и EXIF.
+            '--all-progressive', // Прогрессивное кодирование изображения.
         ],
         Pngquant::class => [
-            '--force', // required parameter for this package
+            '--force', // Обязательный параметр пакета.
         ],
         Optipng::class => [
-            '-i0', // this will result in a non-interlaced, progressive scanned image
-            '-o2', // this set the optimization level to two (multiple IDAT compression trials)
-            '-quiet', // required parameter for this package
+            '-i0', // Отключение чересстрочной развёртки.
+            '-o2', // Уровень оптимизации 2 с несколькими попытками сжатия IDAT.
+            '-quiet', // Обязательный параметр пакета.
         ],
         Svgo::class => [
-            '--disable=cleanupIDs', // disabling because it is known to cause troubles
+            '--disable=cleanupIDs', // Опция отключена из-за проблем совместимости.
         ],
         Gifsicle::class => [
-            '-b', // required parameter for this package
-            '-O3', // this produces the slowest but best results
+            '-b', // Обязательный параметр пакета.
+            '-O3', // Самый медленный режим с наилучшим результатом сжатия.
         ],
         Cwebp::class => [
-            '-m 6', // for the slowest compression method in order to get the best compression.
-            '-pass 10', // for maximizing the amount of analysis pass.
-            '-mt', // multithreading for some speed improvements.
-            '-q 90', // quality factor that brings the least noticeable changes.
+            '-m 6', // Самый медленный метод для максимального сжатия.
+            '-pass 10', // Максимальное число проходов анализа.
+            '-mt', // Многопоточная обработка для ускорения.
+            '-q 90', // Коэффициент качества с минимально заметными изменениями.
         ],
         Avifenc::class => [
-            '-a cq-level=23', // constant quality level, lower values mean better quality and greater file size (0-63).
-            '-j all', // number of jobs (worker threads, "all" uses all available cores).
-            '--min 0', // min quantizer for color (0-63).
-            '--max 63', // max quantizer for color (0-63).
-            '--minalpha 0', // min quantizer for alpha (0-63).
-            '--maxalpha 63', // max quantizer for alpha (0-63).
-            '-a end-usage=q', // rate control mode set to Constant Quality mode.
-            '-a tune=ssim', // SSIM as tune the encoder for distortion metric.
+            '-a cq-level=23', // Постоянный уровень качества 0–63: меньшее значение повышает качество и размер файла.
+            '-j all', // Число рабочих потоков; all использует все доступные ядра.
+            '--min 0', // Минимальный квантователь цвета, 0–63.
+            '--max 63', // Максимальный квантователь цвета, 0–63.
+            '--minalpha 0', // Минимальный квантователь прозрачности, 0–63.
+            '--maxalpha 63', // Максимальный квантователь прозрачности, 0–63.
+            '-a end-usage=q', // Режим постоянного качества.
+            '-a tune=ssim', // Настройка кодировщика по метрике искажений SSIM.
         ],
     ],
 
     /*
-     * These generators will be used to create an image of media files.
+     * Генераторы изображений для медиафайлов.
      */
     'image_generators' => [
         Image::class,
@@ -232,40 +199,33 @@ return [
     ],
 
     /*
-     * The path where to store temporary files while performing image conversions.
-     * If set to null, storage_path('media-library/temp') will be used.
+     * Каталог временных файлов преобразований; при null используется storage_path('media-library/temp').
      */
     'temporary_directory_path' => null,
 
     /*
-     * The engine that should perform the image conversions.
-     * Should be either `gd`, `imagick` or `vips`.
+     * Движок преобразования изображений: gd, imagick или vips.
      */
     'image_driver' => env('IMAGE_DRIVER', 'gd'),
 
     /*
-     * FFMPEG & FFProbe binaries paths, only used if you try to generate video
-     * thumbnails and have installed the php-ffmpeg/php-ffmpeg composer
-     * dependency.
+     * Пути FFMPEG и FFProbe для миниатюр видео; требуется пакет php-ffmpeg/php-ffmpeg.
      */
     'ffmpeg_path' => env('FFMPEG_PATH', '/usr/bin/ffmpeg'),
     'ffprobe_path' => env('FFPROBE_PATH', '/usr/bin/ffprobe'),
 
     /*
-     * The timeout (in seconds) that will be used when generating video
-     * thumbnails via FFMPEG.
+     * Таймаут создания миниатюр видео через FFMPEG в секундах.
      */
     'ffmpeg_timeout' => env('FFMPEG_TIMEOUT', 900),
 
     /*
-     * The number of threads that FFMPEG should use. 0 means that FFMPEG
-     * may decide itself.
+     * Число потоков FFMPEG; 0 позволяет выбрать его автоматически.
      */
     'ffmpeg_threads' => env('FFMPEG_THREADS', 0),
 
     /*
-     * Here you can override the class names of the jobs used by this package. Make sure
-     * your custom jobs extend the ones provided by the package.
+     * Классы заданий пакета. Собственные задания должны наследовать соответствующие классы пакета.
      */
     'jobs' => [
         'perform_conversions' => PerformConversionsJob::class,
@@ -273,33 +233,24 @@ return [
     ],
 
     /*
-     * When using the addMediaFromUrl method you may want to replace the default downloader.
-     * This is particularly useful when the url of the image is behind a firewall and
-     * need to add additional flags, possibly using curl.
+     * Класс загрузчика для addMediaFromUrl().
      */
     'media_downloader' => SpatieImageDownloader::class,
 
     /*
-     * When using the addMediaFromUrl method the SSL is verified by default.
-     * This is option disables SSL verification when downloading remote media.
-     * Please note that this is a security risk and should only be false in a local environment.
+     * Проверка сертификата SSL при загрузке удалённых файлов. Отключать только в локальном окружении.
      */
     'media_downloader_ssl' => env('MEDIA_DOWNLOADER_SSL', true),
 
     /*
-     * The default lifetime in minutes for temporary urls.
-     * This is used when you call the `getLastTemporaryUrl` or `getLastTemporaryUrl` method on a media item.
+     * Срок действия временных URL в минутах.
      */
     'temporary_url_default_lifetime' => env('MEDIA_TEMPORARY_URL_DEFAULT_LIFETIME', 5),
 
     'remote' => [
         /*
-         * Any extra headers that should be included when uploading media to
-         * a remote disk. Even though supported headers may vary between
-         * different drivers, a sensible default has been provided.
-         *
-         * Supported by S3: CacheControl, Expires, StorageClass,
-         * ServerSideEncryption, Metadata, ACL, ContentEncoding
+         * Дополнительные заголовки при загрузке на удалённый диск; набор поддерживаемых заголовков зависит от
+         * драйвера.
          */
         'extra_headers' => [
             'CacheControl' => 'max-age=604800',
@@ -308,55 +259,43 @@ return [
 
     'responsive_images' => [
         /*
-         * This class is responsible for calculating the target widths of the responsive
-         * images. By default we optimize for filesize and create variations that each are 30%
-         * smaller than the previous one. More info in the documentation.
-         *
-         * https://docs.spatie.be/laravel-medialibrary/v9/advanced-usage/generating-responsive-images
+         * Класс расчёта ширины адаптивных изображений. Стандартная стратегия создаёт варианты с последовательным
+         * уменьшением размера файла на 30%. См.
+         * https://docs.spatie.be/laravel-medialibrary/v9/advanced-usage/generating-responsive-images.
          */
         'width_calculator' => FileSizeOptimizedWidthCalculator::class,
 
         /*
-         * By default rendering media to a responsive image will add some javascript and a tiny placeholder.
-         * This ensures that the browser can already determine the correct layout.
-         * When disabled, no tiny placeholder is generated.
+         * Добавление небольшой заглушки и JavaScript для определения размеров адаптивного изображения до
+         * загрузки.
          */
         'use_tiny_placeholders' => true,
 
         /*
-         * This class will generate the tiny placeholder used for progressive image loading. By default
-         * the media library will use a tiny blurred jpg image.
+         * Класс генерации заглушки для постепенной загрузки; стандартная заглушка — небольшое размытое
+         * изображение JPG.
          */
         'tiny_placeholder_generator' => Blurred::class,
     ],
 
     /*
-     * When enabling this option, a route will be registered that will enable
-     * the Media Library Pro Vue and React components to move uploaded files
-     * in a S3 bucket to their right place.
+     * Маршрут перемещения загруженных файлов S3 для компонентов Vue и React из Media Library Pro.
      */
     'enable_vapor_uploads' => env('ENABLE_MEDIA_LIBRARY_VAPOR_UPLOADS', false),
 
     /*
-     * When converting Media instances to response the media library will add
-     * a `loading` attribute to the `img` tag. Here you can set the default
-     * value of that attribute.
-     *
-     * Possible values: 'lazy', 'eager', 'auto' or null if you don't want to set any loading instruction.
-     *
-     * More info: https://css-tricks.com/native-lazy-loading/
+     * Значение атрибута loading для img: lazy, eager, auto или null. См.
+     * https://css-tricks.com/native-lazy-loading/.
      */
     'default_loading_attribute_value' => null,
 
     /*
-     * You can specify a prefix for that is used for storing all media.
-     * If you set this to `/my-subdir`, all your media will be stored in a `/my-subdir` directory.
+     * Общий префикс пути хранения медиафайлов.
      */
     'prefix' => env('MEDIA_PREFIX', ''),
 
     /*
-     * When forcing lazy loading, media will be loaded even if you don't eager load media and you have
-     * disabled lazy loading globally in the service provider.
+     * Разрешает отложенную загрузку медиа, даже если она глобально отключена для моделей.
      */
     'force_lazy_loading' => env('FORCE_MEDIA_LIBRARY_LAZY_LOADING', true),
 ];

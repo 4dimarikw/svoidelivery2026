@@ -8,16 +8,9 @@ use Services\CatalogImport\Contracts\ImportStage;
 use Services\CatalogImport\Dto\ImportContext;
 
 /**
- * Сохранение пивных атрибутов товара в beer_product_details (1:1 с products,
- * PK = product_id — см. BeerProductDetail::$primaryKey).
- *
- * Логика:
- * Требует $ctx->product. Если ни один из abv/ibu/plato/ebc/beerStyle/untappdBeer
- * не задан — стейдж пропускается: не создаёт пустую строку под товары без
- * пивных атрибутов (сопутствующие товары, атрибутика и т.д.).
- * Create-only (firstOrCreate): эти поля теперь редактируются из админки
- * (ProductResource, вкладка «Пиво») — повторный импорт не должен затирать
- * ручную правку abv/ibu/plato/ebc/стиля у уже существующей строки.
+ * Сохраняет пивные атрибуты в beer_product_details с ключом product_id и связью 1:1 с products. Требует
+ * ctx->product; при отсутствии всех пивных атрибутов строка не создаётся. firstOrCreate() сохраняет ручные
+ * правки существующих атрибутов при повторном импорте.
  */
 final class PersistBeerDetailsStage implements ImportStage
 {

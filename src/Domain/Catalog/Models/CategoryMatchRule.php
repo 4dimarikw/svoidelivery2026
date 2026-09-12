@@ -12,11 +12,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Services\CatalogImport\CategoryRegistry;
 
 /**
- * One slug-resolution rule for a Category, formerly one entry in that
- * category's `match[]` array in config/catalog_import.php. Read exclusively
- * through Services\CatalogImport\CategoryRegistry — see that class and
- * Services\CatalogImport\CategorySlugResolver for how `type`/`match_when`/
- * `value`/`priority` are interpreted.
+ * Правило определения категории. CategoryRegistry загружает правила, а CategorySlugResolver интерпретирует type,
+ * match_when, value и priority.
  */
 class CategoryMatchRule extends Model
 {

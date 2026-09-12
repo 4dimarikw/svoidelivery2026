@@ -13,11 +13,8 @@ use Spatie\LaravelSettings\Models\SettingsProperty;
 use Tests\TestCase;
 
 /**
- * Регресс на ликвидацию GeneralSettings: часть её свойств переехала в
- * CatalogImportSettings, часть — в SiteSettings (см. database/settings/
- * create_catalog_import_settings и create_site_settings). Spatie бросает
- * MissingSettings, если у объявленного свойства нет строки в репозитории —
- * этот тест ловит рассинхрон между классом настроек и его settings-миграциями.
+ * Проверяет согласованность свойств CatalogImportSettings и SiteSettings с миграциями настроек. Отсутствующее
+ * значение в репозитории вызывает MissingSettings.
  */
 class SettingsPagesSmokeTest extends TestCase
 {
