@@ -1,8 +1,13 @@
 <?php
 
+use App\Http\Middleware\SecureMoonShineActions;
+use App\Http\Middleware\SecurityHeaders;
+use App\Http\Middleware\TrustedHosts;
+use App\Http\Middleware\TrustedProxies;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Http\Middleware\TrustProxies;
 use Spatie\Sluggable\Exceptions\StaleSelfHealingUrl;
 
 return Application::configure(basePath: dirname(__DIR__))
@@ -12,9 +17,14 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        $middleware->replace(TrustProxies::class, TrustedProxies::class);
+        $middleware->append([TrustedHosts::class, SecurityHeaders::class]);
+        $middleware->web(append: [SecureMoonShineActions::class]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->dontFlash(['init_data', 'initData', 'hash', 'auth_date', 'authorization', 'token', 'secret']);
+        $exceptions->dontFlash(['smart-token', 'form_loaded_at', '_token']);
+        $exceptions->respond(fn ($response) => SecurityHeaders::apply($response, request()));
         // Self-healing slug (spatie/laravel-sluggable) — не ошибка, а штатный
         // способ сделать редирект на канонический slug (у исключения свой
         // render(), см. StaleSelfHealingUrl::render()); без dontReport() оно

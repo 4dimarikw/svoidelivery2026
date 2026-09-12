@@ -1,0 +1,16 @@
+PHPUnit 11.5.56 by Sebastian Bergmann and contributors.
+
+Runtime:       PHP 8.4.1
+Configuration: D:\WebProject\svoidelivery2026\phpunit.xml
+
+Time: 00:04.492, Memory: 70.00 MB
+
+There was 1 failure:
+
+1) Tests\SecurityAudit\SecurityAuditTest::test_reset_mail_host_cannot_be_poisoned
+Failed asserting that null is not null.
+
+D:\WebProject\svoidelivery2026\reports\SecurityAuditTest.php:52
+
+FAILURES!
+Tests: 12, Assertions: 38, Failures: 1.

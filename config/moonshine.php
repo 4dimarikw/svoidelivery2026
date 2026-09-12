@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Http\Middleware\SecureMoonShineActions;
 use App\MoonShine\Layouts\MoonShineLayout;
 use App\MoonShine\Pages\Dashboard;
 use App\MoonShine\Pages\ProfilePage;
@@ -63,6 +64,7 @@ return [
         VerifyCsrfToken::class,
         SubstituteBindings::class,
         ChangeLocale::class,
+        SecureMoonShineActions::class,
     ],
 
     // Хранилище.

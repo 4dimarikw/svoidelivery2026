@@ -1,6 +1,10 @@
 <?php
 
 return [
+    'trusted_hosts' => array_values(array_filter(array_map('trim', explode(',', (string) env('SECURITY_TRUSTED_HOSTS', ''))))),
+    'trusted_proxies' => array_values(array_filter(array_map('trim', explode(',', (string) env('SECURITY_TRUSTED_PROXIES', ''))))),
+    'login_throttle' => ['per_ip' => (int) env('LOGIN_THROTTLE_PER_IP', 30)],
+    'https_hsts_max_age' => (int) env('SECURITY_HSTS_MAX_AGE', 31536000),
 
     /*
     |--------------------------------------------------------------------------

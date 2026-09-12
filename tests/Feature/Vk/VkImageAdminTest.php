@@ -120,9 +120,10 @@ class VkImageAdminTest extends TestCase
             $this->assertStringContainsString((string) $post->id, $response->json('redirect'));
         }
         $mediaUrl = $post->localImage($image)->getUrl();
-        $this->get('/admin/resource/vk-post-resource/vk-post-index-page')->assertOk()->assertSee($mediaUrl, false)->assertSee('1 / 1');
+        // The index shows a download count; image previews are on the form page.
+        $this->get('/admin/resource/vk-post-resource/vk-post-index-page')->assertOk()->assertSee('1 / 1');
         $this->get('/admin/resource/vk-post-resource/vk-post-form-page/'.$post->id)->assertOk()->assertSee('Локальные копии')->assertSee($mediaUrl, false);
-        $this->get('/admin/resource/vk-post-resource/vk-post-detail-page/'.$post->id)->assertOk()->assertSee('Исходные ссылки VK')->assertSee($mediaUrl, false);
+        $this->get('/admin/resource/vk-post-resource/vk-post-detail-page/'.$post->id)->assertForbidden();
     }
 
     public function test_staff_without_update_permission_cannot_download(): void

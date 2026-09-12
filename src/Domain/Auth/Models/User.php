@@ -2,6 +2,7 @@
 
 namespace Domain\Auth\Models;
 
+use App\Notifications\QueuedResetPassword;
 use Database\Factories\UserFactory;
 use Domain\Favorite\Models\Favorite;
 use Domain\Order\Models\Order;
@@ -18,6 +19,11 @@ use Illuminate\Notifications\Notifiable;
 
 class User extends Authenticatable implements MustVerifyEmail
 {
+    public function sendPasswordResetNotification($token): void
+    {
+        $this->notify(new QueuedResetPassword($token));
+    }
+
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable;
 

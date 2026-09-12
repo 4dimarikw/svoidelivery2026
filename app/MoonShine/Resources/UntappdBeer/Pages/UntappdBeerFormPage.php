@@ -16,6 +16,7 @@ use MoonShine\Crud\JsonResponse;
 use MoonShine\Laravel\Pages\Crud\FormPage;
 use MoonShine\Support\AlpineJs;
 use MoonShine\Support\Attributes\AsyncMethod;
+use MoonShine\Support\Enums\HttpMethod;
 use MoonShine\Support\Enums\JsEvent;
 use MoonShine\Support\Enums\ToastType;
 use MoonShine\UI\Components\ActionButton;
@@ -49,7 +50,9 @@ final class UntappdBeerFormPage extends FormPage
                                 'resync',
                                 params: ['itemId' => $this->getItem()?->getKey()],
                                 events: [AlpineJs::event(JsEvent::FRAGMENT_UPDATED, 'untappd-beer')]
-                            ),
+                            )->async(HttpMethod::POST,
+                                events: [AlpineJs::event(JsEvent::FRAGMENT_UPDATED, 'untappd-beer')])
+                            ->setAttribute('data-async-method', 'POST'),
                     ],
                 ),
 

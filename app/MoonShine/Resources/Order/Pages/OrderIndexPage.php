@@ -26,6 +26,7 @@ use MoonShine\Laravel\Pages\Crud\IndexPage;
 use MoonShine\Laravel\QueryTags\QueryTag;
 use MoonShine\Support\AlpineJs;
 use MoonShine\Support\Attributes\AsyncMethod;
+use MoonShine\Support\Enums\HttpMethod;
 use MoonShine\Support\Enums\JsEvent;
 use MoonShine\Support\Enums\ToastType;
 use MoonShine\Support\ListOf;
@@ -163,6 +164,8 @@ class OrderIndexPage extends IndexPage
                 ActionButton::make('Создать тестовый заказ', '#')
                     ->secondary()
                     ->method('createTestOrder')
+                    ->async(HttpMethod::POST)->setAttribute('data-async-method', 'POST')
+                    ->canSee(fn () => request()->user('moonshine')->isSuperUser())
             );
     }
 

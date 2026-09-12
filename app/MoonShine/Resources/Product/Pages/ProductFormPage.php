@@ -30,6 +30,7 @@ use MoonShine\Laravel\Fields\Relationships\RelationRepeater;
 use MoonShine\Laravel\Pages\Crud\FormPage;
 use MoonShine\Support\AlpineJs;
 use MoonShine\Support\Attributes\AsyncMethod;
+use MoonShine\Support\Enums\HttpMethod;
 use MoonShine\Support\Enums\JsEvent;
 use MoonShine\Support\Enums\ToastType;
 use MoonShine\UI\Components\ActionButton;
@@ -161,7 +162,9 @@ final class ProductFormPage extends FormPage
                                     'updateImageFromUntappd',
                                     params: ['itemId' => $this->getItem()?->id],
                                     events: [AlpineJs::event(JsEvent::FRAGMENT_UPDATED, 'product-label')]
-                                )],
+                                )->async(HttpMethod::POST,
+                                    events: [AlpineJs::event(JsEvent::FRAGMENT_UPDATED, 'product-label')])
+                                ->setAttribute('data-async-method', 'POST')],
                         ),
 
                         Fragment::make([

@@ -74,13 +74,13 @@ class VkAdminSmokeTest extends TestCase
             ->assertSee('https://sun9-1.userapi.com/a.jpg', false);
     }
 
-    public function test_detail_page_renders(): void
+    public function test_disabled_detail_action_is_forbidden(): void
     {
         $post = $this->makePost();
 
         $this->actingAs($this->superuser(), 'moonshine')
             ->get("/admin/resource/vk-post-resource/vk-post-detail-page/{$post->id}")
-            ->assertOk();
+            ->assertForbidden();
     }
 
     public function test_settings_page_renders(): void

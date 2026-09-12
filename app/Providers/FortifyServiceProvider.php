@@ -6,22 +6,34 @@ use App\Actions\Fortify\CreateNewUser;
 use App\Actions\Fortify\ResetUserPassword;
 use App\Actions\Fortify\UpdateUserPassword;
 use App\Actions\Fortify\UpdateUserProfileInformation;
+use App\Http\Requests\LoginRequest;
+use App\Http\Responses\PasswordResetLinkResponse;
+use App\Support\AuthInput;
+use App\Support\NotificationUrls;
+use Illuminate\Auth\Notifications\ResetPassword;
+use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
-use Illuminate\Support\Str;
 use Laravel\Fortify\Actions\RedirectIfTwoFactorAuthenticatable;
+use Laravel\Fortify\Contracts\FailedPasswordResetLinkRequestResponse;
+use Laravel\Fortify\Contracts\SuccessfulPasswordResetLinkRequestResponse;
 use Laravel\Fortify\Fortify;
 
 class FortifyServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
+        $this->app->bind(\Laravel\Fortify\Http\Requests\LoginRequest::class, LoginRequest::class);
+        $this->app->bind(SuccessfulPasswordResetLinkRequestResponse::class, PasswordResetLinkResponse::class);
+        $this->app->bind(FailedPasswordResetLinkRequestResponse::class, PasswordResetLinkResponse::class);
     }
 
     public function boot(): void
     {
+        ResetPassword::createUrlUsing(NotificationUrls::reset(...));
+        VerifyEmail::createUrlUsing(NotificationUrls::verify(...));
         Fortify::createUsersUsing(CreateNewUser::class);
         Fortify::updateUserProfileInformationUsing(UpdateUserProfileInformation::class);
         Fortify::updateUserPasswordsUsing(UpdateUserPassword::class);
@@ -46,16 +58,15 @@ class FortifyServiceProvider extends ServiceProvider
         Fortify::verifyEmailView(fn () => view('auth.verify-email'));
 
         RateLimiter::for('login', function (Request $request) {
-            $throttleKey = Str::transliterate(Str::lower($request->input(Fortify::username())).'|'.$request->ip());
+            $throttleKey = self::identityKey($request).'|'.$request->ip();
 
             // Обработчик ответа возвращает переведённое сообщение auth.throttle при превышении лимита.
-            return Limit::perMinute(5)->by($throttleKey)->response(
-                fn (Request $request, array $headers) => back()
-                    ->withInput($request->except('password'))
-                    ->withErrors([Fortify::username() => __('auth.throttle', [
-                        'seconds' => $headers['Retry-After'] ?? 60,
-                    ])])
-            );
+            return [
+                Limit::perMinute(5)->by('identity|'.$throttleKey)
+                    ->response(self::throttleResponse('email', 'auth.throttle')),
+                Limit::perMinute(config('security.login_throttle.per_ip'))->by('ip|'.$request->ip())
+                    ->response(self::throttleResponse('email', 'auth.throttle')),
+            ];
         });
 
         RateLimiter::for('two-factor', function (Request $request) {
@@ -131,7 +142,7 @@ class FortifyServiceProvider extends ServiceProvider
      */
     private static function identityKey(Request $request): string
     {
-        return Str::transliterate(Str::lower((string) $request->input('email')));
+        return AuthInput::identity($request);
     }
 
     /**
@@ -142,10 +153,13 @@ class FortifyServiceProvider extends ServiceProvider
      */
     private static function throttleResponse(string $field, string $translationKey): \Closure
     {
-        return fn (Request $request, array $headers) => back()
-            ->withInput($request->except(['password', 'password_confirmation']))
-            ->withErrors([$field => __($translationKey, [
-                'seconds' => $headers['Retry-After'] ?? 60,
-            ])]);
+        return function (Request $request, array $headers) use ($field, $translationKey) {
+            $message = __($translationKey, ['seconds' => $headers['Retry-After'] ?? 60]);
+
+            return $request->wantsJson()
+                ? response()->json(['errors' => [$field => [$message]]], 429, $headers)
+                : back()->withInput(AuthInput::oldInput($request))
+                    ->withErrors([$field => $message]);
+        };
     }
 }

@@ -79,7 +79,7 @@ return [
      * Передача cookie сессии только по HTTPS.
      */
 
-    'secure' => env('SESSION_SECURE_COOKIE'),
+    'secure' => env('SESSION_SECURE_COOKIE', parse_url((string) env('APP_URL', ''), PHP_URL_SCHEME) === 'https'),
 
     /*
      * Ограничивает доступ к cookie протоколом HTTP, исключая чтение из JavaScript.

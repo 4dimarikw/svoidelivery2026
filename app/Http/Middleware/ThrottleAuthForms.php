@@ -41,6 +41,13 @@ class ThrottleAuthForms extends ThrottleRequests
             return $next($request);
         }
 
-        return parent::handle($request, $next, $limiter);
+        return parent::handle($request, function ($request) use ($next, $routeName) {
+            if ($routeName !== 'password.confirm.store') {
+                // Fortify registration lowercases email before its own validator.
+                $request->validate(['email' => ['required', 'string', 'max:255']]);
+            }
+
+            return $next($request);
+        }, $limiter);
     }
 }

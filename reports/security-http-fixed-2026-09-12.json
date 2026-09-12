@@ -1,0 +1,1211 @@
+[
+  {
+    "label": "login form",
+    "method": "GET",
+    "path": "/login",
+    "status": 200,
+    "location": null,
+    "errorFields": [],
+    "exception": null,
+    "debugTrace": false,
+    "rawXssTag": false,
+    "headers": {
+      "content-security-policy": "base-uri 'self'; object-src 'none'",
+      "content-security-policy-report-only": "script-src 'self' https://telegram.org https://smartcaptcha.cloud.yandex.ru https://captcha-api.yandex.ru; frame-ancestors 'self' https://web.telegram.org",
+      "x-frame-options": null,
+      "x-content-type-options": "nosniff",
+      "referrer-policy": "strict-origin-when-cross-origin",
+      "strict-transport-security": null,
+      "access-control-allow-origin": null,
+      "retry-after": null,
+      "x-ratelimit-remaining": null
+    },
+    "cookies": [
+      {
+        "name": "XSRF-TOKEN",
+        "secure": false,
+        "httpOnly": false,
+        "sameSite": "lax"
+      },
+      {
+        "name": "svoidelivery-session",
+        "secure": false,
+        "httpOnly": true,
+        "sameSite": "lax"
+      }
+    ],
+    "exposedEnv": false,
+    "exposedGit": false
+  },
+  {
+    "label": "guest/read access",
+    "method": "GET",
+    "path": "/",
+    "status": 200,
+    "location": null,
+    "errorFields": [],
+    "exception": null,
+    "debugTrace": false,
+    "rawXssTag": false,
+    "headers": {
+      "content-security-policy": "base-uri 'self'; object-src 'none'",
+      "content-security-policy-report-only": "script-src 'self' https://telegram.org https://smartcaptcha.cloud.yandex.ru https://captcha-api.yandex.ru; frame-ancestors 'self' https://web.telegram.org",
+      "x-frame-options": null,
+      "x-content-type-options": "nosniff",
+      "referrer-policy": "strict-origin-when-cross-origin",
+      "strict-transport-security": null,
+      "access-control-allow-origin": null,
+      "retry-after": null,
+      "x-ratelimit-remaining": null
+    },
+    "cookies": [
+      {
+        "name": "XSRF-TOKEN",
+        "secure": false,
+        "httpOnly": false,
+        "sameSite": "lax"
+      },
+      {
+        "name": "svoidelivery-session",
+        "secure": false,
+        "httpOnly": true,
+        "sameSite": "lax"
+      }
+    ],
+    "exposedEnv": false,
+    "exposedGit": false
+  },
+  {
+    "label": "guest/read access",
+    "method": "GET",
+    "path": "/register",
+    "status": 200,
+    "location": null,
+    "errorFields": [],
+    "exception": null,
+    "debugTrace": false,
+    "rawXssTag": false,
+    "headers": {
+      "content-security-policy": "base-uri 'self'; object-src 'none'",
+      "content-security-policy-report-only": "script-src 'self' https://telegram.org https://smartcaptcha.cloud.yandex.ru https://captcha-api.yandex.ru; frame-ancestors 'self' https://web.telegram.org",
+      "x-frame-options": null,
+      "x-content-type-options": "nosniff",
+      "referrer-policy": "strict-origin-when-cross-origin",
+      "strict-transport-security": null,
+      "access-control-allow-origin": null,
+      "retry-after": null,
+      "x-ratelimit-remaining": null
+    },
+    "cookies": [
+      {
+        "name": "XSRF-TOKEN",
+        "secure": false,
+        "httpOnly": false,
+        "sameSite": "lax"
+      },
+      {
+        "name": "svoidelivery-session",
+        "secure": false,
+        "httpOnly": true,
+        "sameSite": "lax"
+      }
+    ],
+    "exposedEnv": false,
+    "exposedGit": false
+  },
+  {
+    "label": "guest/read access",
+    "method": "GET",
+    "path": "/forgot-password",
+    "status": 200,
+    "location": null,
+    "errorFields": [],
+    "exception": null,
+    "debugTrace": false,
+    "rawXssTag": false,
+    "headers": {
+      "content-security-policy": "base-uri 'self'; object-src 'none'",
+      "content-security-policy-report-only": "script-src 'self' https://telegram.org https://smartcaptcha.cloud.yandex.ru https://captcha-api.yandex.ru; frame-ancestors 'self' https://web.telegram.org",
+      "x-frame-options": null,
+      "x-content-type-options": "nosniff",
+      "referrer-policy": "strict-origin-when-cross-origin",
+      "strict-transport-security": null,
+      "access-control-allow-origin": null,
+      "retry-after": null,
+      "x-ratelimit-remaining": null
+    },
+    "cookies": [
+      {
+        "name": "XSRF-TOKEN",
+        "secure": false,
+        "httpOnly": false,
+        "sameSite": "lax"
+      },
+      {
+        "name": "svoidelivery-session",
+        "secure": false,
+        "httpOnly": true,
+        "sameSite": "lax"
+      }
+    ],
+    "exposedEnv": false,
+    "exposedGit": false
+  },
+  {
+    "label": "guest/read access",
+    "method": "GET",
+    "path": "/account/profile",
+    "status": 401,
+    "location": null,
+    "errorFields": [],
+    "exception": null,
+    "debugTrace": false,
+    "rawXssTag": false,
+    "headers": {
+      "content-security-policy": "base-uri 'self'; object-src 'none'",
+      "content-security-policy-report-only": "script-src 'self' https://telegram.org https://smartcaptcha.cloud.yandex.ru https://captcha-api.yandex.ru; frame-ancestors 'self' https://web.telegram.org",
+      "x-frame-options": null,
+      "x-content-type-options": "nosniff",
+      "referrer-policy": "strict-origin-when-cross-origin",
+      "strict-transport-security": null,
+      "access-control-allow-origin": null,
+      "retry-after": null,
+      "x-ratelimit-remaining": null
+    },
+    "cookies": [
+      {
+        "name": "XSRF-TOKEN",
+        "secure": false,
+        "httpOnly": false,
+        "sameSite": "lax"
+      },
+      {
+        "name": "svoidelivery-session",
+        "secure": false,
+        "httpOnly": true,
+        "sameSite": "lax"
+      }
+    ],
+    "exposedEnv": false,
+    "exposedGit": false
+  },
+  {
+    "label": "guest/read access",
+    "method": "GET",
+    "path": "/account/addresses",
+    "status": 401,
+    "location": null,
+    "errorFields": [],
+    "exception": null,
+    "debugTrace": false,
+    "rawXssTag": false,
+    "headers": {
+      "content-security-policy": "base-uri 'self'; object-src 'none'",
+      "content-security-policy-report-only": "script-src 'self' https://telegram.org https://smartcaptcha.cloud.yandex.ru https://captcha-api.yandex.ru; frame-ancestors 'self' https://web.telegram.org",
+      "x-frame-options": null,
+      "x-content-type-options": "nosniff",
+      "referrer-policy": "strict-origin-when-cross-origin",
+      "strict-transport-security": null,
+      "access-control-allow-origin": null,
+      "retry-after": null,
+      "x-ratelimit-remaining": null
+    },
+    "cookies": [
+      {
+        "name": "XSRF-TOKEN",
+        "secure": false,
+        "httpOnly": false,
+        "sameSite": "lax"
+      },
+      {
+        "name": "svoidelivery-session",
+        "secure": false,
+        "httpOnly": true,
+        "sameSite": "lax"
+      }
+    ],
+    "exposedEnv": false,
+    "exposedGit": false
+  },
+  {
+    "label": "guest/read access",
+    "method": "GET",
+    "path": "/account/orders/1",
+    "status": 401,
+    "location": null,
+    "errorFields": [],
+    "exception": null,
+    "debugTrace": false,
+    "rawXssTag": false,
+    "headers": {
+      "content-security-policy": "base-uri 'self'; object-src 'none'",
+      "content-security-policy-report-only": "script-src 'self' https://telegram.org https://smartcaptcha.cloud.yandex.ru https://captcha-api.yandex.ru; frame-ancestors 'self' https://web.telegram.org",
+      "x-frame-options": null,
+      "x-content-type-options": "nosniff",
+      "referrer-policy": "strict-origin-when-cross-origin",
+      "strict-transport-security": null,
+      "access-control-allow-origin": null,
+      "retry-after": null,
+      "x-ratelimit-remaining": null
+    },
+    "cookies": [
+      {
+        "name": "XSRF-TOKEN",
+        "secure": false,
+        "httpOnly": false,
+        "sameSite": "lax"
+      },
+      {
+        "name": "svoidelivery-session",
+        "secure": false,
+        "httpOnly": true,
+        "sameSite": "lax"
+      }
+    ],
+    "exposedEnv": false,
+    "exposedGit": false
+  },
+  {
+    "label": "guest/read access",
+    "method": "GET",
+    "path": "/cart",
+    "status": 401,
+    "location": null,
+    "errorFields": [],
+    "exception": null,
+    "debugTrace": false,
+    "rawXssTag": false,
+    "headers": {
+      "content-security-policy": "base-uri 'self'; object-src 'none'",
+      "content-security-policy-report-only": "script-src 'self' https://telegram.org https://smartcaptcha.cloud.yandex.ru https://captcha-api.yandex.ru; frame-ancestors 'self' https://web.telegram.org",
+      "x-frame-options": null,
+      "x-content-type-options": "nosniff",
+      "referrer-policy": "strict-origin-when-cross-origin",
+      "strict-transport-security": null,
+      "access-control-allow-origin": null,
+      "retry-after": null,
+      "x-ratelimit-remaining": null
+    },
+    "cookies": [
+      {
+        "name": "XSRF-TOKEN",
+        "secure": false,
+        "httpOnly": false,
+        "sameSite": "lax"
+      },
+      {
+        "name": "svoidelivery-session",
+        "secure": false,
+        "httpOnly": true,
+        "sameSite": "lax"
+      }
+    ],
+    "exposedEnv": false,
+    "exposedGit": false
+  },
+  {
+    "label": "guest/read access",
+    "method": "GET",
+    "path": "/.env",
+    "status": 404,
+    "location": null,
+    "errorFields": [],
+    "exception": null,
+    "debugTrace": false,
+    "rawXssTag": false,
+    "headers": {
+      "content-security-policy": "base-uri 'self'; object-src 'none'",
+      "content-security-policy-report-only": "script-src 'self' https://telegram.org https://smartcaptcha.cloud.yandex.ru https://captcha-api.yandex.ru; frame-ancestors 'self' https://web.telegram.org",
+      "x-frame-options": null,
+      "x-content-type-options": "nosniff",
+      "referrer-policy": "strict-origin-when-cross-origin",
+      "strict-transport-security": null,
+      "access-control-allow-origin": null,
+      "retry-after": null,
+      "x-ratelimit-remaining": null
+    },
+    "cookies": [],
+    "exposedEnv": false,
+    "exposedGit": false
+  },
+  {
+    "label": "guest/read access",
+    "method": "GET",
+    "path": "/.git/config",
+    "status": 404,
+    "location": null,
+    "errorFields": [],
+    "exception": null,
+    "debugTrace": false,
+    "rawXssTag": false,
+    "headers": {
+      "content-security-policy": "base-uri 'self'; object-src 'none'",
+      "content-security-policy-report-only": "script-src 'self' https://telegram.org https://smartcaptcha.cloud.yandex.ru https://captcha-api.yandex.ru; frame-ancestors 'self' https://web.telegram.org",
+      "x-frame-options": null,
+      "x-content-type-options": "nosniff",
+      "referrer-policy": "strict-origin-when-cross-origin",
+      "strict-transport-security": null,
+      "access-control-allow-origin": null,
+      "retry-after": null,
+      "x-ratelimit-remaining": null
+    },
+    "cookies": [],
+    "exposedEnv": false,
+    "exposedGit": false
+  },
+  {
+    "label": "guest/read access",
+    "method": "GET",
+    "path": "/storage/logs/laravel.log",
+    "status": 404,
+    "location": null,
+    "errorFields": [],
+    "exception": null,
+    "debugTrace": false,
+    "rawXssTag": false,
+    "headers": {
+      "content-security-policy": "base-uri 'self'; object-src 'none'",
+      "content-security-policy-report-only": "script-src 'self' https://telegram.org https://smartcaptcha.cloud.yandex.ru https://captcha-api.yandex.ru; frame-ancestors 'self' https://web.telegram.org",
+      "x-frame-options": null,
+      "x-content-type-options": "nosniff",
+      "referrer-policy": "strict-origin-when-cross-origin",
+      "strict-transport-security": null,
+      "access-control-allow-origin": null,
+      "retry-after": null,
+      "x-ratelimit-remaining": null
+    },
+    "cookies": [],
+    "exposedEnv": false,
+    "exposedGit": false
+  },
+  {
+    "label": "missing CSRF",
+    "method": "POST",
+    "path": "/login",
+    "status": 419,
+    "location": null,
+    "errorFields": [],
+    "exception": null,
+    "debugTrace": false,
+    "rawXssTag": false,
+    "headers": {
+      "content-security-policy": "base-uri 'self'; object-src 'none'",
+      "content-security-policy-report-only": "script-src 'self' https://telegram.org https://smartcaptcha.cloud.yandex.ru https://captcha-api.yandex.ru; frame-ancestors 'self' https://web.telegram.org",
+      "x-frame-options": null,
+      "x-content-type-options": "nosniff",
+      "referrer-policy": "strict-origin-when-cross-origin",
+      "strict-transport-security": null,
+      "access-control-allow-origin": null,
+      "retry-after": null,
+      "x-ratelimit-remaining": null
+    },
+    "cookies": [
+      {
+        "name": "svoidelivery-session",
+        "secure": false,
+        "httpOnly": true,
+        "sameSite": "lax"
+      }
+    ],
+    "exposedEnv": false,
+    "exposedGit": false
+  },
+  {
+    "label": "missing CSRF",
+    "method": "POST",
+    "path": "/register",
+    "status": 419,
+    "location": null,
+    "errorFields": [],
+    "exception": null,
+    "debugTrace": false,
+    "rawXssTag": false,
+    "headers": {
+      "content-security-policy": "base-uri 'self'; object-src 'none'",
+      "content-security-policy-report-only": "script-src 'self' https://telegram.org https://smartcaptcha.cloud.yandex.ru https://captcha-api.yandex.ru; frame-ancestors 'self' https://web.telegram.org",
+      "x-frame-options": null,
+      "x-content-type-options": "nosniff",
+      "referrer-policy": "strict-origin-when-cross-origin",
+      "strict-transport-security": null,
+      "access-control-allow-origin": null,
+      "retry-after": null,
+      "x-ratelimit-remaining": null
+    },
+    "cookies": [
+      {
+        "name": "svoidelivery-session",
+        "secure": false,
+        "httpOnly": true,
+        "sameSite": "lax"
+      }
+    ],
+    "exposedEnv": false,
+    "exposedGit": false
+  },
+  {
+    "label": "missing CSRF",
+    "method": "POST",
+    "path": "/forgot-password",
+    "status": 419,
+    "location": null,
+    "errorFields": [],
+    "exception": null,
+    "debugTrace": false,
+    "rawXssTag": false,
+    "headers": {
+      "content-security-policy": "base-uri 'self'; object-src 'none'",
+      "content-security-policy-report-only": "script-src 'self' https://telegram.org https://smartcaptcha.cloud.yandex.ru https://captcha-api.yandex.ru; frame-ancestors 'self' https://web.telegram.org",
+      "x-frame-options": null,
+      "x-content-type-options": "nosniff",
+      "referrer-policy": "strict-origin-when-cross-origin",
+      "strict-transport-security": null,
+      "access-control-allow-origin": null,
+      "retry-after": null,
+      "x-ratelimit-remaining": null
+    },
+    "cookies": [
+      {
+        "name": "svoidelivery-session",
+        "secure": false,
+        "httpOnly": true,
+        "sameSite": "lax"
+      }
+    ],
+    "exposedEnv": false,
+    "exposedGit": false
+  },
+  {
+    "label": "missing CSRF",
+    "method": "POST",
+    "path": "/checkout",
+    "status": 419,
+    "location": null,
+    "errorFields": [],
+    "exception": null,
+    "debugTrace": false,
+    "rawXssTag": false,
+    "headers": {
+      "content-security-policy": "base-uri 'self'; object-src 'none'",
+      "content-security-policy-report-only": "script-src 'self' https://telegram.org https://smartcaptcha.cloud.yandex.ru https://captcha-api.yandex.ru; frame-ancestors 'self' https://web.telegram.org",
+      "x-frame-options": null,
+      "x-content-type-options": "nosniff",
+      "referrer-policy": "strict-origin-when-cross-origin",
+      "strict-transport-security": null,
+      "access-control-allow-origin": null,
+      "retry-after": null,
+      "x-ratelimit-remaining": null
+    },
+    "cookies": [
+      {
+        "name": "svoidelivery-session",
+        "secure": false,
+        "httpOnly": true,
+        "sameSite": "lax"
+      }
+    ],
+    "exposedEnv": false,
+    "exposedGit": false
+  },
+  {
+    "label": "missing CSRF",
+    "method": "POST",
+    "path": "/auth/telegram/webapp",
+    "status": 419,
+    "location": null,
+    "errorFields": [],
+    "exception": null,
+    "debugTrace": false,
+    "rawXssTag": false,
+    "headers": {
+      "content-security-policy": "base-uri 'self'; object-src 'none'",
+      "content-security-policy-report-only": "script-src 'self' https://telegram.org https://smartcaptcha.cloud.yandex.ru https://captcha-api.yandex.ru; frame-ancestors 'self' https://web.telegram.org",
+      "x-frame-options": null,
+      "x-content-type-options": "nosniff",
+      "referrer-policy": "strict-origin-when-cross-origin",
+      "strict-transport-security": null,
+      "access-control-allow-origin": null,
+      "retry-after": null,
+      "x-ratelimit-remaining": null
+    },
+    "cookies": [
+      {
+        "name": "svoidelivery-session",
+        "secure": false,
+        "httpOnly": true,
+        "sameSite": "lax"
+      }
+    ],
+    "exposedEnv": false,
+    "exposedGit": false
+  },
+  {
+    "label": "search XSS",
+    "method": "GET",
+    "path": "/?q=%3Csvg%20onload%3Dalert(7319)%3E",
+    "status": 200,
+    "location": null,
+    "errorFields": [],
+    "exception": null,
+    "debugTrace": false,
+    "rawXssTag": false,
+    "headers": {
+      "content-security-policy": "base-uri 'self'; object-src 'none'",
+      "content-security-policy-report-only": "script-src 'self' https://telegram.org https://smartcaptcha.cloud.yandex.ru https://captcha-api.yandex.ru; frame-ancestors 'self' https://web.telegram.org",
+      "x-frame-options": null,
+      "x-content-type-options": "nosniff",
+      "referrer-policy": "strict-origin-when-cross-origin",
+      "strict-transport-security": null,
+      "access-control-allow-origin": null,
+      "retry-after": null,
+      "x-ratelimit-remaining": null
+    },
+    "cookies": [
+      {
+        "name": "XSRF-TOKEN",
+        "secure": false,
+        "httpOnly": false,
+        "sameSite": "lax"
+      },
+      {
+        "name": "svoidelivery-session",
+        "secure": false,
+        "httpOnly": true,
+        "sameSite": "lax"
+      }
+    ],
+    "exposedEnv": false,
+    "exposedGit": false
+  },
+  {
+    "label": "search SQLi",
+    "method": "GET",
+    "path": "/?q='%20OR%201%3D1%20--",
+    "status": 200,
+    "location": null,
+    "errorFields": [],
+    "exception": null,
+    "debugTrace": false,
+    "rawXssTag": false,
+    "headers": {
+      "content-security-policy": "base-uri 'self'; object-src 'none'",
+      "content-security-policy-report-only": "script-src 'self' https://telegram.org https://smartcaptcha.cloud.yandex.ru https://captcha-api.yandex.ru; frame-ancestors 'self' https://web.telegram.org",
+      "x-frame-options": null,
+      "x-content-type-options": "nosniff",
+      "referrer-policy": "strict-origin-when-cross-origin",
+      "strict-transport-security": null,
+      "access-control-allow-origin": null,
+      "retry-after": null,
+      "x-ratelimit-remaining": null
+    },
+    "cookies": [
+      {
+        "name": "XSRF-TOKEN",
+        "secure": false,
+        "httpOnly": false,
+        "sameSite": "lax"
+      },
+      {
+        "name": "svoidelivery-session",
+        "secure": false,
+        "httpOnly": true,
+        "sameSite": "lax"
+      }
+    ],
+    "exposedEnv": false,
+    "exposedGit": false
+  },
+  {
+    "label": "search array",
+    "method": "GET",
+    "path": "/?q[]=x",
+    "status": 422,
+    "location": null,
+    "errorFields": [
+      "q"
+    ],
+    "exception": null,
+    "debugTrace": false,
+    "rawXssTag": false,
+    "headers": {
+      "content-security-policy": "base-uri 'self'; object-src 'none'",
+      "content-security-policy-report-only": "script-src 'self' https://telegram.org https://smartcaptcha.cloud.yandex.ru https://captcha-api.yandex.ru; frame-ancestors 'self' https://web.telegram.org",
+      "x-frame-options": null,
+      "x-content-type-options": "nosniff",
+      "referrer-policy": "strict-origin-when-cross-origin",
+      "strict-transport-security": null,
+      "access-control-allow-origin": null,
+      "retry-after": null,
+      "x-ratelimit-remaining": null
+    },
+    "cookies": [
+      {
+        "name": "XSRF-TOKEN",
+        "secure": false,
+        "httpOnly": false,
+        "sameSite": "lax"
+      },
+      {
+        "name": "svoidelivery-session",
+        "secure": false,
+        "httpOnly": true,
+        "sameSite": "lax"
+      }
+    ],
+    "exposedEnv": false,
+    "exposedGit": false
+  },
+  {
+    "label": "search length bound",
+    "method": "GET",
+    "path": "/?q=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "status": 422,
+    "location": null,
+    "errorFields": [
+      "q"
+    ],
+    "exception": null,
+    "debugTrace": false,
+    "rawXssTag": false,
+    "headers": {
+      "content-security-policy": "base-uri 'self'; object-src 'none'",
+      "content-security-policy-report-only": "script-src 'self' https://telegram.org https://smartcaptcha.cloud.yandex.ru https://captcha-api.yandex.ru; frame-ancestors 'self' https://web.telegram.org",
+      "x-frame-options": null,
+      "x-content-type-options": "nosniff",
+      "referrer-policy": "strict-origin-when-cross-origin",
+      "strict-transport-security": null,
+      "access-control-allow-origin": null,
+      "retry-after": null,
+      "x-ratelimit-remaining": null
+    },
+    "cookies": [
+      {
+        "name": "XSRF-TOKEN",
+        "secure": false,
+        "httpOnly": false,
+        "sameSite": "lax"
+      },
+      {
+        "name": "svoidelivery-session",
+        "secure": false,
+        "httpOnly": true,
+        "sameSite": "lax"
+      }
+    ],
+    "exposedEnv": false,
+    "exposedGit": false
+  },
+  {
+    "label": "sort SQLi",
+    "method": "GET",
+    "path": "/?sort=price%20desc%2C(select%201)",
+    "status": 422,
+    "location": null,
+    "errorFields": [
+      "sort"
+    ],
+    "exception": null,
+    "debugTrace": false,
+    "rawXssTag": false,
+    "headers": {
+      "content-security-policy": "base-uri 'self'; object-src 'none'",
+      "content-security-policy-report-only": "script-src 'self' https://telegram.org https://smartcaptcha.cloud.yandex.ru https://captcha-api.yandex.ru; frame-ancestors 'self' https://web.telegram.org",
+      "x-frame-options": null,
+      "x-content-type-options": "nosniff",
+      "referrer-policy": "strict-origin-when-cross-origin",
+      "strict-transport-security": null,
+      "access-control-allow-origin": null,
+      "retry-after": null,
+      "x-ratelimit-remaining": null
+    },
+    "cookies": [
+      {
+        "name": "XSRF-TOKEN",
+        "secure": false,
+        "httpOnly": false,
+        "sameSite": "lax"
+      },
+      {
+        "name": "svoidelivery-session",
+        "secure": false,
+        "httpOnly": true,
+        "sameSite": "lax"
+      }
+    ],
+    "exposedEnv": false,
+    "exposedGit": false
+  },
+  {
+    "label": "invalid category element",
+    "method": "GET",
+    "path": "/?categories[]=x",
+    "status": 422,
+    "location": null,
+    "errorFields": [
+      "categories.0"
+    ],
+    "exception": null,
+    "debugTrace": false,
+    "rawXssTag": false,
+    "headers": {
+      "content-security-policy": "base-uri 'self'; object-src 'none'",
+      "content-security-policy-report-only": "script-src 'self' https://telegram.org https://smartcaptcha.cloud.yandex.ru https://captcha-api.yandex.ru; frame-ancestors 'self' https://web.telegram.org",
+      "x-frame-options": null,
+      "x-content-type-options": "nosniff",
+      "referrer-policy": "strict-origin-when-cross-origin",
+      "strict-transport-security": null,
+      "access-control-allow-origin": null,
+      "retry-after": null,
+      "x-ratelimit-remaining": null
+    },
+    "cookies": [
+      {
+        "name": "XSRF-TOKEN",
+        "secure": false,
+        "httpOnly": false,
+        "sameSite": "lax"
+      },
+      {
+        "name": "svoidelivery-session",
+        "secure": false,
+        "httpOnly": true,
+        "sameSite": "lax"
+      }
+    ],
+    "exposedEnv": false,
+    "exposedGit": false
+  },
+  {
+    "label": "page array",
+    "method": "GET",
+    "path": "/?page[]=1",
+    "status": 200,
+    "location": null,
+    "errorFields": [],
+    "exception": null,
+    "debugTrace": false,
+    "rawXssTag": false,
+    "headers": {
+      "content-security-policy": "base-uri 'self'; object-src 'none'",
+      "content-security-policy-report-only": "script-src 'self' https://telegram.org https://smartcaptcha.cloud.yandex.ru https://captcha-api.yandex.ru; frame-ancestors 'self' https://web.telegram.org",
+      "x-frame-options": null,
+      "x-content-type-options": "nosniff",
+      "referrer-policy": "strict-origin-when-cross-origin",
+      "strict-transport-security": null,
+      "access-control-allow-origin": null,
+      "retry-after": null,
+      "x-ratelimit-remaining": null
+    },
+    "cookies": [
+      {
+        "name": "XSRF-TOKEN",
+        "secure": false,
+        "httpOnly": false,
+        "sameSite": "lax"
+      },
+      {
+        "name": "svoidelivery-session",
+        "secure": false,
+        "httpOnly": true,
+        "sameSite": "lax"
+      }
+    ],
+    "exposedEnv": false,
+    "exposedGit": false
+  },
+  {
+    "label": "telegram forged signature",
+    "method": "GET",
+    "path": "/auth/telegram/callback?id=123456789&auth_date=1&hash=invalid",
+    "status": 302,
+    "location": "http://localhost:8000/login",
+    "errorFields": [],
+    "exception": null,
+    "debugTrace": false,
+    "rawXssTag": false,
+    "headers": {
+      "content-security-policy": "base-uri 'self'; object-src 'none'",
+      "content-security-policy-report-only": "script-src 'self' https://telegram.org https://smartcaptcha.cloud.yandex.ru https://captcha-api.yandex.ru; frame-ancestors 'self' https://web.telegram.org",
+      "x-frame-options": null,
+      "x-content-type-options": "nosniff",
+      "referrer-policy": "strict-origin-when-cross-origin",
+      "strict-transport-security": null,
+      "access-control-allow-origin": null,
+      "retry-after": null,
+      "x-ratelimit-remaining": "9"
+    },
+    "cookies": [
+      {
+        "name": "XSRF-TOKEN",
+        "secure": false,
+        "httpOnly": false,
+        "sameSite": "lax"
+      },
+      {
+        "name": "svoidelivery-session",
+        "secure": false,
+        "httpOnly": true,
+        "sameSite": "lax"
+      }
+    ],
+    "exposedEnv": false,
+    "exposedGit": false
+  },
+  {
+    "label": "login invalid credentials",
+    "method": "POST",
+    "path": "/login",
+    "status": 422,
+    "location": null,
+    "errorFields": [
+      "email"
+    ],
+    "exception": null,
+    "debugTrace": false,
+    "rawXssTag": false,
+    "headers": {
+      "content-security-policy": "base-uri 'self'; object-src 'none'",
+      "content-security-policy-report-only": "script-src 'self' https://telegram.org https://smartcaptcha.cloud.yandex.ru https://captcha-api.yandex.ru; frame-ancestors 'self' https://web.telegram.org",
+      "x-frame-options": null,
+      "x-content-type-options": "nosniff",
+      "referrer-policy": "strict-origin-when-cross-origin",
+      "strict-transport-security": null,
+      "access-control-allow-origin": null,
+      "retry-after": null,
+      "x-ratelimit-remaining": "4"
+    },
+    "cookies": [
+      {
+        "name": "XSRF-TOKEN",
+        "secure": false,
+        "httpOnly": false,
+        "sameSite": "lax"
+      },
+      {
+        "name": "svoidelivery-session",
+        "secure": false,
+        "httpOnly": true,
+        "sameSite": "lax"
+      }
+    ],
+    "exposedEnv": false,
+    "exposedGit": false
+  },
+  {
+    "label": "login array email",
+    "method": "POST",
+    "path": "/login",
+    "status": 422,
+    "location": null,
+    "errorFields": [
+      "email"
+    ],
+    "exception": null,
+    "debugTrace": false,
+    "rawXssTag": false,
+    "headers": {
+      "content-security-policy": "base-uri 'self'; object-src 'none'",
+      "content-security-policy-report-only": "script-src 'self' https://telegram.org https://smartcaptcha.cloud.yandex.ru https://captcha-api.yandex.ru; frame-ancestors 'self' https://web.telegram.org",
+      "x-frame-options": null,
+      "x-content-type-options": "nosniff",
+      "referrer-policy": "strict-origin-when-cross-origin",
+      "strict-transport-security": null,
+      "access-control-allow-origin": null,
+      "retry-after": null,
+      "x-ratelimit-remaining": "4"
+    },
+    "cookies": [
+      {
+        "name": "XSRF-TOKEN",
+        "secure": false,
+        "httpOnly": false,
+        "sameSite": "lax"
+      },
+      {
+        "name": "svoidelivery-session",
+        "secure": false,
+        "httpOnly": true,
+        "sameSite": "lax"
+      }
+    ],
+    "exposedEnv": false,
+    "exposedGit": false
+  },
+  {
+    "label": "registration array email",
+    "method": "POST",
+    "path": "/register",
+    "status": 422,
+    "location": null,
+    "errorFields": [
+      "email"
+    ],
+    "exception": null,
+    "debugTrace": false,
+    "rawXssTag": false,
+    "headers": {
+      "content-security-policy": "base-uri 'self'; object-src 'none'",
+      "content-security-policy-report-only": "script-src 'self' https://telegram.org https://smartcaptcha.cloud.yandex.ru https://captcha-api.yandex.ru; frame-ancestors 'self' https://web.telegram.org",
+      "x-frame-options": null,
+      "x-content-type-options": "nosniff",
+      "referrer-policy": "strict-origin-when-cross-origin",
+      "strict-transport-security": null,
+      "access-control-allow-origin": null,
+      "retry-after": null,
+      "x-ratelimit-remaining": null
+    },
+    "cookies": [
+      {
+        "name": "XSRF-TOKEN",
+        "secure": false,
+        "httpOnly": false,
+        "sameSite": "lax"
+      },
+      {
+        "name": "svoidelivery-session",
+        "secure": false,
+        "httpOnly": true,
+        "sameSite": "lax"
+      }
+    ],
+    "exposedEnv": false,
+    "exposedGit": false
+  },
+  {
+    "label": "reset array email",
+    "method": "POST",
+    "path": "/forgot-password",
+    "status": 422,
+    "location": null,
+    "errorFields": [
+      "email"
+    ],
+    "exception": null,
+    "debugTrace": false,
+    "rawXssTag": false,
+    "headers": {
+      "content-security-policy": "base-uri 'self'; object-src 'none'",
+      "content-security-policy-report-only": "script-src 'self' https://telegram.org https://smartcaptcha.cloud.yandex.ru https://captcha-api.yandex.ru; frame-ancestors 'self' https://web.telegram.org",
+      "x-frame-options": null,
+      "x-content-type-options": "nosniff",
+      "referrer-policy": "strict-origin-when-cross-origin",
+      "strict-transport-security": null,
+      "access-control-allow-origin": null,
+      "retry-after": null,
+      "x-ratelimit-remaining": null
+    },
+    "cookies": [
+      {
+        "name": "XSRF-TOKEN",
+        "secure": false,
+        "httpOnly": false,
+        "sameSite": "lax"
+      },
+      {
+        "name": "svoidelivery-session",
+        "secure": false,
+        "httpOnly": true,
+        "sameSite": "lax"
+      }
+    ],
+    "exposedEnv": false,
+    "exposedGit": false
+  },
+  {
+    "label": "reset submission array email",
+    "method": "POST",
+    "path": "/reset-password",
+    "status": 422,
+    "location": null,
+    "errorFields": [
+      "email"
+    ],
+    "exception": null,
+    "debugTrace": false,
+    "rawXssTag": false,
+    "headers": {
+      "content-security-policy": "base-uri 'self'; object-src 'none'",
+      "content-security-policy-report-only": "script-src 'self' https://telegram.org https://smartcaptcha.cloud.yandex.ru https://captcha-api.yandex.ru; frame-ancestors 'self' https://web.telegram.org",
+      "x-frame-options": null,
+      "x-content-type-options": "nosniff",
+      "referrer-policy": "strict-origin-when-cross-origin",
+      "strict-transport-security": null,
+      "access-control-allow-origin": null,
+      "retry-after": null,
+      "x-ratelimit-remaining": null
+    },
+    "cookies": [
+      {
+        "name": "XSRF-TOKEN",
+        "secure": false,
+        "httpOnly": false,
+        "sameSite": "lax"
+      },
+      {
+        "name": "svoidelivery-session",
+        "secure": false,
+        "httpOnly": true,
+        "sameSite": "lax"
+      }
+    ],
+    "exposedEnv": false,
+    "exposedGit": false
+  },
+  {
+    "label": "registration missing required fields",
+    "method": "POST",
+    "path": "/register",
+    "status": 422,
+    "location": null,
+    "errorFields": [
+      "name",
+      "email",
+      "password",
+      "age_confirmed",
+      "terms_accepted",
+      "smart-token"
+    ],
+    "exception": null,
+    "debugTrace": false,
+    "rawXssTag": false,
+    "headers": {
+      "content-security-policy": "base-uri 'self'; object-src 'none'",
+      "content-security-policy-report-only": "script-src 'self' https://telegram.org https://smartcaptcha.cloud.yandex.ru https://captcha-api.yandex.ru; frame-ancestors 'self' https://web.telegram.org",
+      "x-frame-options": null,
+      "x-content-type-options": "nosniff",
+      "referrer-policy": "strict-origin-when-cross-origin",
+      "strict-transport-security": null,
+      "access-control-allow-origin": null,
+      "retry-after": null,
+      "x-ratelimit-remaining": "2"
+    },
+    "cookies": [
+      {
+        "name": "XSRF-TOKEN",
+        "secure": false,
+        "httpOnly": false,
+        "sameSite": "lax"
+      },
+      {
+        "name": "svoidelivery-session",
+        "secure": false,
+        "httpOnly": true,
+        "sameSite": "lax"
+      }
+    ],
+    "exposedEnv": false,
+    "exposedGit": false
+  },
+  {
+    "label": "forged Telegram webapp",
+    "method": "POST",
+    "path": "/auth/telegram/webapp",
+    "status": 302,
+    "location": "http://localhost:8000/login",
+    "errorFields": [],
+    "exception": null,
+    "debugTrace": false,
+    "rawXssTag": false,
+    "headers": {
+      "content-security-policy": "base-uri 'self'; object-src 'none'",
+      "content-security-policy-report-only": "script-src 'self' https://telegram.org https://smartcaptcha.cloud.yandex.ru https://captcha-api.yandex.ru; frame-ancestors 'self' https://web.telegram.org",
+      "x-frame-options": null,
+      "x-content-type-options": "nosniff",
+      "referrer-policy": "strict-origin-when-cross-origin",
+      "strict-transport-security": null,
+      "access-control-allow-origin": null,
+      "retry-after": null,
+      "x-ratelimit-remaining": "8"
+    },
+    "cookies": [
+      {
+        "name": "XSRF-TOKEN",
+        "secure": false,
+        "httpOnly": false,
+        "sameSite": "lax"
+      },
+      {
+        "name": "svoidelivery-session",
+        "secure": false,
+        "httpOnly": true,
+        "sameSite": "lax"
+      }
+    ],
+    "exposedEnv": false,
+    "exposedGit": false
+  },
+  {
+    "label": "host header injection",
+    "method": "GET",
+    "path": "/login",
+    "status": 400,
+    "location": null,
+    "errorFields": [],
+    "exception": null,
+    "debugTrace": false,
+    "rawXssTag": false,
+    "headers": {
+      "content-security-policy": "base-uri 'self'; object-src 'none'",
+      "content-security-policy-report-only": "script-src 'self' https://telegram.org https://smartcaptcha.cloud.yandex.ru https://captcha-api.yandex.ru; frame-ancestors 'self' https://web.telegram.org",
+      "x-frame-options": null,
+      "x-content-type-options": "nosniff",
+      "referrer-policy": "strict-origin-when-cross-origin",
+      "strict-transport-security": null,
+      "access-control-allow-origin": null,
+      "retry-after": null,
+      "x-ratelimit-remaining": null
+    },
+    "cookies": [],
+    "exposedEnv": false,
+    "exposedGit": false
+  },
+  {
+    "label": "production ui kit disabled",
+    "method": "GET",
+    "path": "/ui-kit",
+    "status": 404,
+    "location": null,
+    "errorFields": [],
+    "exception": null,
+    "debugTrace": false,
+    "rawXssTag": false,
+    "headers": {
+      "content-security-policy": "base-uri 'self'; object-src 'none'",
+      "content-security-policy-report-only": "script-src 'self' https://telegram.org https://smartcaptcha.cloud.yandex.ru https://captcha-api.yandex.ru; frame-ancestors 'self' https://web.telegram.org",
+      "x-frame-options": null,
+      "x-content-type-options": "nosniff",
+      "referrer-policy": "strict-origin-when-cross-origin",
+      "strict-transport-security": null,
+      "access-control-allow-origin": null,
+      "retry-after": null,
+      "x-ratelimit-remaining": null
+    },
+    "cookies": [],
+    "exposedEnv": false,
+    "exposedGit": false
+  },
+  {
+    "label": "production debugbar disabled",
+    "method": "GET",
+    "path": "/_debugbar/open",
+    "status": 404,
+    "location": null,
+    "errorFields": [],
+    "exception": null,
+    "debugTrace": false,
+    "rawXssTag": false,
+    "headers": {
+      "content-security-policy": "base-uri 'self'; object-src 'none'",
+      "content-security-policy-report-only": "script-src 'self' https://telegram.org https://smartcaptcha.cloud.yandex.ru https://captcha-api.yandex.ru; frame-ancestors 'self' https://web.telegram.org",
+      "x-frame-options": null,
+      "x-content-type-options": "nosniff",
+      "referrer-policy": "strict-origin-when-cross-origin",
+      "strict-transport-security": null,
+      "access-control-allow-origin": null,
+      "retry-after": null,
+      "x-ratelimit-remaining": null
+    },
+    "cookies": [],
+    "exposedEnv": false,
+    "exposedGit": false
+  }
+]

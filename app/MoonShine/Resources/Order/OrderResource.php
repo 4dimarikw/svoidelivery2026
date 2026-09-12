@@ -24,6 +24,8 @@ class OrderResource extends ModelResource
 {
     protected string $model = Order::class;
 
+    protected bool $withPolicy = true;
+
     protected array $with = ['user', 'deliveryType', 'paymentMethod', 'orderCustomer', 'orderItems', 'orderItems.product'];
 
     public function getTitle(): string

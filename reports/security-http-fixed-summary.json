@@ -1,0 +1,333 @@
+[
+  {
+    "label": "login form",
+    "path": "/login",
+    "status": 200,
+    "errorFields": [],
+    "exception": null,
+    "debugTrace": false,
+    "location": null
+  },
+  {
+    "label": "guest/read access",
+    "path": "/",
+    "status": 200,
+    "errorFields": [],
+    "exception": null,
+    "debugTrace": false,
+    "location": null
+  },
+  {
+    "label": "guest/read access",
+    "path": "/register",
+    "status": 200,
+    "errorFields": [],
+    "exception": null,
+    "debugTrace": false,
+    "location": null
+  },
+  {
+    "label": "guest/read access",
+    "path": "/forgot-password",
+    "status": 200,
+    "errorFields": [],
+    "exception": null,
+    "debugTrace": false,
+    "location": null
+  },
+  {
+    "label": "guest/read access",
+    "path": "/account/profile",
+    "status": 401,
+    "errorFields": [],
+    "exception": null,
+    "debugTrace": false,
+    "location": null
+  },
+  {
+    "label": "guest/read access",
+    "path": "/account/addresses",
+    "status": 401,
+    "errorFields": [],
+    "exception": null,
+    "debugTrace": false,
+    "location": null
+  },
+  {
+    "label": "guest/read access",
+    "path": "/account/orders/1",
+    "status": 401,
+    "errorFields": [],
+    "exception": null,
+    "debugTrace": false,
+    "location": null
+  },
+  {
+    "label": "guest/read access",
+    "path": "/cart",
+    "status": 401,
+    "errorFields": [],
+    "exception": null,
+    "debugTrace": false,
+    "location": null
+  },
+  {
+    "label": "guest/read access",
+    "path": "/.env",
+    "status": 404,
+    "errorFields": [],
+    "exception": null,
+    "debugTrace": false,
+    "location": null
+  },
+  {
+    "label": "guest/read access",
+    "path": "/.git/config",
+    "status": 404,
+    "errorFields": [],
+    "exception": null,
+    "debugTrace": false,
+    "location": null
+  },
+  {
+    "label": "guest/read access",
+    "path": "/storage/logs/laravel.log",
+    "status": 404,
+    "errorFields": [],
+    "exception": null,
+    "debugTrace": false,
+    "location": null
+  },
+  {
+    "label": "missing CSRF",
+    "path": "/login",
+    "status": 419,
+    "errorFields": [],
+    "exception": null,
+    "debugTrace": false,
+    "location": null
+  },
+  {
+    "label": "missing CSRF",
+    "path": "/register",
+    "status": 419,
+    "errorFields": [],
+    "exception": null,
+    "debugTrace": false,
+    "location": null
+  },
+  {
+    "label": "missing CSRF",
+    "path": "/forgot-password",
+    "status": 419,
+    "errorFields": [],
+    "exception": null,
+    "debugTrace": false,
+    "location": null
+  },
+  {
+    "label": "missing CSRF",
+    "path": "/checkout",
+    "status": 419,
+    "errorFields": [],
+    "exception": null,
+    "debugTrace": false,
+    "location": null
+  },
+  {
+    "label": "missing CSRF",
+    "path": "/auth/telegram/webapp",
+    "status": 419,
+    "errorFields": [],
+    "exception": null,
+    "debugTrace": false,
+    "location": null
+  },
+  {
+    "label": "search XSS",
+    "path": "/?q=%3Csvg%20onload%3Dalert(7319)%3E",
+    "status": 200,
+    "errorFields": [],
+    "exception": null,
+    "debugTrace": false,
+    "location": null
+  },
+  {
+    "label": "search SQLi",
+    "path": "/?q='%20OR%201%3D1%20--",
+    "status": 200,
+    "errorFields": [],
+    "exception": null,
+    "debugTrace": false,
+    "location": null
+  },
+  {
+    "label": "search array",
+    "path": "/?q[]=x",
+    "status": 422,
+    "errorFields": [
+      "q"
+    ],
+    "exception": null,
+    "debugTrace": false,
+    "location": null
+  },
+  {
+    "label": "search length bound",
+    "path": "/?q=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "status": 422,
+    "errorFields": [
+      "q"
+    ],
+    "exception": null,
+    "debugTrace": false,
+    "location": null
+  },
+  {
+    "label": "sort SQLi",
+    "path": "/?sort=price%20desc%2C(select%201)",
+    "status": 422,
+    "errorFields": [
+      "sort"
+    ],
+    "exception": null,
+    "debugTrace": false,
+    "location": null
+  },
+  {
+    "label": "invalid category element",
+    "path": "/?categories[]=x",
+    "status": 422,
+    "errorFields": [
+      "categories.0"
+    ],
+    "exception": null,
+    "debugTrace": false,
+    "location": null
+  },
+  {
+    "label": "page array",
+    "path": "/?page[]=1",
+    "status": 200,
+    "errorFields": [],
+    "exception": null,
+    "debugTrace": false,
+    "location": null
+  },
+  {
+    "label": "telegram forged signature",
+    "path": "/auth/telegram/callback?id=123456789&auth_date=1&hash=invalid",
+    "status": 302,
+    "errorFields": [],
+    "exception": null,
+    "debugTrace": false,
+    "location": "http://localhost:8000/login"
+  },
+  {
+    "label": "login invalid credentials",
+    "path": "/login",
+    "status": 422,
+    "errorFields": [
+      "email"
+    ],
+    "exception": null,
+    "debugTrace": false,
+    "location": null
+  },
+  {
+    "label": "login array email",
+    "path": "/login",
+    "status": 422,
+    "errorFields": [
+      "email"
+    ],
+    "exception": null,
+    "debugTrace": false,
+    "location": null
+  },
+  {
+    "label": "registration array email",
+    "path": "/register",
+    "status": 422,
+    "errorFields": [
+      "email"
+    ],
+    "exception": null,
+    "debugTrace": false,
+    "location": null
+  },
+  {
+    "label": "reset array email",
+    "path": "/forgot-password",
+    "status": 422,
+    "errorFields": [
+      "email"
+    ],
+    "exception": null,
+    "debugTrace": false,
+    "location": null
+  },
+  {
+    "label": "reset submission array email",
+    "path": "/reset-password",
+    "status": 422,
+    "errorFields": [
+      "email"
+    ],
+    "exception": null,
+    "debugTrace": false,
+    "location": null
+  },
+  {
+    "label": "registration missing required fields",
+    "path": "/register",
+    "status": 422,
+    "errorFields": [
+      "name",
+      "email",
+      "password",
+      "age_confirmed",
+      "terms_accepted",
+      "smart-token"
+    ],
+    "exception": null,
+    "debugTrace": false,
+    "location": null
+  },
+  {
+    "label": "forged Telegram webapp",
+    "path": "/auth/telegram/webapp",
+    "status": 302,
+    "errorFields": [],
+    "exception": null,
+    "debugTrace": false,
+    "location": "http://localhost:8000/login"
+  },
+  {
+    "label": "host header injection",
+    "path": "/login",
+    "status": 400,
+    "errorFields": [],
+    "exception": null,
+    "debugTrace": false,
+    "location": null
+  },
+  {
+    "label": "production ui kit disabled",
+    "path": "/ui-kit",
+    "status": 404,
+    "errorFields": [],
+    "exception": null,
+    "debugTrace": false,
+    "location": null
+  },
+  {
+    "label": "production debugbar disabled",
+    "path": "/_debugbar/open",
+    "status": 404,
+    "errorFields": [],
+    "exception": null,
+    "debugTrace": false,
+    "location": null
+  }
+]

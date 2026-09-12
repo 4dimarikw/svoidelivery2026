@@ -9,6 +9,7 @@ use Domain\Telegram\Models\TelegramBot;
 use MoonShine\Contracts\UI\ComponentContract;
 use MoonShine\Crud\JsonResponse;
 use MoonShine\Support\Attributes\AsyncMethod;
+use MoonShine\Support\Enums\HttpMethod;
 use MoonShine\Support\Enums\ToastType;
 use MoonShine\UI\Components\ActionButton;
 use MoonShine\UI\Components\Heading;
@@ -51,6 +52,7 @@ final class ProfilePage extends \MoonShine\Laravel\Pages\ProfilePage
                     ->icon('x-mark')
                     ->error()
                     ->method('unlinkTelegram', page: $this)
+                    ->async(HttpMethod::POST)->setAttribute('data-async-method', 'POST')
                     ->withConfirm(
                         title: 'Отвязать Telegram',
                         content: 'Кнопка «Отправить себе» на VK-постах перестанет работать, пока вы не привяжете Telegram заново.',

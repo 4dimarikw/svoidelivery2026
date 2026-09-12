@@ -56,13 +56,13 @@ final class VkPostIndexPage extends IndexPage
         return [
             ID::make()->sortable(),
 
-            Date::make('Опубликован в VK', 'posted_at')->format('d.m.Y H:i')->sortable()->canSee(fn() => $isAdmin),
+            Date::make('Опубликован в VK', 'posted_at')->format('d.m.Y H:i')->sortable()->canSee(fn () => $isAdmin),
 
-            Text::make('Текст', formatted: fn(VkPost $item) => Str::limit((string)($item->message_text ?: $item->text), 80)),
-            Text::make('Загружено на сайт', formatted: fn(VkPost $item) => $item->imageDownloadStatus()),
+            Text::make('Текст', formatted: fn (VkPost $item) => Str::limit((string) ($item->message_text ?: $item->text), 80)),
+            Text::make('Загружено на сайт', formatted: fn (VkPost $item) => $item->imageDownloadStatus()),
             Enum::make('Статус', 'status')->attach(VkPostStatus::class),
             Date::make('Разослан', 'broadcast_at')->format('d.m.Y H:i')->sortable(),
-            Number::make('Доставок', formatted: fn(VkPost $item) => $item->deliveries->count()),
+            Number::make('Доставок', formatted: fn (VkPost $item) => $item->deliveries->count()),
         ];
     }
 
@@ -83,14 +83,14 @@ final class VkPostIndexPage extends IndexPage
     protected function queryTags(): array
     {
         return [
-            QueryTag::make('Черновики', fn(Builder $query) => $query->where('status', VkPostStatus::DRAFT)),
-            QueryTag::make('Готовые', fn(Builder $query) => $query->where('status', VkPostStatus::READY)),
-            QueryTag::make('Отправленные', fn(Builder $query) => $query->where('status', VkPostStatus::SENT)),
+            QueryTag::make('Черновики', fn (Builder $query) => $query->where('status', VkPostStatus::DRAFT)),
+            QueryTag::make('Готовые', fn (Builder $query) => $query->where('status', VkPostStatus::READY)),
+            QueryTag::make('Отправленные', fn (Builder $query) => $query->where('status', VkPostStatus::SENT)),
         ];
     }
 
     /**
-     * @param TableBuilder $component
+     * @param  TableBuilder  $component
      * @return TableBuilder
      */
     protected function modifyListComponent(ComponentContract $component): ComponentContract
@@ -109,13 +109,15 @@ final class VkPostIndexPage extends IndexPage
             ActionButton::make('')
                 ->icon('arrow-down-tray')
                 ->showInLine()
-                ->canSee(fn() => $this->getResource()->can(Ability::UPDATE))
+                ->canSee(fn () => $this->getResource()->can(Ability::UPDATE))
                 ->method('downloadImages', events: $events)
-                ->async(HttpMethod::POST, events: $events),
+                ->async(HttpMethod::POST, events: $events)->setAttribute('data-async-method', 'POST'),
             ActionButton::make('')
                 ->icon('paper-airplane')
                 ->showInLine()
                 ->method('sendToSelf', events: $events)
+                ->canSee(fn () => $this->getResource()->can(Ability::UPDATE))
+                ->setAttribute('data-async-method', 'POST')
                 ->async(HttpMethod::POST, events: $events)
                 ->withConfirm(
                     title: 'Отправить себе',
@@ -127,6 +129,8 @@ final class VkPostIndexPage extends IndexPage
                 ->showInLine()
                 ->warning()
                 ->method('broadcastAll', events: $events)
+                ->canSee(fn () => $this->getResource()->can(Ability::UPDATE))
+                ->setAttribute('data-async-method', 'POST')
                 ->async(HttpMethod::POST, events: $events)
                 ->withConfirm(
                     title: 'Разослать всем',
@@ -145,20 +149,20 @@ final class VkPostIndexPage extends IndexPage
     public static function downloadPostImages(CrudRequestContract $request, DownloadVkPostImages $download): JsonResponse
     {
         $resource = $request->getResource();
-        if (!$resource->can(Ability::UPDATE)) {
+        if (! $resource->can(Ability::UPDATE)) {
             return JsonResponse::make()->toast('Нет права изменять пост.', ToastType::ERROR, 10000)->setStatusCode(403);
         }
         $post = $resource->getItem();
-        if (!$post instanceof VkPost) {
+        if (! $post instanceof VkPost) {
             return JsonResponse::make()->toast('Пост не найден.', ToastType::ERROR, 10000);
         }
         try {
             $download($post);
         } catch (Throwable $e) {
-            return JsonResponse::make()->toast('Ошибка загрузки: ' . $e->getMessage(), ToastType::ERROR, 10000);
+            return JsonResponse::make()->toast('Ошибка загрузки: '.$e->getMessage(), ToastType::ERROR, 10000);
         }
 
-        return JsonResponse::make()->toast('Картинки загружены на сайт: ' . $post->imageDownloadStatus(), ToastType::SUCCESS);
+        return JsonResponse::make()->toast('Картинки загружены на сайт: '.$post->imageDownloadStatus(), ToastType::SUCCESS);
     }
 
     #[AsyncMethod]
@@ -166,7 +170,7 @@ final class VkPostIndexPage extends IndexPage
     {
         $post = $request->getResource()->getItem();
 
-        if (!$post instanceof VkPost) {
+        if (! $post instanceof VkPost) {
             return JsonResponse::make()->toast('Пост не найден.', ToastType::ERROR, 10000);
         }
 
@@ -178,7 +182,7 @@ final class VkPostIndexPage extends IndexPage
     {
         $post = $request->getResource()->getItem();
 
-        if (!$post instanceof VkPost) {
+        if (! $post instanceof VkPost) {
             return JsonResponse::make()->toast('Пост не найден.', ToastType::ERROR, 10000);
         }
 
@@ -188,13 +192,13 @@ final class VkPostIndexPage extends IndexPage
     public static function sendTestMessage(VkPost $post, SendVkPostToChatAction $send): JsonResponse
     {
         $mode = app(VKSyncSettings::class)->image_send_mode;
-        if (trim((string)$post->broadcastText) === '') {
+        if (trim((string) $post->broadcastText) === '') {
             event(new VkPostTestSend($post->id, 'skipped', 'У поста нет текста для отправки.', $mode));
 
             return JsonResponse::make()->toast('У поста нет текста для отправки.', ToastType::ERROR);
         }
 
-        $chat = MoonshineTelegramLink::chatFor((int)request()->user()->id);
+        $chat = MoonshineTelegramLink::chatFor((int) request()->user()->id);
 
         if ($chat === null) {
             event(new VkPostTestSend($post->id, 'skipped', 'Привяжите Telegram на странице профиля.', $mode));
@@ -213,8 +217,8 @@ final class VkPostIndexPage extends IndexPage
             return JsonResponse::make()->toast("Ошибка отправки: {$e->getMessage()}", ToastType::ERROR);
         }
 
-        if (!$response->telegraphOk()) {
-            $error = $response->json('description') ?? ('HTTP ' . $response->status());
+        if (! $response->telegraphOk()) {
+            $error = $response->json('description') ?? ('HTTP '.$response->status());
             event(new VkPostTestSend($post->id, 'failed', $error, $mode, $prepared->imageUrls));
 
             return JsonResponse::make()->toast("Ошибка отправки: {$error}", ToastType::ERROR);
@@ -231,7 +235,7 @@ final class VkPostIndexPage extends IndexPage
             return JsonResponse::make()->toast(BroadcastVkPostJob::FILE_MODE_ERROR, ToastType::ERROR, 10000);
         }
 
-        if (trim((string)$post->broadcastText) === '') {
+        if (trim((string) $post->broadcastText) === '') {
             return JsonResponse::make()->toast('У поста нет текста для отправки.', ToastType::ERROR, 10000);
         }
 
@@ -241,7 +245,7 @@ final class VkPostIndexPage extends IndexPage
 
         $recipients = User::query()
             ->whereHas('telegramChat')
-            ->whereDoesntHave('profile', fn($q) => $q->where('is_bot_active', false))
+            ->whereDoesntHave('profile', fn ($q) => $q->where('is_bot_active', false))
             ->count();
 
         BroadcastVkPostJob::dispatch($post->id);

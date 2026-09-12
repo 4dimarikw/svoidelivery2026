@@ -19,6 +19,7 @@ use MoonShine\Crud\JsonResponse;
 use MoonShine\Laravel\Pages\Crud\FormPage;
 use MoonShine\Support\Attributes\AsyncMethod;
 use MoonShine\Support\Enums\Ability;
+use MoonShine\Support\Enums\HttpMethod;
 use MoonShine\Support\ListOf;
 use MoonShine\UI\Components\ActionButton;
 use MoonShine\UI\Components\Collapse;
@@ -180,9 +181,13 @@ final class VkPostFormPage extends FormPage
         return parent::buttons()->add(...[
             ActionButton::make('Загрузить недостающие картинки')
                 ->canSee(fn () => $this->getItem() instanceof VkPost && $this->getResource()->can(Ability::UPDATE))
-                ->method('downloadImages'),
-            ActionButton::make('Отправить себе')->method('sendToSelf'),
-            ActionButton::make('Разослать всем')->warning()->method('broadcastAll'),
+                ->method('downloadImages')->async(HttpMethod::POST)->setAttribute('data-async-method', 'POST'),
+            ActionButton::make('Отправить себе')->method('sendToSelf')
+                ->canSee(fn () => $this->getResource()->can(Ability::UPDATE))
+                ->async(HttpMethod::POST)->setAttribute('data-async-method', 'POST')->withConfirm(),
+            ActionButton::make('Разослать всем')->warning()->method('broadcastAll')
+                ->canSee(fn () => $this->getResource()->can(Ability::UPDATE))
+                ->async(HttpMethod::POST)->setAttribute('data-async-method', 'POST')->withConfirm(),
         ]);
     }
 
