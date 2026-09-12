@@ -897,7 +897,9 @@ class CatalogControllerTest extends TestCase
         $response = $this->get(route('home'));
 
         $response->assertOk();
-        $response->assertSee('x-on:change="$el.form.submit()"', false);
+        $response->assertSee('x-data="catalogFilters"', false);
+        $response->assertSee('x-on:submit="correctRanges()"', false);
+        $response->assertSee('x-on:change="submitFilters()"', false);
     }
 
     public function test_sort_is_preserved_in_the_next_page_url(): void

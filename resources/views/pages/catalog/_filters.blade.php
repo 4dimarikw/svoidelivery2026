@@ -21,9 +21,12 @@
     <form
         method="GET"
         action="{{ route('home') }}"
+        x-data="catalogFilters"
+        x-on:input="rememberRange($event.target)"
+        x-on:focusout="finishRange($event.target)"
+        x-on:submit="correctRanges()"
         @if ($autoSubmitFiltersOnChange)
-            x-data
-            x-on:change="if (! ['text', 'search', 'number'].includes($event.target.type)) $el.submit()"
+            x-on:change="if (! ['text', 'search', 'number'].includes($event.target.type) && $event.target.name !== 'sort') submitFilters()"
         @endif
     >
         <div class="flex items-center justify-between p-5 pb-0">

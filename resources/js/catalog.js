@@ -2,7 +2,10 @@
  * Регистрация Alpine.data() для страницы каталога (главная, route `home`).
  * Регистрируется на `alpine:init`, чтобы порядок загрузки относительно Alpine.start() не имел значения.
  */
+import { catalogFilters } from './catalog-filters';
+
 document.addEventListener('alpine:init', () => {
+    Alpine.data('catalogFilters', catalogFilters);
     /**
      * Бесконечная подгрузка карточек товара через @alpinejs/intersect.
      *
