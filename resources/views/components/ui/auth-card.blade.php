@@ -4,7 +4,7 @@
     'logo' => true,
 ])
 
-<div {{ $attributes->class('mx-auto max-w-auth rounded-sm border border-hairline bg-cream-50 px-8.5 py-9') }}>
+<div {{ $attributes->class('mx-auto max-w-auth rounded-sm border border-hairline bg-cream-50 px-4 py-9 sm:px-8.5') }}>
     @if (isset($head))
         {{ $head }}
     @elseif ($title)

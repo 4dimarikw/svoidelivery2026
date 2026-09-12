@@ -19,6 +19,7 @@ use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use Infrastructure\Settings\SiteSettings;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
 /**
@@ -81,6 +82,7 @@ class CheckoutTest extends TestCase
     public function test_default_address_comment_prefills_order_comment_field(): void
     {
         $user = User::factory()->create();
+        $user->profile()->updateOrCreate([], ['default_order_comment' => 'Комментарий профиля']);
         $defaultAddress = Address::factory()->for($user)->create(['is_default' => true, 'comment' => 'домофон 45']);
         $otherAddress = Address::factory()->for($user)->create(['is_default' => false, 'comment' => 'код 12']);
         $product = Product::factory()->create(['price' => 500, 'stock_quantity' => 5, 'in_stock' => true]);
@@ -107,6 +109,34 @@ class CheckoutTest extends TestCase
         // x-data="...") — ключ в исходном HTML выглядит как "1":.
         $this->assertStringContainsString("\\u0022{$defaultAddress->id}\\u0022:\\u0022", $html);
         $this->assertStringContainsString("\\u0022{$otherAddress->id}\\u0022:\\u0022", $html);
+    }
+
+    #[DataProvider('commentDefaults')]
+    public function test_order_comment_defaults(?string $addressComment, ?string $profileComment, array $oldInput, string $expected): void
+    {
+        $user = User::factory()->create();
+        $user->profile()->updateOrCreate([], ['default_order_comment' => $profileComment]);
+        if ($addressComment !== null) {
+            Address::factory()->for($user)->create(['is_default' => true, 'comment' => $addressComment]);
+        }
+
+        $response = $this->actingAs($user)->withSession(['_old_input' => $oldInput])->get(route('cart.index'));
+
+        $response->assertOk();
+        $response->assertSee('>'.e($expected).'</textarea>', false);
+    }
+
+    public static function commentDefaults(): array
+    {
+        return [
+            'no address' => [null, 'Позвонить заранее', [], 'Позвонить заранее'],
+            'empty address comment' => ['', 'Позвонить заранее', [], 'Позвонить заранее'],
+            'whitespace address comment' => ['   ', 'Позвонить заранее', [], 'Позвонить заранее'],
+            'address wins' => ['Домофон 45', 'Позвонить заранее', [], 'Домофон 45'],
+            'no defaults' => [null, null, [], ''],
+            'manual text after validation' => ['Домофон 45', 'Профиль', ['comment' => 'Мой текст'], 'Мой текст'],
+            'manual clearing after validation' => ['Домофон 45', 'Профиль', ['comment' => null], ''],
+        ];
     }
 
     public function test_happy_path_creates_order_with_saved_address(): void

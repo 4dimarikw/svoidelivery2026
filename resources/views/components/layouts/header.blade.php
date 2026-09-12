@@ -51,7 +51,7 @@
             @guest
                 <x-ui.link
                     :href="route('login')"
-                    class="inline-flex h-10 w-10 items-center justify-center"
+                    class="hidden h-10 w-10 items-center justify-center md:inline-flex"
                     :aria-label="__('account.login.submit')"
                     :title="__('account.login.submit')"
                 >

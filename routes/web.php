@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/', [CatalogController::class, 'index'])->name('home');
 Route::get('about', [PageController::class, 'about'])->name('about');
+Route::get('terms', [PageController::class, 'terms'])->name('terms');
 
 // Self-healing slug-биндинг (Domain\Catalog\Models\Product::getSlugOptions())
 // резолвит {product} сам — {product:slug} тут не нужен, см. HasSlug::resolveRouteBinding().

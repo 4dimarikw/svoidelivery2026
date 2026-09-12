@@ -42,6 +42,7 @@
                    сохранения их в users. --}}
                 <x-ui.checkbox-field name="age_confirmed" :label="__('account.register.age_gate')" />
                 <x-ui.checkbox-field name="terms_accepted" :label="__('account.register.terms_gate')" />
+                <x-ui.link :href="route('terms')" target="_blank" rel="noopener noreferrer" :aria-label="__('terms.read_accessible')">{{ __('terms.read') }}</x-ui.link>
 
                 <x-ui.smart-captcha />
 

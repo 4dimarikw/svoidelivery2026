@@ -13,6 +13,11 @@ return [
     'cachePath' => storage_path('app/purifier'),
     'cacheFileMode' => 0755,
     'settings' => [
+        'terms' => [
+            'HTML.Allowed' => 'p,br,h2,h3,h4,strong,b,em,i,u,ul,ol,li,a[href|title]',
+            'AutoFormat.RemoveEmpty' => true,
+            'URI.AllowedSchemes' => ['http' => true, 'https' => true, 'mailto' => true],
+        ],
         'default' => [
             'HTML.Doctype' => 'HTML 4.01 Transitional',
             'HTML.Allowed' => 'div,b,strong,i,em,u,a[href|title],ul,ol,li,p[style],br,span[style],img[width|height|alt|src]',

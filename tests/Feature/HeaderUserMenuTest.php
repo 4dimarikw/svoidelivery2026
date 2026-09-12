@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Tests\Feature;
 
 use Domain\Auth\Models\User;
+use DOMDocument;
+use DOMXPath;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -12,14 +14,27 @@ class HeaderUserMenuTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_guest_header_shows_login_and_register_only(): void
+    public function test_guest_header_shows_login_on_desktop_only(): void
     {
         $response = $this->get(route('home'));
 
         $response->assertOk();
-        $response->assertSee(route('login'), false);
-        $response->assertSee(route('register'), false);
-        $response->assertDontSee(route('account.profile.edit'), false);
+        $document = new DOMDocument;
+        $document->loadHTML('<?xml encoding="UTF-8">'.$response->getContent(), LIBXML_NOERROR | LIBXML_NOWARNING);
+        $xpath = new DOMXPath($document);
+
+        // Проверяем именно верхнюю шапку: нижняя навигация тоже содержит вход.
+        $loginLinks = $xpath->query('//header//a[@href="'.route('login').'"]');
+        $this->assertCount(1, $loginLinks);
+        $login = $loginLinks->item(0);
+        $this->assertSame(__('account.login.submit'), $login->getAttribute('aria-label'));
+        $this->assertSame('', trim($login->textContent));
+        $this->assertCount(1, $xpath->query('.//*[local-name()="svg"]', $login));
+        $classes = preg_split('/\s+/', trim($login->getAttribute('class')));
+        $this->assertContains('hidden', $classes);
+        $this->assertContains('md:inline-flex', $classes);
+        $this->assertCount(0, $xpath->query('//header//a[@href="'.route('register').'"]'));
+        $this->assertCount(0, $xpath->query('//header//a[@href="'.route('account.profile.edit').'"]'));
     }
 
     public function test_authenticated_header_shows_cart_icon_and_user_menu(): void

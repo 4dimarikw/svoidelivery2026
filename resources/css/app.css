@@ -269,6 +269,15 @@
         @apply font-mono text-badge tracking-meta uppercase text-ink-500;
         margin: 18px 0;
     }
+    .terms-content { overflow-wrap: anywhere; word-wrap: break-word; }
+    .terms-content p, .terms-content ul, .terms-content ol { margin-bottom: 1rem; }
+    .terms-content h2, .terms-content h3, .terms-content h4 { margin: 1.5rem 0 .75rem; font-weight: 700; }
+    .terms-content h2 { font-size: 1.5rem; }
+    .terms-content h3 { font-size: 1.25rem; }
+    .terms-content ul { list-style: disc; padding-left: 1.5rem; }
+    .terms-content ol { list-style: decimal; padding-left: 1.5rem; }
+    .terms-content a { text-decoration: underline; }
+
     .divider::before,
     .divider::after {
         content: '';

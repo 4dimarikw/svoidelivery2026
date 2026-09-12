@@ -11,6 +11,7 @@ return [
     // единственный блок напрямую, footer.blade.php читает его content сам.
     'views' => [
         'about_info' => 'components.content.about-info',
+        'terms_text' => 'components.content.terms-text',
     ],
     'icons' => [
         'heart',

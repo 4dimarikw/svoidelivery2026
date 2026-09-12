@@ -50,6 +50,11 @@
     // значение поля «Комментарий к заказу»; при переключении радио-кнопки
     // ниже подменяется на лету через Alpine (addressComments).
     $selectedAddress = $addresses->firstWhere('id', (int) $selectedAddressId);
+    $profileComment = $profile?->default_order_comment ?? '';
+    $addressComments = $addresses->mapWithKeys(fn ($address) => [
+        $address->id => filled($address->comment) ? $address->comment : $profileComment,
+    ]);
+    $initialComment = old('comment', $addressComments->get($selectedAddress?->id, $profileComment));
 
     // Ссылки на мессенджеры из профиля (Domain\Profile\Models\Profile::
     // socialLinks(), config/social.php) — источник для селекта «взять из
@@ -110,7 +115,8 @@
                     method="POST"
                     mode="ajax"
                     :state="[
-                        'comment' => old('comment', $selectedAddress?->comment),
+                        'comment' => $initialComment,
+                        'commentEdited' => session()->hasOldInput('comment'),
                         'messenger_url' => $defaultMessengerUrl,
                     ]"
                     x-effect="$store.checkout.submitting = submitting; $store.checkout.error = errorFor('checkout') || errorFor('checkout_key')"
@@ -126,15 +132,15 @@
                         @if ($addresses->isEmpty())
                             <p class="text-body-m text-ink-500">{{ __('order.address_none') }}</p>
                         @else
-                            {{-- addressComments сопоставляет адреса с комментариями. Выбор адреса полностью
-                               заменяет state.comment формы, включая введённый вручную текст. --}}
-                            <div class="grid gap-3" x-data="{ addressComments: @js($addresses->pluck('comment', 'id')) }">
+                            {{-- Пустой комментарий адреса заменяется комментарием профиля.
+                                 Ручные правки, включая очистку поля, сохраняются при смене адреса. --}}
+                            <div class="grid gap-3" x-data="{ addressComments: @js($addressComments) }">
                                 @foreach ($addresses as $address)
                                     <x-ui.radio
                                         name="address_id"
                                         :value="$address->id"
                                         :checked="(string) $selectedAddressId === (string) $address->id"
-                                        x-on:change="state.comment = addressComments[$el.value] ?? ''"
+                                        x-on:change="if (!state.commentEdited) state.comment = addressComments[$el.value] ?? ''"
                                         class="items-start rounded-sm border border-hairline p-3.5"
                                     >
                                         {{ $address->city }}, {{ $address->address }}
@@ -204,8 +210,9 @@
                             <x-ui.textarea-field
                                 name="comment"
                                 :label="__('order.comment')"
-                                :value="old('comment', $selectedAddress?->comment)"
+                                :value="$initialComment"
                                 x-model="state.comment"
+                                x-on:input="state.commentEdited = true"
                             />
                         </div>
                     </x-ui.surface>
