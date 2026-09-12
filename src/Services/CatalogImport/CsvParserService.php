@@ -2,6 +2,7 @@
 
 namespace Services\CatalogImport;
 
+use App\Events\CatalogFieldCollisionsDetected;
 use App\Events\CatalogImportCompleted;
 use App\Events\CatalogImportFailed;
 use App\Events\CatalogImportPriceCoerced;
@@ -90,6 +91,10 @@ readonly class CsvParserService
 
                     if ($report->volumeDiscrepancies !== []) {
                         event(new CatalogVolumeDiscrepanciesDetected($path, $report->volumeDiscrepancies));
+                    }
+
+                    if ($report->fieldCollisionsTotal > 0) {
+                        event(new CatalogFieldCollisionsDetected($path, $report->fieldCollisionsTotal, $report->fieldCollisions));
                     }
 
                     // Одно событие на прогон, не на строку — см. докблоки
@@ -273,6 +278,7 @@ readonly class CsvParserService
     private function applyCounters(ImportReport $report, ImportContext $ctx, int $warningLimit): void
     {
         $report->addWarnings($ctx->row->lineNumber, $ctx->warnings, $warningLimit);
+        $report->addFieldCollisions($ctx->row->lineNumber, $ctx->fieldCollisions, $warningLimit);
         $report->addVolumeDiscrepancies($ctx->row->lineNumber, $ctx->attributes['volume_discrepancies'] ?? []);
 
         if ($ctx->priceCoerced) {

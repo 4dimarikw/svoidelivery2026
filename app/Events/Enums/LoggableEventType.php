@@ -15,6 +15,7 @@ enum LoggableEventType: string
     case UntappdBeerSyncFailed = 'untappd_beer.sync_failed';
     case UntappdBeerSyncBatchCompleted = 'untappd_beer.sync_batch_completed';
     case CatalogImportCompleted = 'catalog_import.completed';
+    case CatalogImportFieldCollisionsDetected = 'catalog_import.field_collisions_detected';
     case CatalogImportFailed = 'catalog_import.failed';
     case CatalogImportStaleProductsZeroed = 'catalog_import.stale_products_zeroed';
     case CatalogImportVolumeDiscrepanciesDetected = 'catalog_import.volume_discrepancies_detected';
@@ -45,6 +46,7 @@ enum LoggableEventType: string
             self::UntappdBeerSyncFailed => 'Ошибка синхронизации пива Untappd',
             self::UntappdBeerSyncBatchCompleted => 'Итог прогона синхронизации Untappd',
             self::CatalogImportCompleted => 'Импорт каталога завершён',
+            self::CatalogImportFieldCollisionsDetected => 'Коллизии полей товара при импорте',
             self::CatalogImportFailed => 'Ошибка импорта каталога',
             self::CatalogImportStaleProductsZeroed => 'Обнуление остатков устаревших товаров',
             self::CatalogImportVolumeDiscrepanciesDetected => 'Расхождения по объёму при импорте',

@@ -33,6 +33,9 @@ class ImportContext
     /** @var list<array{stage: string, message: string, value: string}> */
     public array $warnings = [];
 
+    /** @var array<string, array<string, mixed>> Коллизии по коду причины, отдельно от обычных предупреждений. */
+    public array $fieldCollisions = [];
+
     public bool $skip = false;
 
     /**

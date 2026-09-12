@@ -1,5 +1,6 @@
 <?php
 
+use Services\CatalogImport\Stages\DetectFieldCollisionsStage;
 use Services\CatalogImport\Stages\DetectVolumeMismatchStage;
 use Services\CatalogImport\Stages\FilterCategoryStage;
 use Services\CatalogImport\Stages\NormalizeRowStage;
@@ -67,6 +68,7 @@ return [
         ResolveDescriptionStage::class,
         PersistProductStage::class,
         PersistBeerDetailsStage::class,
+        DetectFieldCollisionsStage::class,
     ],
 
     /*

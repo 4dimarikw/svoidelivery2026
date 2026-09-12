@@ -41,6 +41,7 @@ final class ImportReportLogger
             'Товаров без изменений' => $report->productsUnchanged,
             'Изображений загружено' => $report->imagesAttached,
             'Предупреждений' => $report->warningsTotal,
+            'Коллизий полей товара' => $report->fieldCollisionsTotal,
             'Расхождений объёма' => count($report->volumeDiscrepancies),
             'Длительность' => self::formatDuration($report->durationMs),
         ];
@@ -62,6 +63,8 @@ final class ImportReportLogger
             ...$this->warningLines($report),
             '',
             ...$this->volumeDiscrepancyLines($report),
+            '',
+            ...$this->fieldCollisionLines($report),
         ];
 
         return $this->write($lines, $dryRun ? '-dry-run' : '');
@@ -130,6 +133,22 @@ final class ImportReportLogger
 
         $hidden = $report->warningsTotal - count($report->warnings);
 
+        if ($hidden > 0) {
+            $lines[] = "... ещё {$hidden} не сохранено (лимит catalog_import.warning_limit)";
+        }
+
+        return $lines;
+    }
+
+    /** @return list<string> */
+    private function fieldCollisionLines(ImportReport $report): array
+    {
+        $lines = ["--- Коллизии полей товара ({$report->fieldCollisionsTotal}) ---"];
+        foreach ($report->fieldCollisions as $collision) {
+            // JSON сохраняет исходные поля и экранирует переводы строк внутри значений CSV.
+            $lines[] = json_encode($collision, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_INVALID_UTF8_SUBSTITUTE);
+        }
+        $hidden = $report->fieldCollisionsTotal - count($report->fieldCollisions);
         if ($hidden > 0) {
             $lines[] = "... ещё {$hidden} не сохранено (лимит catalog_import.warning_limit)";
         }

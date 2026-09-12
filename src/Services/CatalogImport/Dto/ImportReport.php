@@ -52,6 +52,22 @@ class ImportReport
     /** @var list<array{line: int, stage: string, message: string, value: string}> */
     public array $warnings = [];
 
+    public int $fieldCollisionsTotal = 0;
+
+    /** @var list<array<string, mixed>> */
+    public array $fieldCollisions = [];
+
+    /** Подробности ограничены независимо от обычных предупреждений; общий счётчик сохраняется. */
+    public function addFieldCollisions(int $line, array $collisions, int $limit): void
+    {
+        foreach ($collisions as $collision) {
+            $this->fieldCollisionsTotal++;
+            if (count($this->fieldCollisions) < $limit) {
+                $this->fieldCollisions[] = ['line' => $line, ...$collision];
+            }
+        }
+    }
+
     /**
      * Расхождения объёма между Упаковкой (авторитетный источник) и
      * Наименованием/Артикулом — см. DetectVolumeMismatchStage. Штучные
