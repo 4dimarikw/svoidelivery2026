@@ -49,8 +49,14 @@
             <x-ui.nav-menu :items="$menu"/>
 
             @guest
-                <x-ui.link :href="route('login')">{{ __('account.login.submit') }}</x-ui.link>
-                <x-ui.btn :href="route('register')" size="sm">{{ __('layout.nav.register') }}</x-ui.btn>
+                <x-ui.link
+                    :href="route('login')"
+                    class="inline-flex h-10 w-10 items-center justify-center"
+                    :aria-label="__('account.login.submit')"
+                    :title="__('account.login.submit')"
+                >
+                    <x-ui.icon name="user" :size="22"/>
+                </x-ui.link>
             @else
                 <div class="hidden items-center space-x-4 md:flex">
                     <a

@@ -17,7 +17,7 @@
      Стиль самого пункта (текст/подчёркивание) — портирован из брандбука
      `data/design-system/project/design-system.html`, секция «Шапка
      сайта», вариант H4 · Упрощённая классическая (`.sh-a nav.main a`):
-     13px/500/tracking .01em, padding 6px 0, нижняя рамка 2px — прозрачная
+     15px/500/tracking .01em, padding 6px 0, нижняя рамка 2px — прозрачная
      в покое, teal-500 на hover, teal-700 в активном состоянии. Только
      типографика/подчёркивание пункта — контейнер (space-x-4, не gap-*),
      dropdown-панель вложенных пунктов и chevron это НЕ затрагивает: у
@@ -37,7 +37,7 @@
                     target="{{ $item['target'] }}"
                     @if ($item['rel']) rel="{{ $item['rel'] }}" @endif
                     @if ($isActive) aria-current="page" @endif
-                    class="whitespace-nowrap border-b-2 py-1.5 text-caption font-medium tracking-[0.01em] transition {{ $isActive ? 'border-teal-700 text-teal-700' : 'border-transparent text-ink-700 hover:border-teal-500 hover:text-teal-700' }}"
+                    class="whitespace-nowrap border-b-2 py-1.5 text-body-m font-medium tracking-[0.01em] transition {{ $isActive ? 'border-teal-700 text-teal-700' : 'border-transparent text-ink-700 hover:border-teal-500 hover:text-teal-700' }}"
                 >{{ $item['label'] }}</a>
             @else
                 <div
@@ -54,7 +54,7 @@
                         aria-haspopup="true"
                         :aria-expanded="open"
                         @if ($isActive) aria-current="page" @endif
-                        class="inline-flex items-center whitespace-nowrap border-b-2 py-1.5 text-caption font-medium tracking-[0.01em] transition {{ $isActive ? 'border-teal-700 text-teal-700' : 'border-transparent text-ink-700 hover:border-teal-500 hover:text-teal-700' }}"
+                        class="inline-flex items-center whitespace-nowrap border-b-2 py-1.5 text-body-m font-medium tracking-[0.01em] transition {{ $isActive ? 'border-teal-700 text-teal-700' : 'border-transparent text-ink-700 hover:border-teal-500 hover:text-teal-700' }}"
                     >
                         {{ $item['label'] }}
                         <x-ui.icon name="chevron-down" :size="16" class="ml-1 transition" ::class="{ 'rotate-180': open }" />
