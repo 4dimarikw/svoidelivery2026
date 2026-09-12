@@ -17,15 +17,15 @@ function fixture(range, from, to) {
 
 for (const range of ['price', 'abv', 'ibu']) {
     test(`${range}: correct the edited boundary only after finishing input`, () => {
-        const { filters, min, max } = fixture(range, '1000', '100');
+        const { filters, min, max } = fixture(range, '10', '1');
         filters.rememberRange(max);
-        assert.equal(max.value, '100');
+        assert.equal(max.value, '1');
         filters.finishRange(max);
-        assert.equal(max.value, '1000');
-        min.value = '2000';
+        assert.equal(max.value, '10');
+        min.value = '20';
         filters.rememberRange(min);
         filters.finishRange(min);
-        assert.equal(min.value, '1000');
+        assert.equal(min.value, '10');
     });
 
     test(`${range}: Enter and sorting correct the last edited boundary before submission`, () => {
@@ -40,7 +40,7 @@ for (const range of ['price', 'abv', 'ibu']) {
     });
 
     test(`${range}: preserve valid, equal, empty and nonnumeric boundaries`, () => {
-        for (const values of [['200', '250'], ['5.6', '5.6'], ['', '100'], ['100', ''], ['', ''], ['bad', '1']]) {
+        for (const values of [['20', '25'], ['5.6', '5.6'], ['', '100'], ['100', ''], ['', ''], ['bad', '1']]) {
             const { filters, min, max } = fixture(range, ...values);
             filters.finishRange(min);
             filters.finishRange(max);
@@ -49,3 +49,22 @@ for (const range of ['price', 'abv', 'ibu']) {
         }
     });
 }
+
+test('ABV is capped at 100 even with the other boundary empty', () => {
+    for (const [from, to, expected] of [['', '101', ['', '100']], ['101', '', ['100', '']], ['200', '300', ['100', '100']]]) {
+        const { filters, min, max, submitted } = fixture('abv', from, to);
+        filters.finishRange(max);
+        assert.deepEqual([min.value, max.value], expected);
+        max.value = '101';
+        filters.submitFilters();
+        assert.deepEqual(submitted(), [expected[0], '100']);
+    }
+});
+
+test('prices and IBU above 100 are not capped', () => {
+    for (const range of ['price', 'ibu']) {
+        const { filters, min, max } = fixture(range, '200', '250');
+        filters.correctRanges();
+        assert.deepEqual([min.value, max.value], ['200', '250']);
+    }
+});

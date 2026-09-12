@@ -136,7 +136,7 @@
     "src": "node_modules/@fontsource/jetbrains-mono/files/jetbrains-mono-vietnamese-500-normal.woff2"
   },
   "resources/css/app.css": {
-    "file": "assets/app-C5LBaECQ.css",
+    "file": "assets/app-DuyS4TY3.css",
     "src": "resources/css/app.css",
     "isEntry": true,
     "name": "app",
@@ -145,7 +145,7 @@
     ]
   },
   "resources/js/app.js": {
-    "file": "assets/app-gDi3MWe4.js",
+    "file": "assets/app-CjZE1NsK.js",
     "name": "app",
     "src": "resources/js/app.js",
     "isEntry": true

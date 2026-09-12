@@ -10,7 +10,7 @@
             <x-ui.account-nav :active="$active" />
         </div>
 
-        <div class="lg:col-span-9">
+        <div class="min-w-0 lg:col-span-9">
             {{ $slot }}
         </div>
     </div>

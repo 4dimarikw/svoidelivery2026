@@ -16,6 +16,11 @@ export function catalogFilters() {
         correctRange(range, editedName = this.lastEdited[range]) {
             const min = this.$root.elements.namedItem(`${range}_min`);
             const max = this.$root.elements.namedItem(`${range}_max`);
+            if (range === 'abv') {
+                for (const input of [min, max]) {
+                    if (input && Number.isFinite(input.valueAsNumber) && input.valueAsNumber > 100) input.value = '100';
+                }
+            }
             if (!min || !max || min.value === '' || max.value === '') return;
             if (!Number.isFinite(min.valueAsNumber) || !Number.isFinite(max.valueAsNumber)) return;
             if (min.valueAsNumber <= max.valueAsNumber) return;

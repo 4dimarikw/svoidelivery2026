@@ -25,6 +25,7 @@
         x-on:input="rememberRange($event.target)"
         x-on:focusout="finishRange($event.target)"
         x-on:submit="correctRanges()"
+        x-on:keydown.enter="correctRanges()"
         @if ($autoSubmitFiltersOnChange)
             x-on:change="if (! ['text', 'search', 'number'].includes($event.target.type) && $event.target.name !== 'sort') submitFilters()"
         @endif

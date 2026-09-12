@@ -10,7 +10,7 @@
 @endphp
 
 <x-layouts.account active="favorites" :title="__('account.favorites.title')">
-    <div class="grid gap-6">
+    <div class="grid gap-6" x-data>
         @if ($noJsStatusMessage)
             <x-ui.alert tone="ok">{{ $noJsStatusMessage }}</x-ui.alert>
         @endif
@@ -19,7 +19,7 @@
             <h2 class="font-display text-heading-s uppercase text-ink-900">{{ __('account.favorites.title') }}</h2>
 
             @if ($products->isNotEmpty())
-                <form method="POST" action="{{ route('account.favorites.destroy') }}"
+                <form method="POST" action="{{ route('account.favorites.destroy') }}" x-show="$store.favorites.count > 0"
                       onsubmit="return confirm(@js(__('account.favorites.clear_confirm')))">
                     @csrf
                     @method('DELETE')
@@ -29,11 +29,11 @@
             @endif
         </div>
 
-        @if ($products->isEmpty())
-            <x-ui.surface tone="paper-2" class="rounded-sm border border-hairline p-8 text-center">
-                <p class="text-body-m text-ink-500">{{ __('account.favorites.empty') }}</p>
-            </x-ui.surface>
-        @else
+        <x-ui.surface tone="paper-2" class="rounded-sm border border-hairline p-8 text-center"
+            x-show="$store.favorites.count === 0" style="{{ $products->total() > 0 ? 'display: none' : '' }}">
+            <p class="text-body-m text-ink-500">{{ __('account.favorites.empty') }}</p>
+        </x-ui.surface>
+        @if ($products->isNotEmpty())
             {{-- Та же сетка и та же карточка, что на главной (pages/catalog/_cards.blade.php)
                  — разметка карточки существует в одном месте. $removeOnUnfavorite
                  расшарен в partial через @include (общий scope переменных) —

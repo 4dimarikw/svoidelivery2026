@@ -7,21 +7,21 @@
 @endphp
 
 <x-layouts.account active="orders" :title="$order->number">
-    <div class="grid gap-6">
+    <div class="grid min-w-0 grid-cols-1 gap-6">
         <div>
-            <h2 class="font-display text-heading-s uppercase text-ink-900">{{ $order->number }}</h2>
+            <h2 class="break-words font-display text-heading-s uppercase text-ink-900">{{ $order->number }}</h2>
             <p class="mt-1 text-caption text-ink-500">{{ $order->created_at?->format('d.m.Y H:i') }}</p>
         </div>
 
         <x-ui.surface tone="paper-2" class="rounded-sm border border-hairline p-6">
-            <div class="grid gap-3">
+            <div class="grid min-w-0 grid-cols-1 gap-3">
                 @foreach ($order->orderItems as $item)
                     <div class="flex items-center justify-between border-b border-hairline pb-3 last:border-b-0 last:pb-0">
                         <div class="min-w-0">
                             <div class="truncate text-body-m text-ink-900">{{ $item->product_title }}</div>
                             <div class="text-caption text-ink-500">{{ $item->quantity }} &times; {{ $item->price }}</div>
                         </div>
-                        <span class="font-mono text-body-m text-ink-900">{{ $item->amount }}</span>
+                        <span class="ml-3 shrink-0 font-mono text-body-m text-ink-900">{{ $item->amount }}</span>
                     </div>
                 @endforeach
             </div>
@@ -35,7 +35,7 @@
         <x-ui.surface tone="paper-2" class="rounded-sm border border-hairline p-6">
             <h3 class="mb-3 text-caption uppercase tracking-meta text-ink-500">{{ __('order.recipient.title') }}</h3>
 
-            <div class="grid gap-2 text-body-m text-ink-900">
+            <div class="grid min-w-0 grid-cols-1 gap-2 break-words text-body-m text-ink-900 [overflow-wrap:anywhere]">
                 @if ($customer)
                     <p><span class="text-ink-500">{{ __('order.recipient.name') }}: </span>{{ trim($customer->last_name.' '.$customer->first_name) }}</p>
                     <p><span class="text-ink-500">{{ __('order.recipient.phone') }}: </span>{{ $customer->phone }}</p>
