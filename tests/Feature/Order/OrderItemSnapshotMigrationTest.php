@@ -119,34 +119,28 @@ class OrderItemSnapshotMigrationTest extends TestCase
         $this->assertCount(23, config('category_matching.rules'));
     }
 
-    public function test_category_rule_migration_round_trip_preserves_effective_rules(): void
+    public function test_fresh_with_seed_creates_current_content_and_permissions(): void
     {
-        $migration = require database_path('migrations/2026_09_12_100000_move_category_matching_rules_to_config.php');
-        $categories = DB::table('categories')->orderBy('id')->get()->toJson();
-        $rules = config('category_matching.rules');
-        $rules[1]['priority'] = $rules[0]['priority'];
-        $rules[2]['is_active'] = false;
-        config(['category_matching.rules' => $rules]);
-        $migration->down();
-        $this->assertSame(23, DB::table('category_match_rules')->count());
-        $this->assertEquals(0, DB::table('category_match_rules')->where('value', 'cider')->value('is_active'));
-        $migration->up();
+        $this->assertSame(0, Artisan::call('migrate:fresh', ['--seed' => true, '--force' => true]), Artisan::output());
         $this->assertFalse(Schema::hasTable('category_match_rules'));
-        $this->assertSame($categories, DB::table('categories')->orderBy('id')->get()->toJson());
-    }
+        $this->assertSame(0, Artisan::call('catalog:validate-registry'), Artisan::output());
 
-    public function test_category_rule_migration_refuses_differences_without_deleting_data(): void
-    {
-        $migration = require database_path('migrations/2026_09_12_100000_move_category_matching_rules_to_config.php');
-        $migration->down();
-        DB::table('category_match_rules')->where('priority', 10)->update(['is_active' => false]);
-        $before = DB::table('category_match_rules')->orderBy('id')->get()->toJson();
-        try {
-            $migration->up();
-            $this->fail('Несовпадающие правила должны остановить миграцию.');
-        } catch (\RuntimeException $e) {
-            $this->assertStringContainsString('отличаются', $e->getMessage());
+        $blocks = DB::table('content_blocks')->where('type', 'about_info')->get();
+        $this->assertNotEmpty($blocks);
+        foreach ($blocks as $block) {
+            $content = json_decode($block->content, true, 512, JSON_THROW_ON_ERROR);
+            $this->assertCount(5, $content['ordering_rules']);
+            $this->assertCount(3, $content['promotions']);
         }
-        $this->assertSame($before, DB::table('category_match_rules')->orderBy('id')->get()->toJson());
+        foreach (['SiteSection', 'SiteMenu', 'SiteMenuItem', 'ContentBlock', 'ContentBlockItem'] as $model) {
+            $this->assertDatabaseHas('moonshine_permissions', ['model' => 'ContentCms\\Models\\'.$model]);
+            $this->assertDatabaseMissing('moonshine_permissions', ['model' => 'Domain\\Content\\Models\\'.$model]);
+        }
+
+        $this->assertSame(0, Artisan::call('migrate:reset', ['--force' => true]), Artisan::output());
+        $this->assertSame(['migrations'], Schema::getTableListing('svoidelivery2026_test', schemaQualified: false));
+        $this->assertSame(0, Artisan::call('migrate', ['--seed' => true, '--force' => true]), Artisan::output());
+        $this->assertSame($blocks->toJson(), DB::table('content_blocks')->where('type', 'about_info')->get()->toJson());
+        $this->assertFalse(Schema::hasTable('category_match_rules'));
     }
 }

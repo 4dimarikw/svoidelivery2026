@@ -33,7 +33,7 @@ return new class extends Migration
         Schema::create('site_menu_items', function (Blueprint $table): void {
             $table->id();
             $table->foreignId('site_menu_id')->constrained()->cascadeOnDelete();
-            $table->string('key', 100)->nullable();
+            $table->string('key', 100);
             $table->foreignId('parent_id')->nullable()->constrained('site_menu_items')->cascadeOnDelete();
             $table->unsignedInteger('_lft')->default(0);
             $table->unsignedInteger('_rgt')->default(0);
@@ -44,6 +44,7 @@ return new class extends Migration
             $table->boolean('is_active')->default(true);
             $table->timestamps();
 
+            $table->unique(['site_menu_id', 'key'], 'site_menu_items_menu_key_unique');
             $table->index(['site_menu_id', '_lft'], 'site_menu_items_menu_lft_idx');
             $table->index(['site_menu_id', '_rgt'], 'site_menu_items_menu_rgt_idx');
             $table->index(['site_menu_id', 'parent_id', '_lft'], 'site_menu_items_menu_parent_lft_idx');
