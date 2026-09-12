@@ -17,7 +17,7 @@
      не внутри переводной строки: число внутри __() нельзя привязать к x-text. --}}
 @props(['count', 'amount'])
 
-<div class="rounded-sm bg-teal-900 p-6 text-cream-100">
+<div class="rounded-sm bg-teal-900 px-4 py-6 sm:px-6 text-cream-100">
     <div class="flex items-center justify-between text-body-m text-cream-100/75">
         <span>{{ __('account.cart.items') }}</span>
         <span class="font-mono" x-text="$store.cart.count">{{ $count }}</span>

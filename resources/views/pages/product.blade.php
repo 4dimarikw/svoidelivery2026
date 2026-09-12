@@ -46,7 +46,7 @@
 @endphp
 
 <x-layouts.site :title="$title">
-    <div class="mx-auto max-w-page px-6 py-10">
+    <div class="mx-auto max-w-page px-3 sm:px-6 py-10">
         <x-ui.breadcrumbs :items="[
             ['label' => __('catalog.title'), 'url' => route('home')],
             ...($product->category ? [['label' => $product->category->name, 'url' => route('home', ['categories' => [$product->category_id]])]] : []),

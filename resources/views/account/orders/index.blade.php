@@ -21,24 +21,24 @@
         @forelse ($orders as $order)
             <a href="{{ route('account.orders.show', $order) }}" class="block">
                 <x-ui.surface tone="paper-2"
-                              class="rounded-sm border border-hairline p-5 transition hover:border-ink-300">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <div class="font-mono text-body-m text-ink-900">{{ $order->number }}</div>
+                              class="rounded-sm border border-hairline px-4 py-5 sm:px-5 transition hover:border-ink-300">
+                    <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                        <div class="min-w-0">
+                            <div class="break-words font-mono text-body-m text-ink-900">{{ $order->number }}</div>
                             <div class="mt-1 text-caption text-ink-500">
                                 {{ $order->created_at?->format('d.m.Y H:i') }}
                                 &middot; {{ __('order.history.items_count') }}: {{ $order->order_items_count }}
                             </div>
                         </div>
 
-                        <div class="flex items-center space-x-4">
+                        <div class="shrink-0 whitespace-nowrap">
                             <span class="font-mono text-body-m text-ink-900">{{ $order->amount }}</span>
                         </div>
                     </div>
                 </x-ui.surface>
             </a>
         @empty
-            <x-ui.surface tone="paper-2" class="rounded-sm border border-hairline p-8 text-center">
+            <x-ui.surface tone="paper-2" class="rounded-sm border border-hairline px-4 py-8 sm:px-8 text-center">
                 <p class="text-body-m text-ink-500">{{ __('order.history.empty') }}</p>
             </x-ui.surface>
         @endforelse

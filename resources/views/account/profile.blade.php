@@ -23,7 +23,7 @@
         @endif
 
         {{-- Имя и email редактируются через обработчик Fortify. --}}
-        <x-ui.surface tone="paper-2" class="rounded-sm border border-hairline p-6">
+        <x-ui.surface tone="paper-2" class="rounded-sm border border-hairline px-4 py-6 sm:px-6">
             <h2 class="mb-5 font-display text-heading-s uppercase text-ink-900">{{ __('account.profile.basic_title') }}</h2>
 
             <x-ui.form :action="route('user-profile-information.update')" method="PUT" mode="ajax">
@@ -68,7 +68,7 @@
         </x-ui.surface>
 
         {{-- Поля профиля Domain\Profile\Models\Profile. --}}
-        <x-ui.surface tone="paper-2" class="rounded-sm border border-hairline p-6">
+        <x-ui.surface tone="paper-2" class="rounded-sm border border-hairline px-4 py-6 sm:px-6">
             <h2 class="mb-5 font-display text-heading-s uppercase text-ink-900">{{ __('account.profile.details_title') }}</h2>
 
             <x-ui.form :action="route('account.profile.update')" method="PUT" mode="ajax">
@@ -125,7 +125,7 @@
              TypeError, а не чистый false. Отдельная форма «задать пароль»
              в объём этой задачи не входит. --}}
         @if ($user->password !== null)
-        <x-ui.surface tone="paper-2" class="rounded-sm border border-hairline p-6">
+        <x-ui.surface tone="paper-2" class="rounded-sm border border-hairline px-4 py-6 sm:px-6">
             <h2 class="mb-5 font-display text-heading-s uppercase text-ink-900">{{ __('account.profile.password_title') }}</h2>
 
             <x-ui.form :action="route('user-password.update')" method="PUT" mode="ajax">
@@ -173,7 +173,7 @@
         {{-- Section 4 — Telegram. Привязка не через форму: пользователь
              открывает диплинк в самом Telegram, чат находит его через
              /start (App\Telegraph\WebhookHandler) — см. ProfileController::edit(). --}}
-        <x-ui.surface tone="paper-2" class="rounded-sm border border-hairline p-6">
+        <x-ui.surface tone="paper-2" class="rounded-sm border border-hairline px-4 py-6 sm:px-6">
             <h2 class="mb-5 font-display text-heading-s uppercase text-ink-900">{{ __('account.telegram.section_title') }}</h2>
 
             @if ($user->telegramLinked())

@@ -6,7 +6,7 @@
      опубликованного блока (сейчас — единственный блок about_info,
      см. resources/views/components/content/about-info.blade.php). --}}
 <x-layouts.site>
-    <div class="mx-auto max-w-page px-6 py-10">
+    <div class="mx-auto max-w-page px-4 py-10 sm:px-6">
         <x-content.sections :sections="$sections" />
     </div>
 </x-layouts.site>

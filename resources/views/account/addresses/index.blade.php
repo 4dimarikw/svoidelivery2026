@@ -19,7 +19,7 @@
         </div>
 
         @forelse ($addresses as $address)
-            <x-ui.surface tone="paper-2" class="rounded-sm border border-hairline p-5">
+            <x-ui.surface tone="paper-2" class="rounded-sm border border-hairline px-4 py-5 sm:px-5">
                 <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between">
                     <div>
                         <div class="flex items-center">
@@ -50,7 +50,7 @@
                 </div>
             </x-ui.surface>
         @empty
-            <x-ui.surface tone="paper-2" class="rounded-sm border border-hairline p-8 text-center">
+            <x-ui.surface tone="paper-2" class="rounded-sm border border-hairline px-4 py-8 sm:px-8 text-center">
                 <p class="text-body-m text-ink-500">{{ __('account.address.empty') }}</p>
             </x-ui.surface>
         @endforelse

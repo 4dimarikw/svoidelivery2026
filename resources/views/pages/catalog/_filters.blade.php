@@ -30,7 +30,7 @@
             x-on:change="if (! ['text', 'search', 'number'].includes($event.target.type) && $event.target.name !== 'sort') submitFilters()"
         @endif
     >
-        <div class="flex items-center justify-between p-5 pb-0">
+        <div class="flex items-center justify-between px-4 pt-5 pb-0 sm:px-5">
             <h2 class="font-display text-heading-s uppercase text-ink-900">{{ __('catalog.filters.title') }}</h2>
             {{-- Только мобиль — на lg панель не закрывается, кнопка не нужна. --}}
             <button type="button" class="lg:hidden" x-on:click="filtersOpen = false" aria-label="{{ __('catalog.filters.close') }}">
@@ -38,7 +38,7 @@
             </button>
         </div>
 
-        <div class="px-5 pb-5">
+        <div class="px-4 pb-5 sm:px-5">
             {{-- Каждый фильтр рендерит себя сам (Domain\Catalog\Filters\AbstractFilter::
                  __toString() → view()) — состав и порядок группы задаются регистрацией
                  в AppServiceProvider::boot(), не здесь. --}}
@@ -50,7 +50,7 @@
         {{-- lg: sticky к низу вьюпорта, не к панели — см. комментарий в начале файла.
              bg-cream-50 совпадает с tone="paper-2" карточки (surface.blade.php) —
              фон нужен, потому что фильтры выше уезжают под этот блок при скролле. --}}
-        <div class="grid gap-3 px-5 py-4 lg:sticky lg:bottom-0 lg:rounded-b-sm lg:border-t lg:border-hairline lg:bg-cream-50">
+        <div class="grid gap-3 px-4 py-4 sm:px-5 lg:sticky lg:bottom-0 lg:rounded-b-sm lg:border-t lg:border-hairline lg:bg-cream-50">
             <x-ui.btn type="submit" block>{{ __('catalog.filters.apply') }}</x-ui.btn>
             <x-ui.link :href="route('home')" class="text-center">{{ __('catalog.filters.reset') }}</x-ui.link>
         </div>

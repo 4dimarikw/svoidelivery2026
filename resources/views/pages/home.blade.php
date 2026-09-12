@@ -1,6 +1,6 @@
 <x-layouts.site>
     <div
-        class="mx-auto max-w-page px-6 py-10"
+        class="mx-auto max-w-page px-3 sm:px-6 py-10"
         x-data="{ filtersOpen: {{ request()->boolean('open_filters') ? 'true' : 'false' }} }"
         x-on:catalog:filters-toggle.window="filtersOpen = !filtersOpen"
     >
@@ -44,7 +44,7 @@
 
             <div class="lg:order-1 lg:col-span-9" x-data="catalogList(@js($products->nextPageUrl()))">
                 @if ($products->isEmpty())
-                    <x-ui.surface tone="paper-2" class="rounded-sm border border-hairline p-8 text-center">
+                    <x-ui.surface tone="paper-2" class="rounded-sm border border-hairline px-4 py-8 sm:px-8 text-center">
                         <p class="text-body-m text-ink-500">{{ __('catalog.empty') }}</p>
                     </x-ui.surface>
                 @else

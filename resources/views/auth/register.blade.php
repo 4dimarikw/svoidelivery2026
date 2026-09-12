@@ -5,7 +5,7 @@
                  и не повлиять на раскладку. См. Infrastructure\Rules\HoneypotRule. --}}
             <x-ui.honeypot />
 
-            <div class="grid gap-3.5">
+            <div class="grid min-w-0 grid-cols-1 gap-3.5">
                 <x-ui.input-field
                     name="name"
                     :label="__('account.field.name')"
@@ -44,7 +44,10 @@
                 <x-ui.checkbox-field name="terms_accepted" :label="__('account.register.terms_gate')" />
                 <x-ui.link :href="route('terms')" target="_blank" rel="noopener noreferrer" :aria-label="__('terms.read_accessible')">{{ __('terms.read') }}</x-ui.link>
 
-                <x-ui.smart-captcha />
+                {{-- Keep the 300px CAPTCHA at its native size on narrow screens. --}}
+                <div class="-mx-4 flex flex-col items-center sm:mx-0 sm:block">
+                    <x-ui.smart-captcha />
+                </div>
 
                 <x-ui.form-actions>
                     <x-ui.btn type="submit" size="lg" block>{{ __('account.register.submit') }}</x-ui.btn>

@@ -29,7 +29,7 @@
             @endif
         </div>
 
-        <x-ui.surface tone="paper-2" class="rounded-sm border border-hairline p-8 text-center"
+        <x-ui.surface tone="paper-2" class="rounded-sm border border-hairline px-4 py-8 sm:px-8 text-center"
             x-show="$store.favorites.count === 0" style="{{ $products->total() > 0 ? 'display: none' : '' }}">
             <p class="text-body-m text-ink-500">{{ __('account.favorites.empty') }}</p>
         </x-ui.surface>

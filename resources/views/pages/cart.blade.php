@@ -76,7 +76,7 @@
 @endphp
 
 <x-layouts.site :title="__('account.cart.title')">
-    <div class="mx-auto max-w-page px-6 py-10" x-init="$store.cart.amount = @js((string) $amount)">
+    <div class="mx-auto max-w-page px-3 sm:px-6 py-10" x-init="$store.cart.amount = @js((string) $amount)">
         @if ($noJsStatusMessage)
             <x-ui.alert tone="ok" class="mb-6">{{ $noJsStatusMessage }}</x-ui.alert>
         @endif
@@ -84,7 +84,7 @@
         <h1 class="mb-6 font-display text-heading-m uppercase text-ink-900">{{ __('account.cart.title') }}</h1>
 
         <div x-show="$store.cart.count === 0" @if ($cartItems->isNotEmpty()) x-cloak @endif>
-            <x-ui.surface tone="paper-2" class="rounded-sm border border-hairline p-8 text-center">
+            <x-ui.surface tone="paper-2" class="rounded-sm border border-hairline px-4 py-8 sm:px-8 text-center">
                 <p class="text-body-m text-ink-500">{{ __('account.cart.empty') }}</p>
             </x-ui.surface>
         </div>
@@ -103,7 +103,7 @@
                     </div>
                 @endif
 
-                <x-ui.surface tone="paper-2" class="border border-hairline px-5">
+                <x-ui.surface tone="paper-2" class="border border-hairline px-4 sm:px-5">
                     @foreach ($cartItems as $cartItem)
                         <x-ui.cart-line :cart-item="$cartItem" />
                     @endforeach
@@ -123,7 +123,7 @@
                     class="grid gap-8"
                 >
                     <input type="hidden" name="checkout_key" value="{{ $checkoutKey }}">
-                    <x-ui.surface tone="paper-2" class="rounded-sm border border-hairline p-6">
+                    <x-ui.surface tone="paper-2" class="rounded-sm border border-hairline px-4 py-6 sm:px-6">
                         <div class="mb-4 flex items-center justify-between">
                             <h2 class="font-display text-heading-s uppercase text-ink-900">{{ __('order.address') }}</h2>
                             <x-ui.link :href="route('account.addresses.create')">{{ __('order.address_add') }}</x-ui.link>
@@ -151,7 +151,7 @@
                         <x-ui.error name="address_id" class="mt-2" />
                     </x-ui.surface>
 
-                    <x-ui.surface tone="paper-2" class="rounded-sm border border-hairline p-6">
+                    <x-ui.surface tone="paper-2" class="rounded-sm border border-hairline px-4 py-6 sm:px-6">
                         <h2 class="mb-4 font-display text-heading-s uppercase text-ink-900">{{ __('account.profile.details_title') }}</h2>
                         {{-- Один внешний grid gap-3.5 на все поля — тот же паттерн,
                              что account/profile.blade.php. Точечный class="mt-3.5"
