@@ -5,18 +5,17 @@ namespace Services\CatalogImport;
 use Domain\Catalog\Enums\CategoryMatchType;
 use Domain\Catalog\Enums\CategoryMatchWhen;
 use Domain\Catalog\Models\Category;
-use Domain\Catalog\Models\CategoryMatchRule;
 use Illuminate\Support\Facades\Cache;
 use Infrastructure\Settings\CatalogImportSettings;
 
 /**
- * Единая точка чтения реестра категорий из categories, category_match_rules и CatalogImportSettings. Этапы
- * импорта получают типизированные данные через этот класс. Общий кеш исключает запросы к базе для каждой строки
- * CSV; его очищают события Category и CategoryMatchRule и сохранение настроек импорта.
+ * Единая точка чтения реестра категорий из categories, category_matching.php и CatalogImportSettings. Этапы
+ * импорта получают типизированные данные через этот класс. Кеш категорий исключает запросы к базе для каждой строки
+ * CSV; его очищают события Category и сохранение настроек импорта.
  */
 final class CategoryRegistry
 {
-    public const CACHE_KEY = 'catalog.category_registry';
+    public const CACHE_KEY = 'catalog.category_registry.categories.v2';
 
     /**
      * Очищает запись кеша и singleton в контейнере. Сброс обоих уровней гарантирует загрузку актуального реестра
@@ -32,7 +31,7 @@ final class CategoryRegistry
     private readonly array $categories;
 
     /**
-     * Плоский список правил в общем порядке priority, id. Хранится отдельно от категорий, чтобы rulesOfType()
+     * Плоский список правил по priority и порядку списка. Хранится отдельно от категорий, чтобы rulesOfType()
      * сохранял межкатегорийный порядок правил.
      *
      * @var list<array{slug: string, rule: array<string, mixed>}>
@@ -47,8 +46,8 @@ final class CategoryRegistry
         $settings ??= app(CatalogImportSettings::class);
 
         $cached = Cache::rememberForever(self::CACHE_KEY, static fn () => self::loadCategories());
-        $this->categories = $cached['categories'];
-        $this->orderedRules = $cached['rules'];
+        $this->categories = $cached;
+        $this->orderedRules = $this->loadRules();
 
         $this->resolution = [
             'alcohol_marker' => $settings->alcohol_marker,
@@ -59,7 +58,7 @@ final class CategoryRegistry
     }
 
     /**
-     * @return array{categories: array<string, array<string, mixed>>, rules: list<array{slug: string, rule: array<string, mixed>}>}
+     * @return array<string, array<string, mixed>>
      */
     private static function loadCategories(): array
     {
@@ -77,42 +76,28 @@ final class CategoryRegistry
             ];
         }
 
+        return $categories;
+    }
+
+    private function loadRules(): array
+    {
         $orderedRules = [];
-
-        $rules = CategoryMatchRule::query()
-            ->active()
-            ->with('category:id,slug')
-            ->orderBy('priority')
-            ->orderBy('id')
-            ->get();
-
-        foreach ($rules as $rule) {
-            $slug = $rule->category->slug;
-
-            if (! isset($categories[$slug])) {
+        foreach (CategoryMatchingRules::ordered(config('category_matching.rules')) as $rule) {
+            if (! $rule['is_active'] || ! isset($this->categories[$rule['slug']])) {
                 continue;
             }
-
-            // Пустое значение accessory_title или contains совпало бы с любым названием. Проверка нужна и при
-            // использовании реестра вне команды catalog:validate-registry.
-            if ($rule->type !== CategoryMatchType::Alcohol && blank($rule->value)) {
-                continue;
-            }
-
-            $orderedRules[] = ['slug' => $slug, 'rule' => match ($rule->type) {
-                CategoryMatchType::Alcohol => array_filter([
+            $orderedRules[] = ['slug' => $rule['slug'], 'rule' => match ($rule['type']) {
+                CategoryMatchType::Alcohol->value => array_filter([
                     'type' => 'alcohol',
-                    'when' => $rule->match_when?->value,
-                    'keyword' => $rule->match_when === CategoryMatchWhen::Style ? $rule->value : null,
-                ], static fn ($v) => $v !== null),
-                CategoryMatchType::Contains => ['type' => 'contains', 'needle' => $rule->value],
-                // Каждая запись содержит одно ключевое слово. resolveAccessoryTitleSlug() объединяет слова
-                // подходящих правил в общую карту категорий.
-                CategoryMatchType::AccessoryTitle => ['type' => 'accessory_title', 'keywords' => [$rule->value]],
+                    'when' => $rule['match_when'],
+                    'keyword' => $rule['match_when'] === CategoryMatchWhen::Style->value ? $rule['value'] : null,
+                ], static fn ($value) => $value !== null),
+                CategoryMatchType::Contains->value => ['type' => 'contains', 'needle' => $rule['value']],
+                CategoryMatchType::AccessoryTitle->value => ['type' => 'accessory_title', 'keywords' => [$rule['value']]],
             }];
         }
 
-        return ['categories' => $categories, 'rules' => $orderedRules];
+        return $orderedRules;
     }
 
     public function property(string $slug, string $key, mixed $default = null): mixed
@@ -171,7 +156,7 @@ final class CategoryRegistry
     }
 
     /**
-     * Правила заданного type в порядке priority, затем id.
+     * Правила заданного type в порядке priority, затем порядку списка.
      *
      * @return list<array{slug: string, rule: array<string, mixed>}>
      */

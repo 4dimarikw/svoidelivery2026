@@ -2,9 +2,7 @@
 
 namespace Tests\Feature\Domain;
 
-use Domain\Catalog\Enums\CategoryMatchType;
 use Domain\Catalog\Models\Category;
-use Domain\Catalog\Models\CategoryMatchRule;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
 use Services\CatalogImport\CategoryRegistry;
@@ -43,7 +41,7 @@ class CategoryTest extends TestCase
     {
         // Валидная по форме, но заведомо устаревшая (пустая) полезная нагрузка —
         // CategoryRegistry::__construct() не проверяет форму, просто доверяет кэшу.
-        Cache::put(CategoryRegistry::CACHE_KEY, ['categories' => [], 'rules' => []], now()->addHour());
+        Cache::put(CategoryRegistry::CACHE_KEY, [], now()->addHour());
         $stale = app(CategoryRegistry::class);
 
         Category::query()->create([
@@ -71,33 +69,5 @@ class CategoryTest extends TestCase
         $category->delete();
 
         $this->assertNull(Cache::get(CategoryRegistry::CACHE_KEY));
-    }
-
-    public function test_match_rules_relation_is_ordered_by_priority_then_id(): void
-    {
-        $category = Category::query()->create([
-            'code' => 'test_order_relation',
-            'name' => 'Тест',
-            'is_active' => true,
-        ]);
-
-        $second = CategoryMatchRule::query()->create([
-            'category_id' => $category->id,
-            'type' => CategoryMatchType::Contains,
-            'value' => 'нидл-2',
-            'priority' => 20,
-            'is_active' => true,
-        ]);
-        $first = CategoryMatchRule::query()->create([
-            'category_id' => $category->id,
-            'type' => CategoryMatchType::Contains,
-            'value' => 'нидл-1',
-            'priority' => 10,
-            'is_active' => true,
-        ]);
-
-        $ids = $category->matchRules()->pluck('id')->all();
-
-        $this->assertSame([$first->id, $second->id], $ids);
     }
 }

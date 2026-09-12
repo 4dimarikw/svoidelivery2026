@@ -7,7 +7,6 @@ use App\Events\CatalogVolumeDiscrepanciesDetected;
 use Domain\Catalog\Enums\CategoryMatchType;
 use Domain\Catalog\Enums\CategoryMatchWhen;
 use Domain\Catalog\Models\Category;
-use Domain\Catalog\Models\CategoryMatchRule;
 use Domain\Catalog\Models\Product;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Artisan;
@@ -20,11 +19,13 @@ use Infrastructure\Settings\CatalogImportSettings;
 use PHPUnit\Framework\Attributes\DataProvider;
 use RuntimeException;
 use Tests\Support\BuildsCatalogCsv;
+use Tests\Support\ConfiguresCategoryMatching;
 use Tests\TestCase;
 
 class CatalogImportCommandTest extends TestCase
 {
     use BuildsCatalogCsv;
+    use ConfiguresCategoryMatching;
     use RefreshDatabase;
 
     public static function refreshImportOptions(): array
@@ -88,8 +89,8 @@ class CatalogImportCommandTest extends TestCase
             'name' => 'Тест',
             'is_active' => true,
         ]);
-        CategoryMatchRule::query()->create([
-            'category_id' => $extra->id,
+        $this->addMatchingRule([
+            'slug' => $extra->slug,
             'type' => CategoryMatchType::Alcohol,
             'match_when' => CategoryMatchWhen::DefaultRule,
             'priority' => 999,

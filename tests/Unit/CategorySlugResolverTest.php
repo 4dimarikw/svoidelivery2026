@@ -4,10 +4,10 @@ namespace Tests\Unit;
 
 use Domain\Catalog\Enums\CategoryMatchType;
 use Domain\Catalog\Models\Category;
-use Domain\Catalog\Models\CategoryMatchRule;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Services\CatalogImport\CategorySlugResolver;
 use Services\CatalogImport\Dto\RawRow;
+use Tests\Support\ConfiguresCategoryMatching;
 use Tests\TestCase;
 
 /**
@@ -16,6 +16,7 @@ use Tests\TestCase;
  */
 class CategorySlugResolverTest extends TestCase
 {
+    use ConfiguresCategoryMatching;
     use RefreshDatabase;
 
     private function row(array $data): RawRow
@@ -127,8 +128,8 @@ class CategorySlugResolverTest extends TestCase
             'is_active' => true,
         ]);
 
-        CategoryMatchRule::query()->create([
-            'category_id' => $category->id,
+        $this->addMatchingRule([
+            'slug' => $category->slug,
             'type' => CategoryMatchType::AccessoryTitle,
             'value' => 'тара 1/2',
             'priority' => 5,
@@ -160,7 +161,7 @@ class CategorySlugResolverTest extends TestCase
      * Правило accessory_title с пустым value отфильтровывается CategoryRegistry и не совпадает с произвольным
      * названием.
      */
-    public function test_blank_accessory_keyword_does_not_match_everything(): void
+    public function test_blank_accessory_keyword_is_rejected(): void
     {
         $category = Category::query()->create([
             'slug' => 'test-blank-keyword',
@@ -169,13 +170,15 @@ class CategorySlugResolverTest extends TestCase
             'is_active' => true,
         ]);
 
-        CategoryMatchRule::query()->create([
-            'category_id' => $category->id,
+        $this->addMatchingRule([
+            'slug' => $category->slug,
             'type' => CategoryMatchType::AccessoryTitle,
             'value' => null,
             'priority' => 1,
             'is_active' => true,
         ]);
+
+        $this->expectException(\InvalidArgumentException::class);
 
         // Товар с ключевым словом, которое реально существует в реестре
         // ('пэт'), всё ещё резолвится в правильную категорию — а не в
@@ -202,5 +205,24 @@ class CategorySlugResolverTest extends TestCase
         ]));
 
         $this->assertSame('probes', $slug);
+    }
+
+    public function test_accessory_uses_leftmost_match_even_when_priority_is_lower(): void
+    {
+        $this->assertSame('clothes', app(CategorySlugResolver::class)->resolve($this->row([
+            'category' => 'Сопутствующие товары', 'name_full' => 'ШАПКА и пэт пакет',
+        ])));
+    }
+
+    public function test_disabled_rule_is_not_used_and_equal_priorities_keep_list_order(): void
+    {
+        config(['category_matching.rules' => [
+            ['slug' => 'beer', 'type' => 'contains', 'match_when' => null, 'value' => 'совпадение', 'priority' => 0, 'is_active' => false],
+            ['slug' => 'mead', 'type' => 'contains', 'match_when' => null, 'value' => 'совпадение', 'priority' => 10, 'is_active' => true],
+            ['slug' => 'cider', 'type' => 'contains', 'match_when' => null, 'value' => 'совпадение', 'priority' => 10, 'is_active' => true],
+        ]]);
+        $this->assertSame('mead', app(CategorySlugResolver::class)->resolve($this->row([
+            'category' => 'СОВПАДЕНИЕ',
+        ])));
     }
 }

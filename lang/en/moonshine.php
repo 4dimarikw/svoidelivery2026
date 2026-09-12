@@ -70,14 +70,12 @@ return [
             'slug' => 'Slug',
             'is_active' => 'Active',
             'products_count' => 'Products',
-            'match_rules_count' => 'Rules',
             'expects_container' => 'Expects container',
             'expects_volume' => 'Expects volume',
             'price_exempt' => 'Skip min-price filter',
             'name_from_article' => 'Name from article',
             'default_brand' => 'Default brand',
             'container_code' => 'Fixed container',
-            'match_rules' => 'Resolution rules',
             'properties' => 'Properties',
             'pivot_is_required' => 'Required',
             'pivot_is_filterable' => 'Filterable',
@@ -87,19 +85,7 @@ return [
         'tabs' => [
             'main' => 'Main',
             'import' => 'Import',
-            'match_rules' => 'Resolution rules',
             'properties' => 'Properties',
-        ],
-    ],
-
-    'category_match_rule' => [
-        'title' => 'Category resolution rules',
-        'fields' => [
-            'type' => 'Type',
-            'match_when' => 'When',
-            'value' => 'Value',
-            'priority' => 'Priority',
-            'is_active' => 'Active',
         ],
     ],
 

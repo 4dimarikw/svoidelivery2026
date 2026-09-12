@@ -4,9 +4,9 @@ namespace Tests\Unit\CatalogImport;
 
 use Domain\Catalog\Enums\CategoryMatchType;
 use Domain\Catalog\Models\Category;
-use Domain\Catalog\Models\CategoryMatchRule;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Services\CatalogImport\CategoryRegistry;
+use Tests\Support\ConfiguresCategoryMatching;
 use Tests\TestCase;
 
 /**
@@ -15,6 +15,7 @@ use Tests\TestCase;
  */
 class CategoryRegistryTest extends TestCase
 {
+    use ConfiguresCategoryMatching;
     use RefreshDatabase;
 
     private function makeCategory(array $overrides = []): Category
@@ -59,23 +60,23 @@ class CategoryRegistryTest extends TestCase
         $this->assertNull($registry->containerCode('no-such-slug'));
     }
 
-    public function test_rules_of_type_are_ordered_by_priority_then_id_not_by_category(): void
+    public function test_rules_of_type_are_ordered_by_priority_then_list_order_not_by_category(): void
     {
         // Категория B создаётся раньше A, но её правило имеет больший priority —
         // порядок в rulesOfType() должен идти по priority, а не по id категории.
         $b = $this->makeCategory(['slug' => 'test-order-b', 'code' => 'test_order_b']);
         $a = $this->makeCategory(['slug' => 'test-order-a', 'code' => 'test_order_a']);
 
-        CategoryMatchRule::query()->create([
-            'category_id' => $b->id,
+        $this->addMatchingRule([
+            'slug' => $b->slug,
             'type' => CategoryMatchType::Contains,
             'value' => 'нидл-б',
             'priority' => 20,
             'is_active' => true,
         ]);
 
-        CategoryMatchRule::query()->create([
-            'category_id' => $a->id,
+        $this->addMatchingRule([
+            'slug' => $a->slug,
             'type' => CategoryMatchType::Contains,
             'value' => 'нидл-а',
             'priority' => 10,
@@ -92,24 +93,21 @@ class CategoryRegistryTest extends TestCase
         $this->assertSame(['test-order-a', 'test-order-b'], $slugs);
     }
 
-    public function test_rule_with_blank_value_is_skipped(): void
+    public function test_rule_with_blank_value_is_rejected(): void
     {
-        // Правило accessory_title с пустым value должно отфильтровываться, чтобы не совпадать с любым названием.
+        // Пустое ключевое слово отклоняется до сопоставления с названием.
         $category = $this->makeCategory(['slug' => 'test-blank-value', 'code' => 'test_blank_value']);
 
-        CategoryMatchRule::query()->create([
-            'category_id' => $category->id,
+        $this->addMatchingRule([
+            'slug' => $category->slug,
             'type' => CategoryMatchType::AccessoryTitle,
             'value' => null,
             'priority' => 10,
             'is_active' => true,
         ]);
 
-        $registry = new CategoryRegistry;
-        $entries = collect($registry->rulesOfType('accessory_title'))
-            ->filter(fn (array $entry) => $entry['slug'] === 'test-blank-value');
-
-        $this->assertTrue($entries->isEmpty());
+        $this->expectException(\InvalidArgumentException::class);
+        new CategoryRegistry;
     }
 
     public function test_markers_are_read_from_seeded_settings(): void

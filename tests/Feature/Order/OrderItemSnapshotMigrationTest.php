@@ -81,22 +81,22 @@ class OrderItemSnapshotMigrationTest extends TestCase
     public function test_initial_registry_is_available_without_seeders_and_preserves_admin_edits(): void
     {
         $this->assertSame(13, DB::table('categories')->count());
-        $this->assertSame(23, DB::table('category_match_rules')->count());
-        $this->assertSame(range(10, 230, 10), DB::table('category_match_rules')->orderBy('priority')->pluck('priority')->all());
+        $this->assertFalse(Schema::hasTable('category_match_rules'));
+        $this->assertCount(23, config('category_matching.rules'));
+        $this->assertSame(range(10, 230, 10), array_column(config('category_matching.rules'), 'priority'));
         $this->assertSame('pet', DB::table('categories')->where('slug', 'pet-tare-packages')->value('container_code'));
         $this->assertEquals(1, DB::table('categories')->where('slug', 'beer')->value('expects_volume'));
         $this->assertEquals(0, DB::table('categories')->where('slug', 'not-defined')->value('expects_volume'));
         $this->assertSame(0, Artisan::call('catalog:validate-registry'), Artisan::output());
 
         DB::table('categories')->where('slug', 'beer')->update(['name' => 'Название из админки', 'expects_volume' => false]);
-        DB::table('category_match_rules')->where('priority', 10)->update(['is_active' => false]);
         $categories = DB::table('categories')->orderBy('id')->get()->toJson();
-        $rules = DB::table('category_match_rules')->orderBy('id')->get()->toJson();
+        $rules = config('category_matching.rules');
         $this->seed(CategorySeeder::class);
         $this->seed(DatabaseSeeder::class);
         $this->seed(DatabaseSeeder::class);
         $this->assertSame($categories, DB::table('categories')->orderBy('id')->get()->toJson());
-        $this->assertSame($rules, DB::table('category_match_rules')->orderBy('id')->get()->toJson());
+        $this->assertSame($rules, config('category_matching.rules'));
     }
 
     public function test_all_migrations_roll_back_and_apply_again_with_settings(): void
@@ -115,6 +115,38 @@ class OrderItemSnapshotMigrationTest extends TestCase
         $this->assertSame($migrations, DB::table('migrations')->count());
         $this->assertSame($tables, Schema::getTableListing('svoidelivery2026_test', schemaQualified: false));
         $this->assertSame($settings, DB::table('settings')->orderBy('group')->orderBy('name')->get(['group', 'name', 'payload'])->toJson());
+        $this->assertFalse(Schema::hasTable('category_match_rules'));
+        $this->assertCount(23, config('category_matching.rules'));
+    }
+
+    public function test_category_rule_migration_round_trip_preserves_effective_rules(): void
+    {
+        $migration = require database_path('migrations/2026_09_12_100000_move_category_matching_rules_to_config.php');
+        $categories = DB::table('categories')->orderBy('id')->get()->toJson();
+        $rules = config('category_matching.rules');
+        $rules[1]['priority'] = $rules[0]['priority'];
+        $rules[2]['is_active'] = false;
+        config(['category_matching.rules' => $rules]);
+        $migration->down();
         $this->assertSame(23, DB::table('category_match_rules')->count());
+        $this->assertEquals(0, DB::table('category_match_rules')->where('value', 'cider')->value('is_active'));
+        $migration->up();
+        $this->assertFalse(Schema::hasTable('category_match_rules'));
+        $this->assertSame($categories, DB::table('categories')->orderBy('id')->get()->toJson());
+    }
+
+    public function test_category_rule_migration_refuses_differences_without_deleting_data(): void
+    {
+        $migration = require database_path('migrations/2026_09_12_100000_move_category_matching_rules_to_config.php');
+        $migration->down();
+        DB::table('category_match_rules')->where('priority', 10)->update(['is_active' => false]);
+        $before = DB::table('category_match_rules')->orderBy('id')->get()->toJson();
+        try {
+            $migration->up();
+            $this->fail('Несовпадающие правила должны остановить миграцию.');
+        } catch (\RuntimeException $e) {
+            $this->assertStringContainsString('отличаются', $e->getMessage());
+        }
+        $this->assertSame($before, DB::table('category_match_rules')->orderBy('id')->get()->toJson());
     }
 }

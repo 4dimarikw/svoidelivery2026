@@ -33,8 +33,6 @@ use Spatie\Sluggable\SlugOptions;
  * @property-read int|null $products_count
  * @property-read Collection<int, Property> $properties
  * @property-read int|null $properties_count
- * @property-read Collection<int, CategoryMatchRule> $matchRules
- * @property-read int|null $match_rules_count
  *
  * @method static \Database\Factories\Catalog\CategoryFactory factory($count = null, $state = [])
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Category newModelQuery()
@@ -95,13 +93,8 @@ class Category extends Model
             ->withPivot(['is_required', 'is_filterable', 'is_visible', 'sort_order']);
     }
 
-    public function matchRules(): HasMany
-    {
-        return $this->hasMany(CategoryMatchRule::class)->orderBy('priority')->orderBy('id');
-    }
-
     /**
-     * CategoryRegistry кеширует категории и правила импорта. События изменения модели очищают этот кеш и
+     * CategoryRegistry кеширует категории. События изменения модели очищают этот кеш и
      * отдельный кеш витринных фильтров FilterOptionsRegistry.
      */
     protected static function booted(): void

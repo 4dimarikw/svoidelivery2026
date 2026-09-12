@@ -8,11 +8,7 @@ use MoonShine\Laravel\Models\MoonshineUser;
 use MoonShine\Laravel\Models\MoonshineUserRole;
 use Tests\TestCase;
 
-/**
- * Проверяет рендер формы категории с RelationRepeater для matchRules через реальный маршрут админки. MoonShine
- * обнаруживает ресурсы через оптимизированную карту классов Composer; она должна содержать CategoryMatchRule и
- * его страницы.
- */
+/** Проверяет форму и список категорий после удаления редактора правил. */
 class CategoryFormPageSmokeTest extends TestCase
 {
     use RefreshDatabase;
@@ -33,6 +29,7 @@ class CategoryFormPageSmokeTest extends TestCase
         $response = $this->actingAs($admin, 'moonshine')
             ->get("/admin/resource/category-resource/category-form-page/{$categoryId}");
 
-        $response->assertOk();
+        $response->assertOk()->assertDontSee('matchRules');
+        $this->get('/admin/resource/category-resource/category-index-page')->assertOk();
     }
 }

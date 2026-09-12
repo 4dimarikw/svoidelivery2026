@@ -5,9 +5,9 @@ namespace Tests\Feature;
 use Domain\Catalog\Enums\CategoryMatchType;
 use Domain\Catalog\Enums\CategoryMatchWhen;
 use Domain\Catalog\Models\Category;
-use Domain\Catalog\Models\CategoryMatchRule;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Infrastructure\Settings\CatalogImportSettings;
+use Tests\Support\ConfiguresCategoryMatching;
 use Tests\TestCase;
 
 /**
@@ -16,6 +16,7 @@ use Tests\TestCase;
  */
 class ValidateCategoryRegistryCommandTest extends TestCase
 {
+    use ConfiguresCategoryMatching;
     use RefreshDatabase;
 
     private function makeCategory(string $slug, string $name): Category
@@ -39,8 +40,8 @@ class ValidateCategoryRegistryCommandTest extends TestCase
         // проверки.
         $extra = $this->makeCategory('test-extra-default', 'Тестовая доп. категория');
 
-        CategoryMatchRule::query()->create([
-            'category_id' => $extra->id,
+        $this->addMatchingRule([
+            'slug' => $extra->slug,
             'type' => CategoryMatchType::Alcohol,
             'match_when' => CategoryMatchWhen::DefaultRule,
             'priority' => 999,
@@ -56,8 +57,8 @@ class ValidateCategoryRegistryCommandTest extends TestCase
         $b = $this->makeCategory('test-accessory-b', 'Тест Б');
 
         foreach ([$a, $b] as $category) {
-            CategoryMatchRule::query()->create([
-                'category_id' => $category->id,
+            $this->addMatchingRule([
+                'slug' => $category->slug,
                 'type' => CategoryMatchType::AccessoryTitle,
                 'value' => 'уникальный-тест-keyword',
                 'priority' => 999,
@@ -90,5 +91,18 @@ class ValidateCategoryRegistryCommandTest extends TestCase
         $this->artisan('catalog:validate-registry')
             ->expectsOutputToContain('неактивна')
             ->assertExitCode(0);
+    }
+
+    public function test_missing_rule_category_is_rejected_even_when_disabled(): void
+    {
+        $this->addMatchingRule(['slug' => 'missing-category', 'type' => 'contains',
+            'value' => 'missing', 'is_active' => false]);
+        $this->artisan('catalog:validate-registry')->assertExitCode(1);
+    }
+
+    public function test_invalid_rule_structure_is_reported(): void
+    {
+        config(['category_matching.rules' => [['type' => 'contains']]]);
+        $this->artisan('catalog:validate-registry')->assertExitCode(1);
     }
 }

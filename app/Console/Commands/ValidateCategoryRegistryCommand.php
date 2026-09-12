@@ -2,140 +2,50 @@
 
 namespace App\Console\Commands;
 
-use Domain\Catalog\Enums\CategoryMatchType;
-use Domain\Catalog\Enums\CategoryMatchWhen;
 use Domain\Catalog\Models\Category;
-use Domain\Catalog\Models\CategoryMatchRule;
 use Illuminate\Console\Command;
-use Illuminate\Support\Collection;
 use Infrastructure\Settings\CatalogImportSettings;
+use InvalidArgumentException;
+use Services\CatalogImport\CategoryMatchingRules;
 
-/**
- * Проверяет реестр категорий, редактируемый в MoonShine. Для alcohol значения advent, no_abv и default должны
- * быть уникальны среди активных правил. Для alcohol/style и contains требуется value; у contains match_when
- * должен быть пустым. Значения accessory_title обязательны и уникальны среди активных правил. fallback_slug
- * должен указывать на существующую категорию; её неактивность допустима и скрывает товары с витрины.
- */
+/** Проверяет конфиг правил и ссылки на категории до запуска импорта. */
 class ValidateCategoryRegistryCommand extends Command
 {
     protected $signature = 'catalog:validate-registry';
 
-    protected $description = 'Проверить инварианты реестра категорий (правила резолва slug, fallback)';
+    protected $description = 'Проверить правила категоризации и резервную категорию';
 
     public function handle(CatalogImportSettings $settings): int
     {
-        $errors = [];
-        $notices = [];
+        try {
+            $rules = CategoryMatchingRules::ordered(config('category_matching.rules'));
+        } catch (InvalidArgumentException $e) {
+            $this->error($e->getMessage());
 
-        $rules = CategoryMatchRule::query()->active()->with('category:id,slug')->get();
-
-        $this->checkAlcoholWhenUniqueness($rules, $errors);
-        $this->checkRequiredValues($rules, $errors);
-        $this->checkAccessoryTitleUniqueness($rules, $errors);
-        $this->checkFallback($settings, $errors, $notices);
-
-        if ($errors === []) {
-            $this->info('Реестр категорий валиден.');
-
-            foreach ($notices as $notice) {
-                $this->warn("  ! {$notice}");
-            }
-
-            return self::SUCCESS;
+            return self::FAILURE;
         }
 
-        $this->error('Найдены нарушения инвариантов реестра категорий:');
-        foreach ($errors as $error) {
-            $this->line("  - {$error}");
+        $categories = Category::query()->get(['slug', 'is_active'])->keyBy('slug');
+        $missing = array_diff(array_unique(array_column($rules, 'slug')), $categories->keys()->all());
+        if ($missing !== []) {
+            $this->error('Категории правил не найдены: '.implode(', ', $missing));
+
+            return self::FAILURE;
         }
 
-        foreach ($notices as $notice) {
-            $this->warn("  ! {$notice}");
+        $fallback = $categories->get($settings->fallback_slug);
+        if ($fallback === null) {
+            $this->error("fallback_slug '{$settings->fallback_slug}' не найден среди категорий.");
+
+            return self::FAILURE;
         }
 
-        return self::FAILURE;
-    }
-
-    /**
-     * @param  Collection<int, CategoryMatchRule>  $rules
-     * @param  list<string>  $errors
-     */
-    private function checkAlcoholWhenUniqueness($rules, array &$errors): void
-    {
-        $byWhen = $rules
-            ->filter(fn (CategoryMatchRule $r) => $r->type === CategoryMatchType::Alcohol
-                && in_array($r->match_when, [CategoryMatchWhen::Advent, CategoryMatchWhen::NoAbv, CategoryMatchWhen::DefaultRule], true))
-            ->groupBy(fn (CategoryMatchRule $r) => $r->match_when->value);
-
-        foreach ($byWhen as $when => $group) {
-            if ($group->count() > 1) {
-                $slugs = $group->map(fn (CategoryMatchRule $r) => $r->category->slug)->implode(', ');
-                $errors[] = "Несколько активных правил alcohol/when={$when}: {$slugs} — только первое будет учтено.";
-            }
+        if (! $fallback->is_active) {
+            $this->warn("fallback_slug '{$settings->fallback_slug}' — категория неактивна: товары скрыты с витрины.");
         }
-    }
 
-    /**
-     * @param  Collection<int, CategoryMatchRule>  $rules
-     * @param  list<string>  $errors
-     */
-    private function checkRequiredValues($rules, array &$errors): void
-    {
-        foreach ($rules as $rule) {
-            $slug = $rule->category->slug;
+        $this->info('Реестр категорий валиден.');
 
-            if ($rule->type === CategoryMatchType::Alcohol && $rule->match_when === CategoryMatchWhen::Style && blank($rule->value)) {
-                $errors[] = "Категория '{$slug}': правило alcohol/style без value (keyword).";
-            }
-
-            if ($rule->type === CategoryMatchType::Contains) {
-                if (blank($rule->value)) {
-                    $errors[] = "Категория '{$slug}': правило contains без value (needle).";
-                }
-                if ($rule->match_when !== null) {
-                    $errors[] = "Категория '{$slug}': правило contains не должно иметь match_when.";
-                }
-            }
-
-            if ($rule->type === CategoryMatchType::AccessoryTitle && blank($rule->value)) {
-                $errors[] = "Категория '{$slug}': правило accessory_title без value (keyword).";
-            }
-        }
-    }
-
-    /**
-     * @param  Collection<int, CategoryMatchRule>  $rules
-     * @param  list<string>  $errors
-     */
-    private function checkAccessoryTitleUniqueness($rules, array &$errors): void
-    {
-        $duplicates = $rules
-            ->filter(fn (CategoryMatchRule $r) => $r->type === CategoryMatchType::AccessoryTitle && filled($r->value))
-            ->groupBy(fn (CategoryMatchRule $r) => mb_strtolower($r->value))
-            ->filter(fn ($group) => $group->count() > 1);
-
-        foreach ($duplicates as $keyword => $group) {
-            $slugs = $group->map(fn (CategoryMatchRule $r) => $r->category->slug)->implode(', ');
-            $errors[] = "Ключевое слово accessory_title '{$keyword}' встречается в нескольких категориях: {$slugs} — выигрывает только одна.";
-        }
-    }
-
-    /**
-     * @param  list<string>  $errors
-     * @param  list<string>  $notices
-     */
-    private function checkFallback(CatalogImportSettings $settings, array &$errors, array &$notices): void
-    {
-        $category = Category::query()->where('slug', $settings->fallback_slug)->first();
-
-        if ($category === null) {
-            $errors[] = "fallback_slug '{$settings->fallback_slug}' не найден среди категорий.";
-        } elseif (! $category->is_active) {
-            // Не ошибка: импорт резолвит fallback по slug независимо от
-            // is_active, а отключённая категория просто не показывает свои
-            // товары на витрине (ProductBuilder::inCategories()) — это
-            // штатный способ скрыть нераспознанные товары из выдачи.
-            $notices[] = "fallback_slug '{$settings->fallback_slug}' — категория неактивна: товары без правила импортируются, но на витрине видны не будут.";
-        }
+        return self::SUCCESS;
     }
 }

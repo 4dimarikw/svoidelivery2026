@@ -5,10 +5,7 @@ declare(strict_types=1);
 namespace App\MoonShine\Resources\Category\Pages;
 
 use App\MoonShine\Resources\Category\CategoryResource;
-use App\MoonShine\Resources\CategoryMatchRule\CategoryMatchRuleResource;
 use App\MoonShine\Resources\Property\PropertyResource;
-use Domain\Catalog\Enums\CategoryMatchType;
-use Domain\Catalog\Enums\CategoryMatchWhen;
 use Domain\Catalog\Models\Category;
 use Domain\Catalog\Models\Container;
 use Illuminate\Validation\Rule;
@@ -16,12 +13,10 @@ use MoonShine\Contracts\Core\TypeCasts\DataWrapperContract;
 use MoonShine\Contracts\UI\ComponentContract;
 use MoonShine\Contracts\UI\FieldContract;
 use MoonShine\Laravel\Fields\Relationships\BelongsToMany;
-use MoonShine\Laravel\Fields\Relationships\RelationRepeater;
 use MoonShine\Laravel\Pages\Crud\FormPage;
 use MoonShine\UI\Components\Layout\Box;
 use MoonShine\UI\Components\Tabs;
 use MoonShine\UI\Components\Tabs\Tab;
-use MoonShine\UI\Fields\Enum;
 use MoonShine\UI\Fields\ID;
 use MoonShine\UI\Fields\Number;
 use MoonShine\UI\Fields\Select;
@@ -47,7 +42,7 @@ final class CategoryFormPage extends FormPage
                         ID::make(),
 
                         Text::make(__('moonshine.category.fields.code'), 'code')
-                            ->canSee(fn() => $isAdmin)
+                            ->canSee(fn () => $isAdmin)
                             ->required()
                             ->hint('Уникальный код категории. Не перезаписывается CategorySeeder после создания.'),
 
@@ -55,7 +50,7 @@ final class CategoryFormPage extends FormPage
                             ->required(),
 
                         Text::make(__('moonshine.category.fields.slug'), 'slug')
-                            ->canSee(fn() => $isAdmin)
+                            ->canSee(fn () => $isAdmin)
                             ->locked()
                             ->hint('Импорт-ключ каталога — по нему CategorySlugResolver находит категорию для товара. Генерируется из name только при пустом значении, повторно не перезаписывается.'),
 
@@ -80,30 +75,10 @@ final class CategoryFormPage extends FormPage
                             ->hint('Бренд по умолчанию для пустой колонки «Производитель» (ResolveBrandStage).'),
 
                         Select::make(__('moonshine.category.fields.container_code'), 'container_code')
-                            ->options(static fn(): array => Container::query()->orderBy('name')->pluck('name', 'code')->all())
+                            ->options(static fn (): array => Container::query()->orderBy('name')->pluck('name', 'code')->all())
                             ->nullable()
                             ->hint('Фиксированный код тары независимо от колонки «Упаковка» (ResolveContainerStage).'),
-                    ])->icon('adjustments-horizontal')->canSee(fn() => $isAdmin),
-
-                    Tab::make(__('moonshine.category.tabs.match_rules'), [
-                        RelationRepeater::make(__('moonshine.category.fields.match_rules'), 'matchRules', resource: CategoryMatchRuleResource::class)
-                            ->fields([
-                                Enum::make(__('moonshine.category_match_rule.fields.type'), 'type')
-                                    ->attach(CategoryMatchType::class),
-
-                                Enum::make(__('moonshine.category_match_rule.fields.match_when'), 'match_when')
-                                    ->attach(CategoryMatchWhen::class)
-                                    ->nullable(),
-
-                                Text::make(__('moonshine.category_match_rule.fields.value'), 'value')
-                                    ->nullable(),
-
-                                Number::make(__('moonshine.category_match_rule.fields.priority'), 'priority')
-                                    ->default(0),
-
-                                Switcher::make(__('moonshine.category_match_rule.fields.is_active'), 'is_active'),
-                            ]),
-                    ])->icon('funnel')->canSee(fn() => $isAdmin),
+                    ])->icon('adjustments-horizontal')->canSee(fn () => $isAdmin),
 
                     Tab::make(__('moonshine.category.tabs.properties'), [
                         BelongsToMany::make(__('moonshine.category.fields.properties'), 'properties', resource: PropertyResource::class)
@@ -117,7 +92,7 @@ final class CategoryFormPage extends FormPage
                             // привязываются к существующей записи.
                             ->pivotModalMode()
                             ->creatable(),
-                    ])->icon('adjustments-vertical')->canSee(fn() => $isAdmin),
+                    ])->icon('adjustments-vertical')->canSee(fn () => $isAdmin),
                 ]),
             ]),
         ];
@@ -143,11 +118,6 @@ final class CategoryFormPage extends FormPage
             'name_from_article' => ['nullable', 'boolean'],
             'default_brand' => ['nullable', 'string', 'max:255'],
             'container_code' => ['nullable', 'string', 'max:64', Rule::exists('containers', 'code')],
-            'matchRules.*.type' => ['required', Rule::enum(CategoryMatchType::class)],
-            'matchRules.*.match_when' => ['nullable', Rule::enum(CategoryMatchWhen::class)],
-            'matchRules.*.value' => ['nullable', 'string', 'max:255'],
-            'matchRules.*.priority' => ['required', 'integer', 'min:0', 'max:65535'],
-            'matchRules.*.is_active' => ['nullable', 'boolean'],
         ];
     }
 }

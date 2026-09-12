@@ -121,7 +121,7 @@ return [
     ],
 
     /*
-     * Реестр категорий хранится в categories и category_match_rules, глобальные маркеры импорта — в
+     * Реестр категорий хранится в categories и config/category_matching.php, глобальные маркеры импорта — в
      * CatalogImportSettings. Управляется через MoonShine. CategoryRegistry предоставляет данные
      * CategorySlugResolver и этапам Resolve*.
      */

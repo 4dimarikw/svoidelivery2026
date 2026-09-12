@@ -9,12 +9,10 @@ use App\MoonShine\Resources\Category\Pages\CategoryIndexPage;
 use App\MoonShine\Support\GuardsRelatedDeletion;
 use Domain\Catalog\Models\Category;
 use Illuminate\Contracts\Database\Eloquent\Builder;
-use MoonShine\Contracts\Core\TypeCasts\DataWrapperContract;
 use MoonShine\Laravel\Resources\ModelResource;
 use MoonShine\MenuManager\Attributes\Group;
 use MoonShine\MenuManager\Attributes\Order;
 use MoonShine\Support\Attributes\Icon;
-use Services\CatalogImport\CategoryRegistry;
 
 /**
  * @extends ModelResource<Category, CategoryIndexPage, CategoryFormPage, null>
@@ -58,7 +56,7 @@ class CategoryResource extends ModelResource
 
     protected function modifyQueryBuilder(Builder $builder): Builder
     {
-        return $builder->withCount(['products', 'matchRules']);
+        return $builder->withCount(['products']);
     }
 
     protected function deletionGuards(): array
@@ -66,28 +64,5 @@ class CategoryResource extends ModelResource
         return [
             'products' => 'Нельзя удалить категорию: она используется в товарах.',
         ];
-    }
-
-    // RelationRepeater сохраняет и удаляет правила через построитель запросов без событий Eloquent. Явная
-    // очистка кеша обеспечивает актуальность реестра независимо от порядка событий родительской Category.
-    protected function afterCreated(DataWrapperContract $item): DataWrapperContract
-    {
-        CategoryRegistry::flush();
-
-        return $item;
-    }
-
-    protected function afterUpdated(DataWrapperContract $item): DataWrapperContract
-    {
-        CategoryRegistry::flush();
-
-        return $item;
-    }
-
-    protected function afterDeleted(DataWrapperContract $item): DataWrapperContract
-    {
-        CategoryRegistry::flush();
-
-        return $item;
     }
 }

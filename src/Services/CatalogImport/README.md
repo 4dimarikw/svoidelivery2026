@@ -23,8 +23,8 @@ php artisan db:seed --class=ContainerSeeder
 
 `CategorySeeder` гарантирует наличие исходного набора категорий
 (`firstOrCreate` по slug, никогда не перезаписывает существующие) — не
-источник правды для резолва. Реестр, которым пользуется парсер, живёт в БД
-(`categories` + `category_match_rules`) и читается через `CategoryRegistry` —
+источник правды для резолва. Реестр, которым пользуется парсер, объединяет БД и конфиг
+(`categories` + `config/category_matching.php`) и читается через `CategoryRegistry` —
 см. §4 «Изменить определение категории или добавить новую» ниже.
 
 ### Команды
@@ -162,7 +162,7 @@ ImportReport (счётчики + warnings)
 |---|---|
 | `CsvReader` | Открывает файл, конвертирует Windows-1251→UTF-8, отдаёт `RawRow` через generator |
 | `CsvParserService` | Оркестратор: итерирует строки, запускает pipeline, формирует `ImportReport` |
-| `CategoryRegistry` | Типизированный доступ к реестру категорий (БД: `categories`+`category_match_rules`, кэшируется) + `CatalogImportSettings` |
+| `CategoryRegistry` | Типизированный доступ к реестру категорий (БД: `categories` + конфиг правил, кэшируется) + `CatalogImportSettings` |
 | `CategorySlugResolver` | Резолвит slug категории из сырых колонок CSV через `CategoryRegistry`, без обращения к БД |
 | `LookupCache` | Per-import кэш `Category`/`Container` — устраняет N+1 в Resolve*-стейджах |
 | `ImportContext` | Mutable-объект, передаётся между стейджами; содержит `RawRow`, резолвенные модели (`brand`, `category`, `container`, `volume`, `beerStyle`, `product`, `untappdBeer`) и буфер `$attributes` |
@@ -355,37 +355,27 @@ $productData = [
 
 ### 4. Изменить определение категории или добавить новую
 
-Категория определяется `CategorySlugResolver` (используется и `NormalizeRowStage` для
-price-exemption, и `ResolveCategoryStage` для резолва модели) из реестра,
-который читает `CategoryRegistry` — единственная точка доступа. Реестр живёт
-в БД (`categories` + `category_match_rules`), не в конфиге, и редактируется
-из MoonShine («Категории» в разделе «Каталог»):
+Категория определяется `CategorySlugResolver` через `CategoryRegistry`.
+Категории и флаги импорта остаются в БД и редактируются в MoonShine.
+Правила хранятся в `config/category_matching.php`: список `rules` с полями
+`slug`, `type`, `match_when`, `value`, `priority`, `is_active`.
+Их меняет разработчик; после деплоя нужно обновить кеш конфигурации и перезапустить workers.
 
-- флаги импорта (`expects_container`/`expects_volume`/`price_exempt`/
-  `default_brand`/`name_from_article`/`container_code`) — на вкладке «Импорт»
-  формы категории;
-- `match`-правила резолва slug (тип `alcohol`/`contains`/`accessory_title`,
-  `match_when`, `value`, `priority`) — на вкладке «Правила резолва», через
-  репитер над `category_match_rules`; порядок проверки = `priority ASC`;
-- глобальные маркеры сегментов (`alcohol_marker`/`accessory_marker`/
-  `advent_marker`/`fallback_slug`) — отдельная страница настроек импорта
-  в MoonShine (`Infrastructure\Settings\CatalogImportSettings`).
+Порядок правил — priority ASC, при равенстве порядок списка. Порядок ветвей
+не меняется: alcohol → contains → accessory_title → fallback. Для аксессуаров
+побеждает самое левое совпадение в названии; priority не отменяет этот принцип.
+Категория существующего товара при повторном импорте не перезаписывается.
 
-Чтобы добавить категорию: создай запись в «Категории», заполни нужные флаги
-и добавь правила резолва. Изменения читаются сразу — `CategoryRegistry`
-кэширует реестр целиком и сбрасывает кэш по `saved`/`deleted` на `Category`/
-`CategoryMatchRule`. Инварианты, которые раньше держались «правильным
-порядком в конфиге» (не больше одного активного `alcohol`-правила на каждый
-`match_when`, уникальность `accessory_title`-значений), теперь проверяет
-`php artisan catalog:validate-registry` — гоняй её после правок вручную в БД
-или перед импортом. Отключить `fallback_slug`-категорию (`is_active=false`) —
-штатный способ скрыть нераспознанные товары с витрины (см.
-`ProductBuilder::inCategories()`): валидатор об этом только предупреждает,
-импорт не блокирует.
+Маркеры и fallback остаются в `CatalogImportSettings`. Команда
+`php artisan catalog:validate-registry` проверяет структуру правил, конфликты
+и существование категорий; импорт вызывает её автоматически.
+Неактивная fallback-категория допустима: это скрывает товары с витрины.
 
-`database/seeders/CategorySeeder.php` только гарантирует наличие исходного
-набора категорий (`firstOrCreate` по slug, никогда не перезаписывает) — не
-источник правды для резолва, как раньше.
+`CategoryRegistry` кеширует только категории; события Category сбрасывают кеш.
+Чтобы добавить новую категорию, обеспечьте её наличие в БД до включения правила.
+`CategorySeeder` сохраняет изменения существующих категорий.
+
+Переход существующих баз описан в [инструкции](../../../docs/category-matching-config.md).
 
 ### 5. Отключить или переставить стейдж
 
