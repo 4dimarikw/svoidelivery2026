@@ -34,7 +34,8 @@
         "spatie/laravel-sluggable": "^4.0",
         "spatie/simple-excel": "^3.10",
         "visual-ideas/moonshine-spatie-medialibrary": "^4.1",
-        "yurizoom/moonshine-scheduling": "^3.0"
+        "yurizoom/moonshine-scheduling": "^3.0",
+        "ext-pdo": "*"
     },
     "require-dev": {
         "barryvdh/laravel-debugbar": "^4.4",

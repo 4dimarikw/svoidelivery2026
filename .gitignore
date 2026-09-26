@@ -25,3 +25,4 @@ Homestead.yaml
 Thumbs.db
 /data
 /database/seeders/data/*.local.php
+/reports/
