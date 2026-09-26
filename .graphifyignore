@@ -1,0 +1,15 @@
+.pnpm-store/
+public/vendor/
+node_modules/
+vendor/
+graphify-out/
+public/build/
+public/storage/
+bootstrap/cache/
+storage/
+.git/
+.idea/
+.phpunit.cache/
+_ide_helper.php
+.env
+.env.*
