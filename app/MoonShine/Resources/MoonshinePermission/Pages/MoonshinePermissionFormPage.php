@@ -6,17 +6,16 @@ namespace App\MoonShine\Resources\MoonshinePermission\Pages;
 
 use App\MoonShine\Resources\MoonshinePermission\MoonshinePermissionResource;
 use App\MoonShine\Resources\MoonShineUserRole\MoonShineUserRoleResource;
+use App\MoonShine\Support\PermissionData;
+use App\MoonShine\Support\PermissionModels;
 use MoonShine\Contracts\Core\TypeCasts\DataWrapperContract;
 use MoonShine\Contracts\UI\ComponentContract;
 use MoonShine\Contracts\UI\FieldContract;
 use MoonShine\Contracts\UI\FormBuilderContract;
 use MoonShine\Laravel\Fields\Relationships\BelongsTo;
 use MoonShine\Laravel\Pages\Crud\FormPage;
-use MoonShine\Laravel\Resources\ModelResource;
-use MoonShine\Support\Enums\Ability;
 use MoonShine\Support\ListOf;
 use MoonShine\UI\Components\FormBuilder;
-use MoonShine\UI\Fields\Enum;
 use MoonShine\UI\Fields\ID;
 use MoonShine\UI\Fields\Json;
 use MoonShine\UI\Fields\Select;
@@ -37,39 +36,20 @@ class MoonshinePermissionFormPage extends FormPage
     {
         return [
             ID::make('id'),
-            BelongsTo::make('Role', 'moonshineUserRole', resource: MoonShineUserRoleResource::class),
-            Select::make('Model', 'model')
-                ->options($this->modelOptions())
-                ->searchable(),
-            Json::make('Permissions', 'permissions')
-                ->keyValue(
-                    keyField: Enum::make('Key')
-                        ->attach(Ability::class),
-                    valueField: Switcher::make('Value'),
-                ),
+            BelongsTo::make('Роль', 'moonshineUserRole', resource: MoonShineUserRoleResource::class),
+            Select::make('Модель', 'model')
+                ->options(app(PermissionModels::class)->options())
+                ->searchable()
+                ->hint('Права не отменяют ограничения меню для SuperUser. Особые ограничения указаны рядом с названием модели.'),
+            Json::make('Разрешённые действия', 'permissions')
+                ->object()
+                ->fields(array_map(
+                    static fn (string $key, string $label): Switcher => Switcher::make($label, $key)->default(false),
+                    array_keys(PermissionData::LABELS),
+                    array_values(PermissionData::LABELS),
+                ))
+                ->default(array_fill_keys(array_keys(PermissionData::LABELS), false)),
         ];
-    }
-
-    /**
-     * @return array<class-string, string>
-     */
-    private function modelOptions(): array
-    {
-        $options = [];
-
-        foreach (moonshine()->getResources() as $resource) {
-            if (! $resource instanceof ModelResource) {
-                continue;
-            }
-
-            $model = $resource->getModel()::class;
-
-            $options[$model] = class_basename($model).' — '.$resource->getTitle();
-        }
-
-        asort($options);
-
-        return $options;
     }
 
     protected function buttons(): ListOf
@@ -84,11 +64,7 @@ class MoonshinePermissionFormPage extends FormPage
 
     protected function rules(DataWrapperContract $item): array
     {
-        return [
-            'moonshine_user_role_id' => ['required', 'integer', 'exists:moonshine_user_roles,id'],
-            'model' => ['required', 'string'],
-            'permissions' => ['nullable', 'array'],
-        ];
+        return app(PermissionData::class)->rules($item->getKey(), request('moonshine_user_role_id'));
     }
 
     /**

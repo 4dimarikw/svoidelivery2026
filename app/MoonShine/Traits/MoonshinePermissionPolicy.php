@@ -2,7 +2,7 @@
 
 namespace App\MoonShine\Traits;
 
-use App\MoonShine\Models\MoonshinePermission;
+use App\MoonShine\Support\PermissionCache;
 use Illuminate\Auth\Access\HandlesAuthorization;
 use Illuminate\Database\Eloquent\Model;
 use MoonShine\Laravel\Models\MoonshineUser;
@@ -52,8 +52,6 @@ trait MoonshinePermissionPolicy
         return $this->isCan($moonshineUser, $model::class, Ability::MASS_DELETE);
     }
 
-    private static array $cache = [];
-
     protected function isCan(MoonshineUser $moonshineUser, string $model, Ability $ability): bool
     {
         if ($moonshineUser->isSuperUser()) {
@@ -66,18 +64,8 @@ trait MoonshinePermissionPolicy
             return false;
         }
 
-        $key = $roleId.':'.$model;
+        $permissions = app(PermissionCache::class)->get($roleId, $model);
 
-        $query = MoonshinePermission::query()
-            ->where('moonshine_user_role_id', $moonshineUser->moonshineUserRole->id)
-            ->where('model', $model);
-
-        // В тестах роли пересоздаются между кейсами под RefreshDatabase, а id
-        // переиспользуются — статический кеш иначе отдал бы права чужого теста.
-        $permission = app()->runningUnitTests()
-            ? $query->first()
-            : self::$cache[$key] ??= $query->first();
-
-        return (bool) ($permission?->permissions[$ability->value] ?? false);
+        return (bool) ($permissions[$ability->value] ?? false);
     }
 }

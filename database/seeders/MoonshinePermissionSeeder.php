@@ -114,9 +114,7 @@ class MoonshinePermissionSeeder extends Seeder
     {
         $roleId = MoonshineUserRole::query()->firstOrCreate(['name' => 'Manager'])->getKey();
 
-        // updateOrCreate по паре (роль, модель) — в таблице нет unique-индекса
-        // на эту пару, так что при ручном создании дубля через UI сидер не
-        // подчистит хвост, а лишь обновит первую найденную строку.
+        // Уникальный индекс гарантирует одну запись на пару (роль, модель).
         foreach (self::PERMISSIONS as $model => $abilities) {
             MoonshinePermission::query()->updateOrCreate(
                 ['moonshine_user_role_id' => $roleId, 'model' => $model],

@@ -8,6 +8,7 @@ use App\MoonShine\Models\MoonshinePermission;
 use App\MoonShine\Resources\MoonshinePermission\Pages\MoonshinePermissionDetailPage;
 use App\MoonShine\Resources\MoonshinePermission\Pages\MoonshinePermissionFormPage;
 use App\MoonShine\Resources\MoonshinePermission\Pages\MoonshinePermissionIndexPage;
+use App\MoonShine\Support\PermissionData;
 use MoonShine\Contracts\Core\PageContract;
 use MoonShine\Contracts\UI\FieldContract;
 use MoonShine\Crud\Handlers\Handler;
@@ -32,6 +33,13 @@ use MoonShine\UI\Fields\Text;
 class MoonshinePermissionResource extends ModelResource implements HasImportExportContract
 {
     use ImportExportConcern;
+
+    public function beforeImported(mixed $item): mixed
+    {
+        $item->permissions = app(PermissionData::class)->validate($item);
+
+        return $item;
+    }
 
     protected string $model = MoonshinePermission::class;
 
