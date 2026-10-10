@@ -21,7 +21,7 @@
         "laravel/socialite": "^5.29",
         "laravel/tinker": "^2.10.1",
         "league/flysystem-ftp": "^3.31",
-        "lee-to/laravel-seo-by-url": "^2.2",
+        "dimarik/laravel-seo": "^1.0.1",
         "mews/purifier": "^3.4",
         "moonshine/ace": "^1.0",
         "moonshine/import-export": "^2.1",
@@ -50,6 +50,7 @@
         "phpunit/phpunit": "^11.5.50"
     },
     "repositories": [
+        { "type": "vcs", "url": "https://github.com/4dimarikw/laravel-seo.git" },
         {
             "type": "vcs",
             "url": "https://github.com/4dimarikw/laravel-content-cms.git"

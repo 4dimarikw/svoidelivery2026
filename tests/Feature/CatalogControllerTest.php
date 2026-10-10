@@ -928,11 +928,20 @@ class CatalogControllerTest extends TestCase
         DB::enableQueryLog();
         $this->get(route('home', ['sort' => 'rating_desc']))->assertOk();
         $queryCount = count(DB::getQueryLog());
+        $seoQueryCount = count(array_filter(DB::getQueryLog(), fn (array $query): bool => str_contains($query['query'], 'from `seo`')));
         DB::disableQueryLog();
 
         // Коррелированный подзапрос сортировки не увеличивает число запросов пропорционально товарам. Бюджет
         // учитывает общую загрузку категорий, настроек сайта и подвала.
-        $this->assertLessThan(18, $queryCount, 'Сортировка по рейтингу не должна добавлять N+1.');
+        // Новый SEO-пакет читает метаданные и сохранённый HTML отдельными фиксированными запросами.
+        $this->assertSame(2, $seoQueryCount);
+        $this->assertLessThan(18, $queryCount - $seoQueryCount, 'Сортировка по рейтингу не должна добавлять N+1.');
+        Product::factory()->count(10)->create();
+        DB::enableQueryLog();
+        DB::flushQueryLog();
+        $this->get(route('home', ['sort' => 'rating_desc']))->assertOk();
+        $this->assertLessThanOrEqual($queryCount, count(DB::getQueryLog()));
+        DB::disableQueryLog();
     }
 
     public function test_partial_request_returns_only_cards_with_next_page_header(): void
@@ -1005,6 +1014,7 @@ class CatalogControllerTest extends TestCase
         DB::enableQueryLog();
         $this->get(route('home'))->assertOk();
         $queryCount = count(DB::getQueryLog());
+        $seoQueryCount = count(array_filter(DB::getQueryLog(), fn (array $query): bool => str_contains($query['query'], 'from `seo`')));
         DB::disableQueryLog();
 
         // Товары + справочники фильтров (категории/производители/объёмы/тара) +
@@ -1015,6 +1025,13 @@ class CatalogControllerTest extends TestCase
         // components.layouts.footer) — фиксированное небольшое число
         // запросов независимо от количества товаров.
         // F02: ещё один общий eager-load категорий для правила покупки.
-        $this->assertLessThan(19, $queryCount, 'Ожидались фиксированные запросы без N+1 по manufacturer/volume/container/category.');
+        $this->assertSame(2, $seoQueryCount);
+        $this->assertLessThan(19, $queryCount - $seoQueryCount, 'Ожидались фиксированные запросы без N+1 по manufacturer/volume/container/category.');
+        Product::factory()->count(8)->create();
+        DB::enableQueryLog();
+        DB::flushQueryLog();
+        $this->get(route('home'))->assertOk();
+        $this->assertLessThanOrEqual($queryCount, count(DB::getQueryLog()));
+        DB::disableQueryLog();
     }
 }

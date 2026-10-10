@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Domain\Catalog\Actions;
 
+use Dimarik\LaravelSeo\Models\Seo;
 use Domain\Catalog\Models\Product;
-use Leeto\Seo\Models\Seo;
 
 /**
  * Синхронизирует SEO товара: title, description, keywords и text с OG и JSON-LD. Модель определяет момент
@@ -174,12 +174,8 @@ final class SyncProductSeoAction
             $og['article:published_time'] = $product->created_at->toJSON();
         }
 
-        // htmlspecialchars на каждое значение — products.name/description
-        // (HtmlEntityDecoder-каст) приходят из 1С декодированными, то есть
-        // потенциально с сырыми <, >, &, кавычками. Пакетный
-        // SeoMeta::metaTag() сам пишет атрибуты без экранирования (см.
-        // app.blade.php — поэтому там не используется @seo), здесь строим
-        // руками — значит экранируем сами.
+        // Значения из 1С декодированы и могут содержать HTML-символы.
+        // Поле text выводится как готовая разметка, поэтому экранируем атрибуты здесь.
         $ogHtml = collect($og)
             ->map(fn (string $content, string $property): string => sprintf(
                 '<meta property="%s" content="%s">',

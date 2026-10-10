@@ -205,11 +205,11 @@ final class ProductFormPage extends FormPage
                 'required', 'string', 'max:64',
                 Rule::unique('products', 'external_code')->ignore($item->getKey()),
             ],
-            'name' => ['required', 'string', 'max:512'],
+            'name' => ['required', 'string', 'max:128'],
             'article' => ['nullable', 'string', 'max:255'],
             'slug' => [
                 ...$item->getKey() !== null ? ['required'] : ['nullable'],
-                'string', 'max:255',
+                'string', 'max:'.Product::SLUG_MAX_LENGTH, 'regex:/\A[a-z0-9-]+\z/',
                 Rule::unique('products', 'slug')->ignore($item->getKey()),
             ],
             'category_id' => ['required', 'integer', 'exists:categories,id'],

@@ -4,16 +4,15 @@ declare(strict_types=1);
 
 namespace App\MoonShine\Resources\Seo\Pages;
 
+use App\MoonShine\Resources\Seo\SeoFields;
 use App\MoonShine\Resources\Seo\SeoResource;
-use Leeto\Seo\Models\Seo;
+use Dimarik\LaravelSeo\Models\Seo;
 use MoonShine\Contracts\UI\ComponentContract;
 use MoonShine\Contracts\UI\FieldContract;
 use MoonShine\Laravel\Pages\Crud\IndexPage;
 use MoonShine\Support\ListOf;
 use MoonShine\UI\Components\ActionButton;
 use MoonShine\UI\Components\Table\TableBuilder;
-use MoonShine\UI\Fields\ID;
-use MoonShine\UI\Fields\Text;
 
 /**
  * @extends IndexPage<SeoResource>
@@ -27,16 +26,7 @@ class SeoIndexPage extends IndexPage
      */
     protected function fields(): iterable
     {
-        return [
-            ID::make()
-                ->sortable(),
-            Text::make('Url'),
-            Text::make('Title'),
-            Text::make('Description')
-                ->columnSelection(hideOnInit: true),
-            Text::make('Keywords')
-                ->columnSelection(hideOnInit: true),
-        ];
+        return SeoFields::index();
     }
 
     /**
@@ -44,17 +34,14 @@ class SeoIndexPage extends IndexPage
      */
     public function filters(): array
     {
-        return [
-            Text::make('Url'),
-            Text::make('Title'),
-        ];
+        return SeoFields::filters();
     }
 
     public function buttons(): ListOf
     {
         return parent::buttons()
             ->add(
-                ActionButton::make('На страницу', static fn (Seo $item) => $item->url)
+                ActionButton::make(__('laravel-seo::moonshine.open_page'), static fn (Seo $item) => $item->url)
                     ->icon('arrow-top-right-on-square')
                     ->blank()
             );

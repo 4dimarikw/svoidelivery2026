@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use Dimarik\LaravelSeo\Models\Seo;
 use Domain\Catalog\Models\BeerProductDetail;
 use Domain\Catalog\Models\BeerStyle;
 use Domain\Catalog\Models\Container;
@@ -11,7 +12,6 @@ use Domain\Catalog\Models\Volume;
 use Domain\Untappd\Models\UntappdBeer;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
-use Leeto\Seo\Models\Seo;
 use Tests\TestCase;
 
 class SyncProductSeoCommandTest extends TestCase

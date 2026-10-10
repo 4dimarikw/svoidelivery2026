@@ -6,6 +6,7 @@ namespace Tests\Feature\Order;
 
 use App\Events\Order\OrderCreated;
 use App\Events\Order\OrderStatusChanged;
+use Dimarik\LaravelSeo\Models\Seo;
 use Domain\Auth\Models\User;
 use Domain\Cart\Models\Cart;
 use Domain\Catalog\Models\Product;
@@ -17,7 +18,6 @@ use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Http;
-use Leeto\Seo\Models\Seo;
 use PDOException;
 use Symfony\Component\Process\Process;
 use Tests\TestCase;

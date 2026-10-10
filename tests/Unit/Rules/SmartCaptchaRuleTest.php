@@ -4,11 +4,13 @@ namespace Tests\Unit\Rules;
 
 use App\Events\Security\CaptchaFailOpen;
 use Illuminate\Http\Client\ConnectionException;
+use Illuminate\Log\LogManager;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use Infrastructure\Rules\SmartCaptchaRule;
+use Mockery;
 use Tests\TestCase;
 
 /**
@@ -20,6 +22,13 @@ use Tests\TestCase;
  */
 class SmartCaptchaRuleTest extends TestCase
 {
+    private function expectSecurityLog(string $level, string $message): void
+    {
+        Log::swap(Mockery::mock(LogManager::class));
+        Log::shouldReceive('channel')->with('security')->once()->andReturnSelf();
+        Log::shouldReceive($level)->with($message, Mockery::type('array'))->once();
+    }
+
     private function validate(?string $token): \Illuminate\Contracts\Validation\Validator
     {
         $data = $token === null ? [] : ['smart-token' => $token];
@@ -57,8 +66,7 @@ class SmartCaptchaRuleTest extends TestCase
     {
         config(['security.smart_captcha.enabled' => true, 'security.smart_captcha.server_key' => '']);
         Http::fake();
-        Log::shouldReceive('channel')->with('security')->once()->andReturnSelf();
-        Log::shouldReceive('warning')->once();
+        $this->expectSecurityLog('warning', 'SmartCaptcha server key not configured');
 
         $this->assertTrue($this->validate('some-token')->passes());
         Http::assertNothingSent();
@@ -97,8 +105,7 @@ class SmartCaptchaRuleTest extends TestCase
         Http::fake([
             'smartcaptcha.cloud.yandex.ru/*' => Http::response('', 500),
         ]);
-        Log::shouldReceive('channel')->with('security')->once()->andReturnSelf();
-        Log::shouldReceive('warning')->once();
+        $this->expectSecurityLog('warning', 'SmartCaptcha API returned non-2xx response');
 
         $this->assertTrue($this->validate('any-token')->passes());
     }
@@ -109,8 +116,7 @@ class SmartCaptchaRuleTest extends TestCase
         Http::fake(function () {
             throw new ConnectionException('timed out');
         });
-        Log::shouldReceive('channel')->with('security')->once()->andReturnSelf();
-        Log::shouldReceive('error')->once();
+        $this->expectSecurityLog('error', 'SmartCaptcha validation request failed');
 
         $this->assertTrue($this->validate('any-token')->passes());
     }

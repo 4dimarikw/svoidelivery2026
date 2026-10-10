@@ -6,14 +6,8 @@ use Domain\Auth\Models\User;
 use Domain\Catalog\Models\Product;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
-use Leeto\Seo\SeoManager;
 use Tests\TestCase;
 
-/**
- * Начальные SEO-записи создаются через DB::table(), чтобы события модели не инициализировали SeoManager до
- * HTTP-запроса. Контейнер теста общий для подготовки данных и запроса; singleton должен запомнить URL
- * проверяемого запроса.
- */
 class SeoRenderingTest extends TestCase
 {
     use RefreshDatabase;
@@ -43,14 +37,12 @@ class SeoRenderingTest extends TestCase
         $response->assertDontSee('<title>'.__('account.cart.title').'</title>', false);
     }
 
-    public function test_page_without_a_seo_row_shows_app_name_not_its_own_title_prop(): void
+    public function test_page_without_a_seo_row_uses_its_title_prop(): void
     {
-        // Без SEO-записи пакет возвращает config('seo.default.title'), поэтому оператор ?? не использует title
-        // страницы. Проверяется отображение APP_NAME по умолчанию.
         $response = $this->actingAs(User::factory()->create())->get(route('cart.index'));
 
         $response->assertOk();
-        $response->assertSee('<title>'.config('app.name').'</title>', false);
+        $response->assertSee('<title>'.__('account.cart.title').'</title>', false);
     }
 
     public function test_home_page_falls_back_to_app_name_without_a_seo_row(): void
@@ -91,20 +83,57 @@ class SeoRenderingTest extends TestCase
 
     public function test_product_page_renders_the_seo_text_block_raw(): void
     {
-        // Product::factory()->create() сам пишет строку seo через
-        // Product::booted() -> SyncProductSeoAction — тот же Seo::updateOrCreate(),
-        // тот же created()/updated()-хук, что и в комментарии класса выше:
-        // это тоже досрочно резолвит singleton SeoManager (внутри Seo::flushCache()),
-        // на этот раз ДО того, как мы вообще начали GET-запрос к странице товара.
-        // forgetInstance() заставляет seo() резолвиться заново внутри
-        // $this->get() ниже, против настоящего url страницы товара.
         $product = Product::factory()->create();
-        $this->app->forgetInstance(SeoManager::class);
 
         $response = $this->get(route('product.show', $product));
 
         $response->assertOk();
         $response->assertSee('<meta property="og:title"', false);
         $response->assertSee('<script type="application/ld+json">', false);
+    }
+
+    public function test_site_indexing_is_disabled_for_pages_redirects_and_errors(): void
+    {
+        $this->assertFalse(config('seo.indexable'));
+        $this->get(route('about'))
+            ->assertOk()
+            ->assertHeader('X-Robots-Tag', 'noindex, nofollow')
+            ->assertSee('<meta name="robots" content="noindex, nofollow">', false);
+        $this->get(route('cart.index'))
+            ->assertRedirect()
+            ->assertHeader('X-Robots-Tag', 'noindex, nofollow');
+        $this->get('/missing-seo-test-page')
+            ->assertNotFound()
+            ->assertHeader('X-Robots-Tag', 'noindex, nofollow')
+            ->assertHeader('X-Content-Type-Options', 'nosniff');
+    }
+
+    public function test_robots_allows_crawling_to_read_noindex_headers(): void
+    {
+        $this->get('/robots.txt')
+            ->assertOk()
+            ->assertHeader('X-Robots-Tag', 'noindex, nofollow')
+            ->assertSee("User-agent: *\nDisallow:", false)
+            ->assertDontSee('Sitemap:', false);
+    }
+
+    public function test_metadata_is_escaped_and_canonical_is_rendered_once(): void
+    {
+        $this->seedSeoRow('/about', 'Title <script>alert("x")</script>', 'Description "quoted" <tag>');
+        $response = $this->get(route('about'))->assertOk();
+        $response->assertSee('<title>'.e('Title <script>alert("x")</script>').'</title>', false);
+        $response->assertSee('content="'.e('Description "quoted" <tag>').'"', false);
+        $response->assertSee('<link rel="canonical" href="'.route('about').'">', false);
+        $this->assertSame(1, substr_count($response->getContent(), '<title>'));
+        $this->assertSame(1, substr_count($response->getContent(), 'rel="canonical"'));
+    }
+
+    public function test_query_specific_record_wins_and_changes_are_visible_on_next_request(): void
+    {
+        $this->seedSeoRow('/about', 'Path title');
+        $this->seedSeoRow('/about?source=test', 'Query title');
+        $this->get('/about?source=test')->assertSee('<title>Query title</title>', false);
+        DB::table('seo')->where('url', '/about?source=test')->update(['title' => 'Updated title']);
+        $this->get('/about?source=test')->assertSee('<title>Updated title</title>', false);
     }
 }

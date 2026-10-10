@@ -11,18 +11,28 @@
     <link rel="icon" href="/favicon.ico">
     <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 
-    <title>{{ (seo()->meta()->title() ?? $title  ?: config('app.name')) }}</title>
-
-    @if ($seoDescription = seo()->meta()->description())
-        <meta name="description" content="{{ $seoDescription }}">
-    @endif
-    @if ($seoKeywords = seo()->meta()->keywords())
-        <meta name="keywords" content="{{ $seoKeywords }}">
-    @endif
+    @php
+        $seoLookupUrl = request()->getRequestUri();
+        $seoMetadata = app(\Dimarik\LaravelSeo\SeoManager::class)->forPage(
+            new \Dimarik\LaravelSeo\SeoPage(
+                lookupUrl: $seoLookupUrl,
+                canonical: request()->url(),
+                title: $title,
+            ),
+        );
+        $seoText = \Dimarik\LaravelSeo\Models\Seo::query()
+            ->whereIn('url', array_unique([$seoLookupUrl, parse_url($seoLookupUrl, PHP_URL_PATH) ?: '/']))
+            ->orderByRaw('CASE WHEN url = ? THEN 0 ELSE 1 END', [$seoLookupUrl])
+            ->first(['text'])?->text;
+    @endphp
+    <x-laravel-seo::meta :metadata="$seoMetadata" />
+    @unless (config('seo.indexable'))
+        <meta name="robots" content="noindex, nofollow">
+    @endunless
     {{-- text — сырой HTML-блок (OG-теги + JSON-LD), собранный и уже
          экранированный на этапе генерации (Domain\Catalog\Actions\SyncProductSeoAction) —
          {!! !!}, не {{ }}: это готовая доверенная разметка, а не пользовательский ввод. --}}
-    @if ($seoText = seo()->meta()->text())
+    @if ($seoText)
         {!! $seoText !!}
     @endif
 

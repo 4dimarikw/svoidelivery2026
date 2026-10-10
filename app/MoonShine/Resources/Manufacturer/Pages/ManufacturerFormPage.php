@@ -45,7 +45,7 @@ final class ManufacturerFormPage extends FormPage
     protected function rules(DataWrapperContract $item): array
     {
         return [
-            'name' => ['required', 'string', 'max:255'],
+            'name' => ['required', 'string', 'max:40'],
             // Slug обязателен при обновлении; при создании пустое значение заполняет обработчик creating модели
             // Manufacturer.
             'slug' => [

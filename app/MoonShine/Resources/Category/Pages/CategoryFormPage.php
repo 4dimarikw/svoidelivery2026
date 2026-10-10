@@ -105,7 +105,7 @@ final class CategoryFormPage extends FormPage
                 'required', 'string', 'max:64',
                 Rule::unique('categories', 'code')->ignore($item->getKey()),
             ],
-            'name' => ['required', 'string', 'max:255'],
+            'name' => ['required', 'string', 'max:32'],
             'slug' => [
                 ...$item->getKey() !== null ? ['required'] : ['nullable'],
                 'string', 'max:255',

@@ -12,9 +12,9 @@ use Illuminate\Support\Facades\DB;
 
 final class CartTransaction
 {
-    public function run(int $userId, Closure $callback, array $productIds = [], ?int $cartId = null): mixed
+    public function run(int $userId, Closure $callback, array $productIds = [], ?int $cartId = null, bool $lockContents = true): mixed
     {
-        return DB::transaction(function () use ($userId, $callback, $productIds, $cartId) {
+        return DB::transaction(function () use ($userId, $callback, $productIds, $cartId, $lockContents) {
             if (User::query()->whereKey($userId)->lockForUpdate()->first() === null) {
                 return null;
             }
@@ -23,6 +23,11 @@ final class CartTransaction
             $cart = Cart::query()->whereKey($targetCartId)->where('user_id', $userId)->lockForUpdate()->first();
             if ($cart === null) {
                 return null;
+            }
+
+            // Выдача токена меняет только корзину, поэтому строки и товары ей не нужны.
+            if (! $lockContents) {
+                return $callback($cart, collect(), collect());
             }
 
             $items = $cart->cartItems()->orderBy('id')->lockForUpdate()->get()->keyBy('product_id');

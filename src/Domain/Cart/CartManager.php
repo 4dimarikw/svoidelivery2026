@@ -63,14 +63,24 @@ final class CartManager
 
     public function checkoutToken(): string
     {
-        return $this->transaction(function (Cart $cart): string {
+        $issueToken = function (Cart $cart): string {
             if ($cart->checkout_token === null) {
                 $cart->checkout_token = (string) Str::uuid();
                 $cart->save();
             }
 
             return $cart->checkout_token;
-        });
+        };
+
+        if ($this->lockedCart !== null) {
+            return $issueToken($this->lockedCart);
+        }
+
+        try {
+            return app(CartTransaction::class)->run((int) auth()->id(), $issueToken, lockContents: false);
+        } finally {
+            $this->items = null;
+        }
     }
 
     private function items(): Collection

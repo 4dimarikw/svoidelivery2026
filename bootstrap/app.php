@@ -4,6 +4,7 @@ use App\Http\Middleware\SecureMoonShineActions;
 use App\Http\Middleware\SecurityHeaders;
 use App\Http\Middleware\TrustedHosts;
 use App\Http\Middleware\TrustedProxies;
+use Dimarik\LaravelSeo\Http\Middleware\PreventSiteIndexing;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -17,6 +18,7 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        $middleware->prepend(PreventSiteIndexing::class);
         $middleware->replace(TrustProxies::class, TrustedProxies::class);
         $middleware->append([TrustedHosts::class, SecurityHeaders::class]);
         $middleware->web(append: [SecureMoonShineActions::class]);
@@ -24,7 +26,10 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->dontFlash(['init_data', 'initData', 'hash', 'auth_date', 'authorization', 'token', 'secret']);
         $exceptions->dontFlash(['smart-token', 'form_loaded_at', '_token']);
-        $exceptions->respond(fn ($response) => SecurityHeaders::apply($response, request()));
+        $exceptions->respond(fn ($response) => app(PreventSiteIndexing::class)->apply(
+            request(),
+            SecurityHeaders::apply($response, request()),
+        ));
         // Self-healing slug (spatie/laravel-sluggable) — не ошибка, а штатный
         // способ сделать редирект на канонический slug (у исключения свой
         // render(), см. StaleSelfHealingUrl::render()); без dontReport() оно

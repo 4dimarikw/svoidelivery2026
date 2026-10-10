@@ -4,20 +4,15 @@ declare(strict_types=1);
 
 namespace App\MoonShine\Resources\Seo\Pages;
 
+use App\MoonShine\Resources\Seo\SeoFields;
 use App\MoonShine\Resources\Seo\SeoResource;
-use Illuminate\Validation\Rule;
-use Leeto\Seo\Models\Seo;
-use Leeto\Seo\Rules\UrlRule;
-use MoonShine\Ace\Fields\Code;
+use Dimarik\LaravelSeo\Models\Seo;
 use MoonShine\Contracts\Core\TypeCasts\DataWrapperContract;
 use MoonShine\Contracts\UI\ComponentContract;
 use MoonShine\Contracts\UI\FieldContract;
 use MoonShine\Laravel\Pages\Crud\FormPage;
 use MoonShine\Support\ListOf;
 use MoonShine\UI\Components\ActionButton;
-use MoonShine\UI\Components\Layout\Box;
-use MoonShine\UI\Fields\ID;
-use MoonShine\UI\Fields\Text;
 
 /**
  * @extends FormPage<SeoResource>
@@ -29,49 +24,22 @@ class SeoFormPage extends FormPage
      */
     protected function fields(): iterable
     {
-        return [
-            Box::make([
-                ID::make(),
-                Text::make('Url')
-                    ->unescape()
-                    ->required(),
-                Text::make('Title')
-                    ->unescape()
-                    ->required(),
-                Text::make('Description')
-                    ->unescape(),
-                Text::make('Keywords')
-                    ->unescape(),
-                Code::make('Text')->language('javascript'),
-            ]),
-        ];
+        return SeoFields::form();
     }
 
     public function buttons(): ListOf
     {
         return parent::buttons()
             ->prepend(
-                ActionButton::make('На страницу', static fn (Seo $item) => $item->url)
+                ActionButton::make(__('laravel-seo::moonshine.open_page'), static fn (Seo $item) => $item->url)
                     ->icon('arrow-top-right-on-square')
                     ->blank()
             );
     }
 
-    /** @param Seo $item */
+    /** @param DataWrapperContract<Seo> $item */
     protected function rules(DataWrapperContract $item): array
     {
-        return [
-            'title' => [
-                'required',
-                'string',
-                'min:3',
-            ],
-            'url' => [
-                'required',
-                'string',
-                new UrlRule,
-                Rule::unique('seo')->ignoreModel($item),
-            ],
-        ];
+        return SeoFields::rules($item);
     }
 }

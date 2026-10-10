@@ -2,13 +2,13 @@
 
 namespace Tests\Feature\CatalogImport;
 
+use Dimarik\LaravelSeo\Models\Seo;
 use Domain\Catalog\Actions\SyncProductSeoAction;
 use Domain\Catalog\Actions\ZeroOutStaleProductsAction;
 use Domain\Catalog\Models\Product;
 use Domain\Logging\Models\EventLog;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
-use Leeto\Seo\Models\Seo;
 use Tests\Support\BuildsCatalogCsv;
 use Tests\TestCase;
 

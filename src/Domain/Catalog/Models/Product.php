@@ -3,6 +3,7 @@
 namespace Domain\Catalog\Models;
 
 use Database\Factories\Catalog\ProductFactory;
+use Domain\Catalog\Actions\GenerateProductSlugAction;
 use Domain\Catalog\Actions\SyncProductSeoAction;
 use Domain\Catalog\Builders\ProductBuilder;
 use Domain\Catalog\Enums\ProductStatus;
@@ -24,6 +25,7 @@ use Spatie\MediaLibrary\InteractsWithMedia;
 use Spatie\MediaLibrary\MediaCollections\File;
 use Spatie\MediaLibrary\MediaCollections\Models\Collections\MediaCollection;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
+use Spatie\Sluggable\Actions\GenerateSlugAction;
 use Spatie\Sluggable\HasSlug;
 use Spatie\Sluggable\SlugOptions;
 use Support\Casts\HtmlEntityDecoder;
@@ -189,12 +191,21 @@ class Product extends Model implements HasMedia
         static::deleted(fn (Product $product) => app(SyncProductSeoAction::class)->forget($product));
     }
 
+    public const int SLUG_MAX_LENGTH = 200;
+
+    protected function generateSlugAction(): GenerateSlugAction
+    {
+        return app(GenerateProductSlugAction::class);
+    }
+
     public function getSlugOptions(): SlugOptions
     {
         return SlugOptions::create()
             ->generateSlugsFrom(fn (Product $product) => $product->name ?: $product->article)
             ->saveSlugsTo('slug')
             ->usingSeparator('-')
+            ->slugsShouldBeNoLongerThan(self::SLUG_MAX_LENGTH)
+            ->skipGenerateWhen(fn (): bool => $this->exists && ! $this->isDirty(['name', 'article', 'slug']))
             ->selfHealing();
     }
 

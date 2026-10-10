@@ -52,7 +52,7 @@ final class VolumeFormPage extends FormPage
                 'min:1',
                 Rule::unique('volumes', 'milliliters')->ignore($item->getKey()),
             ],
-            'label' => ['required', 'string', 'max:32'],
+            'label' => ['required', 'string', 'max:16'],
         ];
     }
 }

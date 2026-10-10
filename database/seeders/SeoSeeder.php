@@ -2,8 +2,8 @@
 
 namespace Database\Seeders;
 
+use Dimarik\LaravelSeo\Models\Seo;
 use Illuminate\Database\Seeder;
-use Leeto\Seo\Models\Seo;
 
 class SeoSeeder extends Seeder
 {

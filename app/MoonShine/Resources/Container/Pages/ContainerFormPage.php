@@ -51,8 +51,8 @@ final class ContainerFormPage extends FormPage
                 'required', 'string', 'max:64',
                 Rule::unique('containers', 'code')->ignore($item->getKey()),
             ],
-            'name' => ['required', 'string', 'max:255'],
-            'label' => ['nullable', 'string', 'max:64'],
+            'name' => ['required', 'string', 'max:24'],
+            'label' => ['nullable', 'string', 'max:24'],
         ];
     }
 }

@@ -7,7 +7,7 @@ namespace App\MoonShine\Resources\Seo;
 use App\MoonShine\Resources\Seo\Pages\SeoDetailPage;
 use App\MoonShine\Resources\Seo\Pages\SeoFormPage;
 use App\MoonShine\Resources\Seo\Pages\SeoIndexPage;
-use Leeto\Seo\Models\Seo;
+use Dimarik\LaravelSeo\Models\Seo;
 use MoonShine\Contracts\Core\PageContract;
 use MoonShine\Laravel\Resources\ModelResource;
 use MoonShine\MenuManager\Attributes\Group;
@@ -15,6 +15,8 @@ use MoonShine\MenuManager\Attributes\Order;
 use MoonShine\Support\Attributes\Icon;
 
 /**
+ * Доступ к SEO разрешён только SuperUser через зарегистрированную SeoPolicy.
+ *
  * @extends ModelResource<Seo, SeoIndexPage, SeoFormPage, SeoDetailPage>
  */
 #[Icon('star')]
@@ -22,9 +24,11 @@ use MoonShine\Support\Attributes\Icon;
 #[Order(10)]
 class SeoResource extends ModelResource
 {
+    protected bool $withPolicy = true;
+
     protected string $model = Seo::class;
 
-    protected string $title = 'Seo';
+    protected string $title = 'SEO';
 
     protected string $column = 'title';
 
