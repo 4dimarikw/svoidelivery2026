@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\MoonShine\Resources\MoonshinePermission;
 
+use App\MoonShine\Handlers\PermissionImportHandler;
 use App\MoonShine\Models\MoonshinePermission;
 use App\MoonShine\Resources\MoonshinePermission\Pages\MoonshinePermissionDetailPage;
 use App\MoonShine\Resources\MoonshinePermission\Pages\MoonshinePermissionFormPage;
@@ -14,7 +15,6 @@ use MoonShine\Contracts\UI\FieldContract;
 use MoonShine\Crud\Handlers\Handler;
 use MoonShine\ImportExport\Contracts\HasImportExportContract;
 use MoonShine\ImportExport\ExportHandler;
-use MoonShine\ImportExport\ImportHandler;
 use MoonShine\ImportExport\Traits\ImportExportConcern;
 use MoonShine\Laravel\Resources\ModelResource;
 use MoonShine\MenuManager\Attributes\Group;
@@ -95,7 +95,8 @@ class MoonshinePermissionResource extends ModelResource implements HasImportExpo
 
     protected function import(): ?Handler
     {
-        return ImportHandler::make(__('moonshine::ui.import'))
+        return PermissionImportHandler::make(__('moonshine::ui.import'))
+            ->alias('import-handler')
             ->notifyUsers(static fn (): array => [auth()->id()])
             ->disk('public')
             ->dir('/imports')

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Feature\MoonShine;
 
+use App\MoonShine\Handlers\PermissionImportHandler;
 use App\MoonShine\Models\MoonshinePermission;
 use App\MoonShine\Resources\Favorite\FavoriteResource;
 use App\MoonShine\Resources\MoonshinePermission\MoonshinePermissionResource;
@@ -16,9 +17,11 @@ use Domain\Catalog\Models\Product;
 use Domain\Favorite\Models\Favorite;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Session\Middleware\AuthenticateSession;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
 use MoonShine\ImportExport\ImportHandler;
@@ -188,6 +191,56 @@ class MoonshinePermissionsTest extends TestCase
             if (is_file($path)) {
                 unlink($path);
             }
+        }
+    }
+
+    public function test_rejected_uploaded_import_is_deleted_and_preserves_existing_permissions(): void
+    {
+        Storage::fake('public');
+        $staff = $this->staff();
+        $permission = $this->permission($staff, ['view' => true]);
+        $csv = 'id;moonshine_user_role_id;model;permissions'."\n"
+            .$permission->id.';'.$staff->moonshine_user_role_id.';'.Product::class.';"{""view"":""invalid""}"'."\n";
+
+        $this->actingAs($this->staff(true), 'moonshine')->postJson(
+            '/admin/resource/moonshine-permission-resource/handler/import-handler',
+            ['import_file' => UploadedFile::fake()->createWithContent('permissions.csv', $csv)],
+        )->assertUnprocessable()->assertJsonValidationErrors('permissions.view');
+
+        self::assertSame(['view' => true], $permission->refresh()->permissions);
+        self::assertSame(1, MoonshinePermission::where('moonshine_user_role_id', $staff->moonshine_user_role_id)->count());
+        self::assertSame([], Storage::disk('public')->allFiles('imports'));
+    }
+
+    public function test_successful_uploaded_import_is_deleted(): void
+    {
+        Storage::fake('public');
+        $staff = $this->staff();
+        $csv = 'id;moonshine_user_role_id;model;permissions'."\n"
+            .';'.$staff->moonshine_user_role_id.';'.Product::class.';"{""view"":true}"'."\n";
+
+        $this->actingAs($this->staff(true), 'moonshine')->post(
+            '/admin/resource/moonshine-permission-resource/handler/import-handler',
+            ['import_file' => UploadedFile::fake()->createWithContent('permissions.csv', $csv)],
+        )->assertRedirect()->assertSessionHasNoErrors();
+
+        self::assertSame(['view' => true], MoonshinePermission::where('moonshine_user_role_id', $staff->moonshine_user_role_id)->firstOrFail()->permissions);
+        self::assertSame([], Storage::disk('public')->allFiles('imports'));
+    }
+
+    public function test_import_preserves_the_file_when_cleanup_is_disabled(): void
+    {
+        Storage::fake('public');
+        $disk = Storage::disk('public');
+        $disk->put('imports/retained.csv', 'id;moonshine_user_role_id;model;permissions'."\n".';99999999;Unknown;"{}"'."\n");
+
+        try {
+            PermissionImportHandler::process($disk->path('imports/retained.csv'), app(MoonshinePermissionResource::class), delimiter: ';');
+            self::fail('Invalid import must fail validation');
+        } catch (ValidationException) {
+            $disk->assertExists('imports/retained.csv');
+        } finally {
+            $disk->delete('imports/retained.csv');
         }
     }
 
